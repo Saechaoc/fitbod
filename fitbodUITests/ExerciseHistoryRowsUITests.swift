@@ -65,8 +65,8 @@ final class ExerciseHistoryRowsUITests: XCTestCase {
     private func openBenchPressHistory(textSize: UITestNavigation.TextSize? = nil) -> XCUIApplication {
         let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: textSize)
         UITestNavigation.selectTab("Library", in: app)
-        UITestNavigation.type("Barbell Bench Press", into: app.textFields["library.search.browser"], replacing: false)
-        let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+        UITestNavigation.type("Bench Press (Barbell)", into: app.textFields["library.search.browser"], replacing: false)
+        let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Bench Press (Barbell)")).firstMatch
         tapWhenReady(bench, in: app)
         tapWhenReady(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "View all history")).firstMatch, in: app)
         let prs = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "PRs · 30d")).firstMatch

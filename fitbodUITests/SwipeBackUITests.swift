@@ -62,7 +62,7 @@ final class SwipeBackUITests: XCTestCase {
         UITestNavigation.selectTab("Library", in: app)
         let search = app.textFields["library.search.browser"]
         assertRootIgnoresSwipe(search, alongRowOf: headerTitle("Library", in: app), "Library", in: app)
-        UITestNavigation.type("Barbell Bench Press", into: search, replacing: false)
+        UITestNavigation.type("Bench Press (Barbell)", into: search, replacing: false)
         let bench = benchPressName(in: app)
         assertStillNavigates(from: bench, to: viewAllHistory(in: app), in: app)
 
@@ -104,7 +104,7 @@ final class SwipeBackUITests: XCTestCase {
 
     @MainActor
     private func benchPressName(in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+        app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Bench Press (Barbell)")).firstMatch
     }
 
     // MARK: - Navigation

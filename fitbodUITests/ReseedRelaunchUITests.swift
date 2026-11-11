@@ -18,7 +18,7 @@
 import XCTest
 
 final class ReseedRelaunchUITests: XCTestCase {
-    private let bench = "Barbell Bench Press - Medium Grip"
+    private let bench = "Bench Press (Barbell)"
 
     override func setUpWithError() throws {
         continueAfterFailure = false

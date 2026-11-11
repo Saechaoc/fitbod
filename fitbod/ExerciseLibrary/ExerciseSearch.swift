@@ -17,13 +17,27 @@ import Foundation
 
 enum ExerciseSearch {
 
-    /// The text one row is found by.
+    /// The text one row is found by, split into words when the row is built.
+    /// The Library builds its rows for each search; the catalog tests build
+    /// them once and run thousands of searches over them.
     struct Row {
         let name: String
-        var family: String? = nil
-        var aliases: [String] = []
-        var brand: String? = nil
-        var equipment: String? = nil
+        let family: String?
+        let aliases: [String]
+        fileprivate let nameWords: [String]
+        /// The searchable words of the name, family, brand and equipment.
+        fileprivate let own: [String]
+        /// Each alias without spaces, and its searchable words.
+        fileprivate let aliasForms: [(joined: String, words: [String])]
+
+        init(name: String, family: String? = nil, aliases: [String] = [], brand: String? = nil, equipment: String? = nil) {
+            self.name = name
+            self.family = family
+            self.aliases = aliases
+            nameWords = ExerciseSearch.words(in: name)
+            own = [name, family, brand, equipment].compactMap { $0 }.flatMap(ExerciseSearch.searchable)
+            aliasForms = aliases.map { (ExerciseSearch.words(in: $0).joined(), ExerciseSearch.searchable($0)) }
+        }
     }
 
     /// How well a query found a row. Earlier cases sort first.
@@ -95,23 +109,21 @@ enum ExerciseSearch {
         guard !queryWords.isEmpty else { return Hit(rank: .other, alias: nil) }
         // Compared without spaces, so "situp" is the whole of "Sit-Up".
         let query = queryWords.joined()
-        let nameWords = words(in: row.name)
-        let name = nameWords.joined()
-        let own = [row.name, row.family, row.brand, row.equipment].compactMap { $0 }.flatMap(searchable)
-        let ownCovers = covers(queryWords[...], in: own)
+        let name = row.nameWords.joined()
+        let ownCovers = covers(queryWords[...], in: row.own)
 
         if name == query { return Hit(rank: .whole, alias: nil) }
-        if let alias = row.aliases.first(where: { words(in: $0).joined() == query }) {
-            return Hit(rank: .whole, alias: ownCovers ? nil : alias)
+        if let index = row.aliasForms.firstIndex(where: { $0.joined == query }) {
+            return Hit(rank: .whole, alias: ownCovers ? nil : row.aliases[index])
         }
         if ownCovers {
             let leads = name.hasPrefix(query)
-                || forms(of: queryWords[0]).contains { nameWords.first?.hasPrefix($0) == true }
+                || forms(of: queryWords[0]).contains { row.nameWords.first?.hasPrefix($0) == true }
             return Hit(rank: leads ? .nameStart : .other, alias: nil)
         }
         // The row's own words fall short: the first alias that completes them.
-        let alias = row.aliases.first { covers(queryWords[...], in: own + searchable($0)) }
-        return alias.map { Hit(rank: .other, alias: $0) }
+        let index = row.aliasForms.firstIndex { covers(queryWords[...], in: row.own + $0.words) }
+        return index.map { Hit(rank: .other, alias: row.aliases[$0]) }
     }
 
     /// The items `query` finds, best first, then by name.

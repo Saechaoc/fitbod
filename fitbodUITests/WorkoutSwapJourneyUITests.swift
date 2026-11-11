@@ -25,7 +25,7 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         let resume = app.buttons["resumeSlab.resume"]
         XCTAssertTrue(UITestNavigation.appears(resume, within: 90))
         resume.tap()
-        let benchName = "Barbell Bench Press - Medium Grip"
+        let benchName = "Bench Press (Barbell)"
         let bench = app.staticTexts[benchName].firstMatch
         XCTAssertTrue(UITestNavigation.appears(bench))
         // The long press that opens the exercise's menu.
@@ -37,18 +37,18 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(search))
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Cancel")).count, 1)
         search.tap()
-        search.typeText("Incline Push-Up Wide")
+        search.typeText("Push-Up (Incline)")
         let replacement = app.buttons.matching(NSPredicate(
-            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", "Incline Push-Up Wide,"
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", "Push-Up (Incline),"
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(replacement))
         replacement.tap()
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Incline Push-Up Wide"].firstMatch))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Push-Up (Incline)"].firstMatch))
 
         UITestNavigation.relaunch(app)
         XCTAssertTrue(UITestNavigation.appears(resume, within: 30))
         resume.tap()
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Incline Push-Up Wide"].firstMatch))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Push-Up (Incline)"].firstMatch))
         app.buttons["Back"].firstMatch.tap()
         UITestNavigation.selectTab("Progress", in: app)
         app.buttons["progress.history"].tap()
@@ -85,7 +85,7 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         let undo = app.buttons["card.undoVariation"]
         UITestNavigation.revealInLogger(undo, in: app)
         undo.tap()
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Barbell Bench Press - Medium Grip"].firstMatch))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Bench Press (Barbell)"].firstMatch))
         assertRestoredInputs(in: app)
         XCTAssertTrue(action("Undo skipped warm-ups", in: app).exists)
         XCTAssertFalse(undo.exists)
@@ -122,7 +122,7 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         pickVariation(in: app)
         let undo = app.buttons["card.undoVariation"]
         XCTAssertTrue(UITestNavigation.appears(undo))
-        let name = app.staticTexts["Dumbbell Bench Press"].firstMatch
+        let name = app.staticTexts["Bench Press (Dumbbell)"].firstMatch
         UITestNavigation.revealInLogger(name, in: app)
         name.press(forDuration: 1)
         let swap = app.buttons["Swap Exercise…"]
@@ -130,14 +130,14 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         swap.tap()
         let search = app.textFields["library.search.picker"]
         XCTAssertTrue(UITestNavigation.appears(search))
-        UITestNavigation.type("Incline Push-Up Wide", into: search)
+        UITestNavigation.type("Push-Up (Incline)", into: search)
         let replacement = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
-            "exercise.pick.", "Incline Push-Up Wide,"
+            "exercise.pick.", "Push-Up (Incline),"
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(replacement))
         replacement.tap()
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Incline Push-Up Wide"].firstMatch))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Push-Up (Incline)"].firstMatch))
         XCTAssertFalse(undo.exists)
     }
 
@@ -159,14 +159,14 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         UITestNavigation.revealInLogger(action, in: app)
         action.tap()
         let candidate = app.buttons.matching(NSPredicate(
-            format: "label BEGINSWITH %@", "Dumbbell Bench Press"
+            format: "label BEGINSWITH %@", "Bench Press (Dumbbell)"
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(candidate), "A logged, matching candidate must be selectable")
         UITestNavigation.waitUntilStill(candidate)
         UITestNavigation.reveal(candidate, in: app)
         candidate.tap()
         XCTAssertTrue(UITestNavigation.appears(app.buttons["card.undoVariation"]))
-        XCTAssertTrue(app.staticTexts["Dumbbell Bench Press"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["Bench Press (Dumbbell)"].firstMatch.exists)
     }
 
     @MainActor

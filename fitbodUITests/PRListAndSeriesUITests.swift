@@ -35,7 +35,7 @@ extension UITestNavigation {
 }
 
 final class PRListAndSeriesUITests: XCTestCase {
-    private let exerciseNames = ["Barbell Bench Press - Medium Grip", "Barbell Squat"]
+    private let exerciseNames = ["Bench Press (Barbell)", "Squat (Back)"]
 
     override func setUpWithError() throws {
         // Every bucket and chip gets checked, so one failure does not hide the rest.
@@ -82,12 +82,12 @@ final class PRListAndSeriesUITests: XCTestCase {
         // the squat's 140 x 5 and the bench's lighter sets drop out.
         let weightStrength = buckets.first { $0.section == "Weight" && $0.header == "1–6 REPS" }
         XCTAssertEqual(weightStrength?.rows.map(setKey), [
-            "Barbell Squat, Weight PR, 160 lb × 3",
-            "Barbell Squat, Weight PR, 150 lb × 3",
-            "Barbell Squat, Weight PR, 145 lb × 4",
-            "Barbell Bench Press - Medium Grip, Weight PR, 107.5 lb × 2",
-            "Barbell Bench Press - Medium Grip, Weight PR, 105 lb × 3",
-            "Barbell Bench Press - Medium Grip, Weight PR, 102.5 lb × 4",
+            "Squat (Back), Weight PR, 160 lb × 3",
+            "Squat (Back), Weight PR, 150 lb × 3",
+            "Squat (Back), Weight PR, 145 lb × 4",
+            "Bench Press (Barbell), Weight PR, 107.5 lb × 2",
+            "Bench Press (Barbell), Weight PR, 105 lb × 3",
+            "Bench Press (Barbell), Weight PR, 102.5 lb × 4",
         ])
     }
 
@@ -97,7 +97,7 @@ final class PRListAndSeriesUITests: XCTestCase {
     func testChipsPlotTheirOwnSeries() throws {
         let app = UITestNavigation.launch(UITestNavigation.progressHistory)
         UITestNavigation.selectTab("Progress", in: app)
-        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press")).firstMatch
+        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Bench Press (Barbell)")).firstMatch
         UITestNavigation.reveal(bench, in: app)
         bench.tap()
         XCTAssertTrue(UITestNavigation.appears(app.buttons["e1RM"]), "The progress chart never opened")

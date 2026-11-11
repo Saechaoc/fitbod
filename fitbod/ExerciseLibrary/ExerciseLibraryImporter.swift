@@ -208,15 +208,24 @@ public actor ExerciseLibraryImporter {
                 }
             }
 
-            // MARK: 3b. Keep the names logged exercises show
+            // MARK: 3b. Exercises in use
             //
             // A workout logged before name snapshots existed (2026-10-02)
             // shows its exercise's live name. It gets that name now, before
             // step 4 writes a curated rename, so History keeps the name the
-            // lifter logged (RM-022).
-            let unnamed = FetchDescriptor<SessionExercise>(predicate: #Predicate { $0.exerciseNameSnapshot == "" })
-            for logged in try modelContext.fetch(unnamed) {
-                if let name = logged.exercise?.name, !name.isEmpty { logged.exerciseNameSnapshot = name }
+            // lifter logged. A row a logged workout or a routine uses stays
+            // listed when curation hides it, so it can still be picked
+            // (RM-022).
+            var inUse = Set<PersistentIdentifier>()
+            for logged in try modelContext.fetch(FetchDescriptor<SessionExercise>()) {
+                guard let exercise = logged.exercise else { continue }
+                inUse.insert(exercise.persistentModelID)
+                if logged.exerciseNameSnapshot.isEmpty, !exercise.name.isEmpty {
+                    logged.exerciseNameSnapshot = exercise.name
+                }
+            }
+            for planned in try modelContext.fetch(FetchDescriptor<SessionExerciseTemplate>()) {
+                if let exercise = planned.exercise { inUse.insert(exercise.persistentModelID) }
             }
 
             // MARK: 4. Upsert Exercise rows + missing stimulus rows in 100-row batches
@@ -243,7 +252,11 @@ public actor ExerciseLibraryImporter {
                 if let existing = exercisesByExternalID[entry.id] {
                     exercise = existing
                     stimulated = stimulatedSlugs[existing.persistentModelID] ?? []
-                    if refresh(existing, from: entry, canonicalName: canonicalName, primaryMuscleSlugsJoined: joined) {
+                    let isHidden = entry.isHidden && !inUse.contains(existing.persistentModelID)
+                    if refresh(
+                        existing, from: entry, canonicalName: canonicalName,
+                        primaryMuscleSlugsJoined: joined, isHidden: isHidden
+                    ) {
                         updatedCount += 1
                     }
                 } else {
@@ -263,6 +276,11 @@ public actor ExerciseLibraryImporter {
                     )
                     exercise.trackingRaw = entry.trackingRaw
                     exercise.aliasesJoined = entry.aliasesJoined
+                    exercise.familyName = entry.familyName
+                    exercise.variantLabel = entry.variantLabel
+                    exercise.brand = entry.brand
+                    exercise.loadingRaw = entry.loadingRaw
+                    exercise.isHidden = entry.isHidden
                     // Pitfall #7 — insert FIRST, then the join rows reference it.
                     // SwiftData drops relationship links silently if the parent
                     // isn't yet inserted into the context.
@@ -350,14 +368,17 @@ public actor ExerciseLibraryImporter {
     /// written, because an equal assignment still marks the row changed and
     /// re-renders every view that reads it. The exercise's identity and the
     /// lifter's settings (unit override, increment, bar weight, plateau
-    /// overrides) are not catalog fields, so they stay as they are. Tracking
-    /// and aliases come from curation alone, so a row curation stops listing
-    /// goes back to the derived tracking and has no aliases.
+    /// overrides) are not catalog fields, so they stay as they are. Tracking,
+    /// aliases, family, variant, brand, loading and hiding come from
+    /// curation alone, so a row curation stops listing goes back to the
+    /// derived tracking and loses the rest. `isHidden` is curation's choice
+    /// unless the row is in use.
     private func refresh(
         _ exercise: Exercise,
         from entry: CatalogEntry,
         canonicalName: String,
-        primaryMuscleSlugsJoined joined: String
+        primaryMuscleSlugsJoined joined: String,
+        isHidden: Bool
     ) -> Bool {
         var changed = false
         func write<Value: Equatable>(_ keyPath: ReferenceWritableKeyPath<Exercise, Value>, _ value: Value) {
@@ -370,6 +391,11 @@ public actor ExerciseLibraryImporter {
         write(\.equipmentRaw, entry.equipmentRaw)
         write(\.trackingRaw, entry.trackingRaw)
         write(\.aliasesJoined, entry.aliasesJoined)
+        write(\.familyName, entry.familyName)
+        write(\.variantLabel, entry.variantLabel)
+        write(\.brand, entry.brand)
+        write(\.loadingRaw, entry.loadingRaw)
+        write(\.isHidden, isHidden)
         write(\.mechanicRaw, entry.mechanicRaw)
         write(\.forceRaw, entry.forceRaw)
         write(\.levelRaw, entry.levelRaw)

@@ -89,7 +89,7 @@ enum DemoWorkoutSeed {
     private static let plan: [(id: String, sets: Int, low: Int, high: Int, rest: Int, priorWeight: Double)] = [
         ("Barbell_Bench_Press_-_Medium_Grip", 3, 5, 8, 180, 100),
         ("Incline_Dumbbell_Press", 3, 8, 12, 120, 30),
-        ("Barbell_Shoulder_Press", 3, 6, 10, 150, 50),
+        ("Seated_Barbell_Military_Press", 3, 6, 10, 150, 50),
         ("Cable_Seated_Lateral_Raise", 3, 12, 15, 60, 10),
         ("Triceps_Pushdown", 3, 10, 15, 60, 25),
     ]

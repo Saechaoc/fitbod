@@ -119,10 +119,10 @@ final class SessionHistoryBRUUITests: XCTestCase {
         tap("Add exercise", in: app)
         let search = app.textFields["library.search.picker"]
         XCTAssertTrue(UITestNavigation.appears(search))
-        UITestNavigation.type("Incline Push-Up Wide", into: search)
+        UITestNavigation.type("Push-Up (Incline)", into: search)
         let picked = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
-            "exercise.pick.", "Incline Push-Up Wide,"
+            "exercise.pick.", "Push-Up (Incline),"
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(picked))
         picked.tap()
@@ -246,7 +246,7 @@ final class SessionHistoryBRUUITests: XCTestCase {
         UITestNavigation.selectTab("Library", in: app)
         let search = app.textFields["library.search.browser"]
         XCTAssertTrue(UITestNavigation.appears(search))
-        let name = "Barbell Bench Press - Medium Grip"
+        let name = "Bench Press (Barbell)"
         UITestNavigation.type(name, into: search)
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
         XCTAssertTrue(UITestNavigation.appears(row))

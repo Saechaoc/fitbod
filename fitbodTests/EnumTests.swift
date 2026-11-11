@@ -50,6 +50,7 @@ struct EnumTests {
             "trap_bar",
             "dumbbell",
             "kettlebell",
+            "plate",
             "machine",
             "smith_machine",
             "cable",

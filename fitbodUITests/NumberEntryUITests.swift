@@ -247,8 +247,8 @@ final class NumberEntryUITests: XCTestCase {
     func testExerciseSettingsTypeOver() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
         UITestNavigation.selectTab("Library", in: app)
-        UITestNavigation.type("Barbell Bench Press", into: app.textFields["library.search.browser"], replacing: false)
-        let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+        UITestNavigation.type("Bench Press (Barbell)", into: app.textFields["library.search.browser"], replacing: false)
+        let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Bench Press (Barbell)")).firstMatch
         UITestNavigation.reveal(bench, in: app)
         bench.tap()
         for (field, first, second) in [("Smallest Increment", "5", "2.5"), ("Bar Weight Override", "35", "25")] {

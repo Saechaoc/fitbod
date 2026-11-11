@@ -1,58 +1,1522 @@
 {
+  "3_4_Sit-Up": {
+    "hidden": true
+  },
+  "Ab_Crunch_Machine": {
+    "name": "Crunch (Machine)",
+    "family": "Crunch",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "ab crunch",
+      "ab crunch machine"
+    ]
+  },
   "Ab_Roller": {
-    "equipment": "bodyweight"
+    "name": "Ab Wheel Rollout",
+    "family": "Ab Wheel Rollout",
+    "equipment": "bodyweight",
+    "aliases": [
+      "ab roller",
+      "ab rollout"
+    ]
+  },
+  "Advanced_Kettlebell_Windmill": {
+    "hidden": true
+  },
+  "Air_Bike": {
+    "name": "Bicycle Crunch",
+    "family": "Bicycle Crunch"
+  },
+  "Alternate_Hammer_Curl": {
+    "name": "Hammer Curl (Alternating Dumbbell)",
+    "family": "Hammer Curl",
+    "variant": "Alternating Dumbbell",
+    "aliases": [
+      "alternate hammer curl"
+    ]
+  },
+  "Alternate_Heel_Touchers": {
+    "name": "Heel Touch",
+    "family": "Heel Touch",
+    "aliases": [
+      "alternate heel touchers",
+      "heel tap"
+    ]
+  },
+  "Alternate_Incline_Dumbbell_Curl": {
+    "name": "Incline Curl (Alternating Dumbbell)",
+    "family": "Incline Curl",
+    "variant": "Alternating Dumbbell",
+    "aliases": [
+      "alternate incline dumbbell curl"
+    ]
+  },
+  "Alternating_Cable_Shoulder_Press": {
+    "hidden": true
+  },
+  "Alternating_Deltoid_Raise": {
+    "hidden": true
+  },
+  "Alternating_Floor_Press": {
+    "hidden": true
+  },
+  "Alternating_Hang_Clean": {
+    "hidden": true
+  },
+  "Alternating_Kettlebell_Press": {
+    "hidden": true
+  },
+  "Alternating_Kettlebell_Row": {
+    "hidden": true
+  },
+  "Alternating_Renegade_Row": {
+    "name": "Renegade Row",
+    "family": "Row",
+    "variant": "Renegade Row",
+    "equipment": "dumbbell",
+    "aliases": [
+      "alternating renegade row"
+    ]
+  },
+  "Anti-Gravity_Press": {
+    "hidden": true
+  },
+  "Arnold_Dumbbell_Press": {
+    "name": "Arnold Press",
+    "family": "Overhead Press",
+    "variant": "Arnold Press",
+    "aliases": [
+      "ohp",
+      "shoulder press",
+      "military press",
+      "arnold dumbbell press"
+    ]
+  },
+  "Around_The_Worlds": {
+    "hidden": true
+  },
+  "Atlas_Stone_Trainer": {
+    "hidden": true
+  },
+  "Atlas_Stones": {
+    "name": "Atlas Stone",
+    "family": "Atlas Stone",
+    "tracking": "reps",
+    "aliases": [
+      "atlas stone trainer",
+      "atlas stones"
+    ]
+  },
+  "Axle_Deadlift": {
+    "hidden": true
+  },
+  "Back_Flyes_-_With_Bands": {
+    "name": "Rear Delt Fly (Band)",
+    "family": "Rear Delt Fly",
+    "variant": "Band",
+    "aliases": [
+      "back flyes - with bands",
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise"
+    ]
+  },
+  "Backward_Drag": {
+    "name": "Sled Pull (Backward)",
+    "family": "Sled Pull",
+    "variant": "Backward",
+    "equipment": "sled",
+    "aliases": [
+      "sled drag",
+      "backward drag"
+    ]
   },
   "Balance_Board": {
+    "hidden": true,
     "equipment": "bodyweight"
   },
   "Ball_Leg_Curl": {
-    "equipment": "bodyweight"
+    "name": "Leg Curl (Ball)",
+    "family": "Leg Curl",
+    "variant": "Ball",
+    "equipment": "bodyweight",
+    "aliases": [
+      "stability ball leg curl",
+      "swiss ball leg curl",
+      "hamstring curl",
+      "ball leg curl"
+    ]
   },
   "Band_Assisted_Pull-Up": {
+    "name": "Pull-Up (Band-Assisted)",
+    "family": "Pull-Up",
+    "variant": "Band-Assisted",
     "equipment": "bodyweight",
-    "tracking": "assisted_reps"
+    "tracking": "assisted_reps",
+    "aliases": [
+      "band assisted pull-up"
+    ]
+  },
+  "Band_Good_Morning": {
+    "name": "Good Morning (Band)",
+    "family": "Good Morning",
+    "variant": "Band",
+    "aliases": [
+      "band good morning"
+    ]
+  },
+  "Band_Good_Morning_Pull_Through": {
+    "name": "Pull-Through (Band)",
+    "family": "Pull-Through",
+    "variant": "Band",
+    "aliases": [
+      "band good morning (pull through)"
+    ]
+  },
+  "Band_Hip_Adductions": {
+    "name": "Hip Adduction (Band)",
+    "family": "Hip Adduction",
+    "variant": "Band",
+    "aliases": [
+      "adductor",
+      "inner thigh",
+      "band hip adductions"
+    ]
+  },
+  "Band_Pull_Apart": {
+    "name": "Band Pull-Apart",
+    "family": "Band Pull-Apart"
+  },
+  "Band_Skull_Crusher": {
+    "name": "Skull Crusher (Band)",
+    "family": "Skull Crusher",
+    "variant": "Band",
+    "aliases": [
+      "skullcrusher",
+      "lying triceps extension",
+      "nose breaker",
+      "band skull crusher"
+    ]
+  },
+  "Barbell_Ab_Rollout": {
+    "hidden": true
+  },
+  "Barbell_Ab_Rollout_-_On_Knees": {
+    "name": "Ab Wheel Rollout (Barbell)",
+    "family": "Ab Wheel Rollout",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell ab rollout",
+      "barbell rollout from bench",
+      "barbell ab rollout - on knees",
+      "ab rollout"
+    ]
+  },
+  "Barbell_Bench_Press_-_Medium_Grip": {
+    "name": "Bench Press (Barbell)",
+    "family": "Bench Press",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell bench",
+      "bench press - powerlifting",
+      "bench press with chains",
+      "reverse band bench press",
+      "barbell bench press - medium grip",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "Barbell_Curl": {
+    "name": "Biceps Curl (Barbell)",
+    "family": "Biceps Curl",
+    "variant": "Barbell",
+    "aliases": [
+      "lying high bench barbell curl",
+      "barbell curls lying against an incline",
+      "bicep curl",
+      "arm curl",
+      "barbell curl"
+    ]
+  },
+  "Barbell_Curls_Lying_Against_An_Incline": {
+    "hidden": true
+  },
+  "Barbell_Deadlift": {
+    "name": "Deadlift (Conventional)",
+    "family": "Deadlift",
+    "variant": "Conventional",
+    "aliases": [
+      "clean deadlift",
+      "deadlift with bands",
+      "deadlift with chains",
+      "reverse band deadlift",
+      "axle deadlift",
+      "barbell deadlift"
+    ]
+  },
+  "Barbell_Full_Squat": {
+    "hidden": true
+  },
+  "Barbell_Glute_Bridge": {
+    "name": "Glute Bridge (Barbell)",
+    "family": "Glute Bridge",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell glute bridge"
+    ]
+  },
+  "Barbell_Guillotine_Bench_Press": {
+    "name": "Bench Press (Guillotine)",
+    "family": "Bench Press",
+    "variant": "Guillotine",
+    "aliases": [
+      "neck press",
+      "bench",
+      "flat bench",
+      "barbell guillotine bench press"
+    ]
+  },
+  "Barbell_Hack_Squat": {
+    "name": "Hack Squat (Barbell)",
+    "family": "Hack Squat",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell hack squat"
+    ]
+  },
+  "Barbell_Hip_Thrust": {
+    "name": "Hip Thrust (Barbell)",
+    "family": "Hip Thrust",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell hip thrust"
+    ]
+  },
+  "Barbell_Incline_Bench_Press_-_Medium_Grip": {
+    "name": "Bench Press (Incline Barbell)",
+    "family": "Bench Press",
+    "variant": "Incline Barbell",
+    "aliases": [
+      "incline bench",
+      "incline press",
+      "barbell incline bench press - medium grip",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "Barbell_Incline_Shoulder_Raise": {
+    "hidden": true
+  },
+  "Barbell_Lunge": {
+    "name": "Lunge (Barbell)",
+    "family": "Lunge",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell lunge"
+    ]
+  },
+  "Barbell_Rear_Delt_Row": {
+    "name": "Rear Delt Row (Barbell)",
+    "family": "Rear Delt Row",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell rear delt row"
+    ]
+  },
+  "Barbell_Rollout_from_Bench": {
+    "hidden": true
+  },
+  "Barbell_Seated_Calf_Raise": {
+    "name": "Calf Raise (Seated Barbell)",
+    "family": "Calf Raise",
+    "variant": "Seated Barbell",
+    "aliases": [
+      "barbell seated calf raise"
+    ]
+  },
+  "Barbell_Shoulder_Press": {
+    "hidden": true
+  },
+  "Barbell_Shrug": {
+    "name": "Shrug (Barbell)",
+    "family": "Shrug",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell shrug"
+    ]
+  },
+  "Barbell_Shrug_Behind_The_Back": {
+    "name": "Shrug (Barbell, Behind the Back)",
+    "family": "Shrug",
+    "variant": "Barbell, Behind the Back",
+    "aliases": [
+      "barbell shrug behind the back"
+    ]
+  },
+  "Barbell_Side_Bend": {
+    "name": "Side Bend (Barbell)",
+    "family": "Side Bend",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell side bend"
+    ]
+  },
+  "Barbell_Side_Split_Squat": {
+    "hidden": true
+  },
+  "Barbell_Squat": {
+    "name": "Squat (Back)",
+    "family": "Squat",
+    "variant": "Back",
+    "aliases": [
+      "back squat",
+      "barbell full squat",
+      "narrow stance squats",
+      "wide stance barbell squat",
+      "speed squats",
+      "squat with bands",
+      "squat with chains",
+      "reverse band power squat",
+      "barbell squat"
+    ]
+  },
+  "Barbell_Squat_To_A_Bench": {
+    "hidden": true
+  },
+  "Barbell_Step_Ups": {
+    "name": "Step-Up (Barbell)",
+    "family": "Step-Up",
+    "variant": "Barbell",
+    "aliases": [
+      "barbell step ups"
+    ]
+  },
+  "Barbell_Walking_Lunge": {
+    "name": "Lunge (Walking Barbell)",
+    "family": "Lunge",
+    "variant": "Walking Barbell",
+    "aliases": [
+      "barbell walking lunge"
+    ]
+  },
+  "Battling_Ropes": {
+    "name": "Battle Ropes",
+    "family": "Battle Ropes",
+    "tracking": "duration",
+    "aliases": [
+      "battling ropes"
+    ]
+  },
+  "Bear_Crawl_Sled_Drags": {
+    "hidden": true
+  },
+  "Bench_Dips": {
+    "name": "Bench Dip",
+    "family": "Bench Dip",
+    "aliases": [
+      "bench dips"
+    ]
+  },
+  "Bench_Press_-_Powerlifting": {
+    "hidden": true
+  },
+  "Bench_Press_-_With_Bands": {
+    "name": "Bench Press (Band)",
+    "family": "Bench Press",
+    "variant": "Band",
+    "aliases": [
+      "bench press - with bands",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "Bench_Press_with_Chains": {
+    "hidden": true
+  },
+  "Bent-Arm_Barbell_Pullover": {
+    "name": "Pullover (Barbell)",
+    "family": "Pullover",
+    "variant": "Barbell",
+    "aliases": [
+      "wide-grip decline barbell pullover",
+      "bent-arm barbell pullover"
+    ]
+  },
+  "Bent-Arm_Dumbbell_Pullover": {
+    "name": "Pullover (Dumbbell)",
+    "family": "Pullover",
+    "variant": "Dumbbell",
+    "aliases": [
+      "db pullover",
+      "straight-arm dumbbell pullover",
+      "bent-arm dumbbell pullover"
+    ]
+  },
+  "Bent-Knee_Hip_Raise": {
+    "hidden": true
+  },
+  "Bent_Over_Barbell_Row": {
+    "name": "Row (Barbell)",
+    "family": "Row",
+    "variant": "Barbell",
+    "aliases": [
+      "bent over row",
+      "bent over barbell row"
+    ]
+  },
+  "Bent_Over_Dumbbell_Rear_Delt_Raise_With_Head_On_Bench": {
+    "name": "Rear Delt Fly (Dumbbell)",
+    "family": "Rear Delt Fly",
+    "variant": "Dumbbell",
+    "aliases": [
+      "bent over dumbbell rear delt raise with head on bench",
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise"
+    ]
+  },
+  "Bent_Over_Low-Pulley_Side_Lateral": {
+    "name": "Rear Delt Fly (Bent-Over Cable)",
+    "family": "Rear Delt Fly",
+    "variant": "Bent-Over Cable",
+    "aliases": [
+      "bent over low-pulley side lateral",
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise"
+    ]
+  },
+  "Bent_Over_One-Arm_Long_Bar_Row": {
+    "hidden": true
+  },
+  "Bent_Over_Two-Arm_Long_Bar_Row": {
+    "hidden": true
+  },
+  "Bent_Over_Two-Dumbbell_Row": {
+    "name": "Row (Dumbbell)",
+    "family": "Row",
+    "variant": "Dumbbell",
+    "aliases": [
+      "bent over two-dumbbell row with palms in",
+      "bent over two-dumbbell row"
+    ]
+  },
+  "Bent_Over_Two-Dumbbell_Row_With_Palms_In": {
+    "hidden": true
+  },
+  "Bent_Press": {
+    "hidden": true
+  },
+  "Bicycling": {
+    "import": true,
+    "name": "Cycling",
+    "family": "Cycling",
+    "tracking": "duration_distance",
+    "aliases": [
+      "bicycling",
+      "bike ride"
+    ]
   },
   "Bicycling_Stationary": {
     "import": true,
-    "name": "Stationary Bike",
+    "name": "Stationary Bike (Upright)",
+    "family": "Stationary Bike",
+    "variant": "Upright",
     "equipment": "cardio_machine",
     "tracking": "duration_distance",
     "aliases": [
       "exercise bike",
       "upright bike",
-      "bike"
+      "bike",
+      "bicycling, stationary",
+      "stationary bike"
     ]
   },
+  "Board_Press": {
+    "family": "Bench Press",
+    "variant": "Board Press",
+    "aliases": [
+      "bench",
+      "flat bench"
+    ]
+  },
+  "Body-Up": {
+    "hidden": true
+  },
+  "Body_Tricep_Press": {
+    "hidden": true
+  },
   "Bodyweight_Flyes": {
+    "hidden": true,
     "equipment": "bodyweight"
   },
   "Bodyweight_Mid_Row": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Bodyweight_Squat": {
+    "name": "Squat (Bodyweight)",
+    "family": "Squat",
+    "variant": "Bodyweight",
+    "aliases": [
+      "air squat",
+      "bodyweight squat"
+    ]
   },
   "Bodyweight_Walking_Lunge": {
-    "equipment": "bodyweight"
+    "name": "Lunge (Walking Bodyweight)",
+    "family": "Lunge",
+    "variant": "Walking Bodyweight",
+    "equipment": "bodyweight",
+    "aliases": [
+      "bodyweight walking lunge"
+    ]
+  },
+  "Bosu_Ball_Cable_Crunch_With_Side_Bends": {
+    "hidden": true
+  },
+  "Bottoms-Up_Clean_From_The_Hang_Position": {
+    "hidden": true
+  },
+  "Bottoms_Up": {
+    "hidden": true
+  },
+  "Box_Squat": {
+    "name": "Squat (Box)",
+    "family": "Squat",
+    "variant": "Box",
+    "aliases": [
+      "barbell squat to a bench",
+      "speed box squat",
+      "box squat with bands",
+      "box squat with chains",
+      "reverse band box squat",
+      "box squat"
+    ]
+  },
+  "Box_Squat_with_Bands": {
+    "hidden": true
+  },
+  "Box_Squat_with_Chains": {
+    "hidden": true
+  },
+  "Bradford_Rocky_Presses": {
+    "hidden": true
+  },
+  "Butt-Ups": {
+    "hidden": true
+  },
+  "Butt_Lift_Bridge": {
+    "name": "Glute Bridge",
+    "family": "Glute Bridge",
+    "aliases": [
+      "physioball hip bridge",
+      "butt lift (bridge)"
+    ]
+  },
+  "Butterfly": {
+    "name": "Chest Fly (Pec Deck)",
+    "family": "Chest Fly",
+    "variant": "Pec Deck",
+    "loading": "stack",
+    "aliases": [
+      "pec deck",
+      "butterfly",
+      "machine fly",
+      "pec fly",
+      "fly",
+      "flye",
+      "flyes"
+    ]
+  },
+  "Cable_Chest_Press": {
+    "name": "Chest Press (Cable)",
+    "family": "Chest Press",
+    "variant": "Cable",
+    "aliases": [
+      "machine press",
+      "cable chest press"
+    ]
+  },
+  "Cable_Crossover": {
+    "name": "Cable Crossover (High to Low)",
+    "family": "Cable Crossover",
+    "variant": "High to Low",
+    "aliases": [
+      "high cable fly",
+      "cable fly",
+      "crossover",
+      "cable crossover"
+    ]
+  },
+  "Cable_Crunch": {
+    "name": "Crunch (Cable)",
+    "family": "Crunch",
+    "variant": "Cable",
+    "aliases": [
+      "kneeling cable crunch",
+      "rope crunch",
+      "ab crunch",
+      "cable crunch"
+    ]
+  },
+  "Cable_Deadlifts": {
+    "hidden": true
+  },
+  "Cable_Hammer_Curls_-_Rope_Attachment": {
+    "name": "Hammer Curl (Cable Rope)",
+    "family": "Hammer Curl",
+    "variant": "Cable Rope",
+    "aliases": [
+      "rope hammer curl",
+      "cable hammer curls - rope attachment"
+    ]
+  },
+  "Cable_Hip_Adduction": {
+    "name": "Hip Adduction (Cable)",
+    "family": "Hip Adduction",
+    "variant": "Cable",
+    "aliases": [
+      "adductor",
+      "inner thigh",
+      "cable hip adduction"
+    ]
+  },
+  "Cable_Incline_Pushdown": {
+    "hidden": true
+  },
+  "Cable_Incline_Triceps_Extension": {
+    "name": "Triceps Extension (Incline Cable)",
+    "family": "Triceps Extension",
+    "variant": "Incline Cable",
+    "aliases": [
+      "tricep extension",
+      "overhead extension",
+      "french press",
+      "cable incline triceps extension"
+    ]
+  },
+  "Cable_Internal_Rotation": {
+    "name": "Internal Rotation (Cable)",
+    "family": "Internal Rotation",
+    "variant": "Cable",
+    "aliases": [
+      "cable internal rotation"
+    ]
+  },
+  "Cable_Iron_Cross": {
+    "hidden": true
+  },
+  "Cable_Judo_Flip": {
+    "hidden": true
+  },
+  "Cable_Lying_Triceps_Extension": {
+    "name": "Skull Crusher (Cable)",
+    "family": "Skull Crusher",
+    "variant": "Cable",
+    "aliases": [
+      "skullcrusher",
+      "lying triceps extension",
+      "nose breaker",
+      "cable lying triceps extension"
+    ]
+  },
+  "Cable_One_Arm_Tricep_Extension": {
+    "name": "Triceps Pushdown (Single-Arm)",
+    "family": "Triceps Pushdown",
+    "variant": "Single-Arm",
+    "aliases": [
+      "cable one arm tricep extension",
+      "pressdown",
+      "tricep pushdown"
+    ]
+  },
+  "Cable_Preacher_Curl": {
+    "name": "Preacher Curl (Cable)",
+    "family": "Preacher Curl",
+    "variant": "Cable",
+    "aliases": [
+      "scott curl",
+      "cable preacher curl"
+    ]
+  },
+  "Cable_Rear_Delt_Fly": {
+    "name": "Rear Delt Fly (Cable)",
+    "family": "Rear Delt Fly",
+    "variant": "Cable",
+    "aliases": [
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise",
+      "cable rear delt fly"
+    ]
+  },
+  "Cable_Reverse_Crunch": {
+    "name": "Reverse Crunch (Cable)",
+    "family": "Reverse Crunch",
+    "variant": "Cable",
+    "aliases": [
+      "cable reverse crunch"
+    ]
+  },
+  "Cable_Rope_Overhead_Triceps_Extension": {
+    "name": "Triceps Extension (Overhead Cable)",
+    "family": "Triceps Extension",
+    "variant": "Overhead Cable",
+    "aliases": [
+      "triceps overhead extension with rope",
+      "low cable triceps extension",
+      "kneeling cable triceps extension",
+      "tricep extension",
+      "overhead extension",
+      "french press",
+      "cable rope overhead triceps extension"
+    ]
+  },
+  "Cable_Rope_Rear-Delt_Rows": {
+    "name": "Rear Delt Row (Cable Rope)",
+    "family": "Rear Delt Row",
+    "variant": "Cable Rope",
+    "aliases": [
+      "cable rope rear-delt rows"
+    ]
+  },
+  "Cable_Russian_Twists": {
+    "name": "Russian Twist (Cable)",
+    "family": "Russian Twist",
+    "variant": "Cable",
+    "aliases": [
+      "cable russian twists"
+    ]
+  },
+  "Cable_Seated_Crunch": {
+    "name": "Crunch (Seated Cable)",
+    "family": "Crunch",
+    "variant": "Seated Cable",
+    "aliases": [
+      "ab crunch",
+      "cable seated crunch"
+    ]
+  },
+  "Cable_Seated_Lateral_Raise": {
+    "name": "Lateral Raise (Seated Cable)",
+    "family": "Lateral Raise",
+    "variant": "Seated Cable",
+    "aliases": [
+      "side raise",
+      "side lateral",
+      "lat raise",
+      "cable seated lateral raise"
+    ]
+  },
+  "Cable_Shoulder_Press": {
+    "name": "Overhead Press (Cable)",
+    "family": "Overhead Press",
+    "variant": "Cable",
+    "aliases": [
+      "alternating cable shoulder press",
+      "ohp",
+      "shoulder press",
+      "military press",
+      "cable shoulder press"
+    ]
+  },
+  "Cable_Shrugs": {
+    "name": "Shrug (Cable)",
+    "family": "Shrug",
+    "variant": "Cable",
+    "aliases": [
+      "cable shrugs"
+    ]
+  },
+  "Cable_Wrist_Curl": {
+    "name": "Wrist Curl (Cable)",
+    "family": "Wrist Curl",
+    "variant": "Cable",
+    "aliases": [
+      "seated two-arm palms-up low-pulley wrist curl",
+      "cable wrist curl"
+    ]
+  },
+  "Calf-Machine_Shoulder_Shrug": {
+    "name": "Shrug (Machine)",
+    "family": "Shrug",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "calf machine shrug",
+      "calf-machine shoulder shrug"
+    ]
+  },
+  "Calf_Press": {
+    "name": "Calf Raise (Calf Press Machine)",
+    "family": "Calf Raise",
+    "variant": "Calf Press Machine",
+    "loading": "stack",
+    "aliases": [
+      "calf press"
+    ]
+  },
+  "Calf_Press_On_The_Leg_Press_Machine": {
+    "name": "Calf Raise (Leg Press)",
+    "family": "Calf Raise",
+    "variant": "Leg Press",
+    "loading": "plate",
+    "aliases": [
+      "calf press on the leg press machine"
+    ]
+  },
+  "Calf_Raise_On_A_Dumbbell": {
+    "hidden": true
+  },
+  "Calf_Raises_-_With_Bands": {
+    "name": "Calf Raise (Band)",
+    "family": "Calf Raise",
+    "variant": "Band",
+    "aliases": [
+      "calf raises - with bands"
+    ]
+  },
+  "Car_Deadlift": {
+    "hidden": true
+  },
+  "Car_Drivers": {
+    "hidden": true
+  },
+  "Chain_Handle_Extension": {
+    "hidden": true
+  },
+  "Chain_Press": {
+    "hidden": true
+  },
+  "Chair_Squat": {
+    "hidden": true
+  },
+  "Chin-Up": {
+    "family": "Chin-Up"
+  },
+  "Circus_Bell": {
+    "hidden": true
+  },
+  "Clean": {
+    "family": "Clean",
+    "aliases": [
+      "clean from blocks",
+      "squat clean"
+    ]
+  },
+  "Clean_Deadlift": {
+    "hidden": true
+  },
+  "Clean_Pull": {
+    "family": "Clean Pull",
+    "aliases": [
+      "clean shrug"
+    ]
+  },
+  "Clean_Shrug": {
+    "hidden": true
+  },
+  "Clean_and_Jerk": {
+    "name": "Clean and Jerk (Barbell)",
+    "family": "Clean and Jerk",
+    "variant": "Barbell",
+    "aliases": [
+      "clean and jerk"
+    ]
+  },
+  "Clean_and_Press": {
+    "family": "Clean and Press"
+  },
+  "Clean_from_Blocks": {
+    "hidden": true
+  },
+  "Clock_Push-Up": {
+    "hidden": true
+  },
+  "Close-Grip_Barbell_Bench_Press": {
+    "name": "Close-Grip Bench Press (Barbell)",
+    "family": "Close-Grip Bench Press",
+    "variant": "Barbell",
+    "aliases": [
+      "cgbp",
+      "close-grip barbell bench press"
+    ]
+  },
+  "Close-Grip_Dumbbell_Press": {
+    "name": "Close-Grip Bench Press (Dumbbell)",
+    "family": "Close-Grip Bench Press",
+    "variant": "Dumbbell",
+    "aliases": [
+      "cgbp",
+      "close-grip dumbbell press"
+    ]
+  },
+  "Close-Grip_EZ-Bar_Curl_with_Band": {
+    "hidden": true
+  },
+  "Close-Grip_EZ-Bar_Press": {
+    "name": "Close-Grip Bench Press (EZ Bar)",
+    "family": "Close-Grip Bench Press",
+    "variant": "EZ Bar",
+    "aliases": [
+      "cgbp",
+      "close-grip ez-bar press"
+    ]
+  },
+  "Close-Grip_EZ_Bar_Curl": {
+    "name": "Biceps Curl (EZ Bar, Close-Grip)",
+    "family": "Biceps Curl",
+    "variant": "EZ Bar, Close-Grip",
+    "equipment": "ez_bar",
+    "aliases": [
+      "close-grip ez-bar curl with band",
+      "bicep curl",
+      "arm curl",
+      "close-grip ez bar curl"
+    ]
+  },
+  "Close-Grip_Front_Lat_Pulldown": {
+    "name": "Lat Pulldown (Close-Grip)",
+    "family": "Lat Pulldown",
+    "variant": "Close-Grip",
+    "aliases": [
+      "close-grip front lat pulldown",
+      "lat pull",
+      "pull down"
+    ]
+  },
+  "Close-Grip_Push-Up_off_of_a_Dumbbell": {
+    "hidden": true
+  },
+  "Close-Grip_Standing_Barbell_Curl": {
+    "name": "Biceps Curl (Barbell, Close-Grip)",
+    "family": "Biceps Curl",
+    "variant": "Barbell, Close-Grip",
+    "aliases": [
+      "close-grip standing barbell curl",
+      "bicep curl",
+      "arm curl"
+    ]
+  },
+  "Cocoons": {
+    "hidden": true
+  },
+  "Conans_Wheel": {
+    "hidden": true
+  },
+  "Concentration_Curls": {
+    "name": "Concentration Curl (Dumbbell)",
+    "family": "Concentration Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "concentration curls"
+    ]
+  },
+  "Cross-Body_Crunch": {
+    "name": "Crunch (Cross-Body)",
+    "family": "Crunch",
+    "variant": "Cross-Body",
+    "aliases": [
+      "elbow to knee",
+      "ab crunch",
+      "cross-body crunch"
+    ]
+  },
+  "Cross_Body_Hammer_Curl": {
+    "name": "Hammer Curl (Cross-Body)",
+    "family": "Hammer Curl",
+    "variant": "Cross-Body",
+    "aliases": [
+      "cross body hammer curl"
+    ]
+  },
+  "Cross_Over_-_With_Bands": {
+    "name": "Chest Fly (Band)",
+    "family": "Chest Fly",
+    "variant": "Band",
+    "aliases": [
+      "cross over - with bands",
+      "fly",
+      "flye",
+      "flyes"
+    ]
   },
   "Crucifix": {
-    "tracking": "duration"
+    "name": "Crucifix Hold",
+    "family": "Crucifix Hold",
+    "equipment": "dumbbell",
+    "tracking": "duration",
+    "aliases": [
+      "crucifix"
+    ]
+  },
+  "Crunch_-_Hands_Overhead": {
+    "hidden": true
+  },
+  "Crunch_-_Legs_On_Exercise_Ball": {
+    "hidden": true
+  },
+  "Crunches": {
+    "name": "Crunch (Floor)",
+    "family": "Crunch",
+    "variant": "Floor",
+    "aliases": [
+      "crunch - hands overhead",
+      "crunch - legs on exercise ball",
+      "tuck crunch",
+      "crunches",
+      "ab crunch"
+    ]
+  },
+  "Cuban_Press": {
+    "family": "Cuban Press"
+  },
+  "Dead_Bug": {
+    "family": "Dead Bug"
+  },
+  "Deadlift_with_Bands": {
+    "hidden": true
+  },
+  "Deadlift_with_Chains": {
+    "hidden": true
+  },
+  "Decline_Barbell_Bench_Press": {
+    "name": "Bench Press (Decline Barbell)",
+    "family": "Bench Press",
+    "variant": "Decline Barbell",
+    "aliases": [
+      "decline bench",
+      "wide-grip decline barbell bench press",
+      "bench",
+      "flat bench",
+      "decline barbell bench press"
+    ]
+  },
+  "Decline_Close-Grip_Bench_To_Skull_Crusher": {
+    "hidden": true
+  },
+  "Decline_Crunch": {
+    "name": "Crunch (Decline)",
+    "family": "Crunch",
+    "variant": "Decline",
+    "aliases": [
+      "ab crunch",
+      "decline crunch"
+    ]
+  },
+  "Decline_Dumbbell_Bench_Press": {
+    "name": "Bench Press (Decline Dumbbell)",
+    "family": "Bench Press",
+    "variant": "Decline Dumbbell",
+    "aliases": [
+      "bench",
+      "flat bench",
+      "decline dumbbell bench press"
+    ]
+  },
+  "Decline_Dumbbell_Flyes": {
+    "name": "Chest Fly (Decline Dumbbell)",
+    "family": "Chest Fly",
+    "variant": "Decline Dumbbell",
+    "aliases": [
+      "fly",
+      "flye",
+      "flyes",
+      "decline dumbbell flyes"
+    ]
+  },
+  "Decline_Dumbbell_Triceps_Extension": {
+    "hidden": true
+  },
+  "Decline_EZ_Bar_Triceps_Extension": {
+    "name": "Skull Crusher (Decline EZ Bar)",
+    "family": "Skull Crusher",
+    "variant": "Decline EZ Bar",
+    "equipment": "ez_bar",
+    "aliases": [
+      "skullcrusher",
+      "lying triceps extension",
+      "nose breaker",
+      "decline ez bar triceps extension"
+    ]
+  },
+  "Decline_Oblique_Crunch": {
+    "name": "Oblique Crunch (Decline)",
+    "family": "Oblique Crunch",
+    "variant": "Decline",
+    "aliases": [
+      "side crunch",
+      "decline oblique crunch"
+    ]
   },
   "Decline_Push-Up": {
-    "equipment": "bodyweight"
+    "name": "Push-Up (Decline)",
+    "family": "Push-Up",
+    "variant": "Decline",
+    "equipment": "bodyweight",
+    "aliases": [
+      "feet-elevated push-up",
+      "push-ups with feet elevated",
+      "push-ups with feet on an exercise ball",
+      "pushup",
+      "press-up",
+      "decline push-up"
+    ]
+  },
+  "Decline_Reverse_Crunch": {
+    "name": "Reverse Crunch (Decline)",
+    "family": "Reverse Crunch",
+    "variant": "Decline",
+    "aliases": [
+      "decline reverse crunch"
+    ]
   },
   "Decline_Smith_Press": {
+    "hidden": true,
     "equipment": "smith_machine"
   },
+  "Deficit_Deadlift": {
+    "name": "Deadlift (Deficit)",
+    "family": "Deadlift",
+    "variant": "Deficit",
+    "aliases": [
+      "deficit deadlift"
+    ]
+  },
+  "Depth_Jump_Leap": {
+    "import": true,
+    "name": "Depth Jump",
+    "family": "Depth Jump",
+    "equipment": "bodyweight",
+    "aliases": [
+      "depth jump leap"
+    ]
+  },
+  "Dip_Machine": {
+    "name": "Dip (Machine)",
+    "family": "Dip",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "seated dip",
+      "dips"
+    ]
+  },
   "Dips_-_Chest_Version": {
-    "equipment": "bodyweight"
+    "name": "Dip (Chest)",
+    "family": "Dip",
+    "variant": "Chest",
+    "equipment": "bodyweight",
+    "aliases": [
+      "chest dip",
+      "dips - chest version",
+      "dips"
+    ]
+  },
+  "Dips_-_Triceps_Version": {
+    "hidden": true
   },
   "Donkey_Calf_Raises": {
-    "equipment": "bodyweight"
+    "name": "Calf Raise (Donkey)",
+    "family": "Calf Raise",
+    "variant": "Donkey",
+    "equipment": "bodyweight",
+    "aliases": [
+      "donkey calf raises"
+    ]
+  },
+  "Double_Kettlebell_Alternating_Hang_Clean": {
+    "hidden": true
+  },
+  "Double_Kettlebell_Jerk": {
+    "hidden": true
+  },
+  "Double_Kettlebell_Push_Press": {
+    "name": "Push Press (Kettlebell)",
+    "family": "Push Press",
+    "variant": "Kettlebell",
+    "aliases": [
+      "double kettlebell push press"
+    ]
+  },
+  "Double_Kettlebell_Snatch": {
+    "name": "Kettlebell Snatch (Double)",
+    "family": "Kettlebell Snatch",
+    "variant": "Double",
+    "aliases": [
+      "double kettlebell snatch"
+    ]
+  },
+  "Double_Kettlebell_Windmill": {
+    "hidden": true
   },
   "Downward_Facing_Balance": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Drag_Curl": {
+    "family": "Drag Curl"
+  },
+  "Dumbbell_Alternate_Bicep_Curl": {
+    "name": "Biceps Curl (Alternating Dumbbell)",
+    "family": "Biceps Curl",
+    "variant": "Alternating Dumbbell",
+    "aliases": [
+      "dumbbell alternate bicep curl",
+      "bicep curl",
+      "arm curl"
+    ]
+  },
+  "Dumbbell_Bench_Press": {
+    "name": "Bench Press (Dumbbell)",
+    "family": "Bench Press",
+    "variant": "Dumbbell",
+    "aliases": [
+      "db bench",
+      "dumbbell press",
+      "bench",
+      "flat bench",
+      "dumbbell bench press"
+    ]
+  },
+  "Dumbbell_Bench_Press_with_Neutral_Grip": {
+    "name": "Bench Press (Dumbbell, Neutral Grip)",
+    "family": "Bench Press",
+    "variant": "Dumbbell, Neutral Grip",
+    "aliases": [
+      "hammer press",
+      "dumbbell bench press with neutral grip",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "Dumbbell_Bicep_Curl": {
+    "name": "Biceps Curl (Dumbbell)",
+    "family": "Biceps Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "standing inner-biceps curl",
+      "lying supine dumbbell curl",
+      "bicep curl",
+      "arm curl",
+      "dumbbell bicep curl"
+    ]
+  },
+  "Dumbbell_Clean": {
+    "name": "Clean (Dumbbell)",
+    "family": "Clean",
+    "variant": "Dumbbell",
+    "aliases": [
+      "squat clean",
+      "dumbbell clean"
+    ]
+  },
+  "Dumbbell_Floor_Press": {
+    "name": "Floor Press (Dumbbell)",
+    "family": "Floor Press",
+    "variant": "Dumbbell",
+    "aliases": [
+      "dumbbell floor press"
+    ]
+  },
+  "Dumbbell_Flyes": {
+    "name": "Chest Fly (Dumbbell)",
+    "family": "Chest Fly",
+    "variant": "Dumbbell",
+    "aliases": [
+      "db fly",
+      "one-arm flat bench dumbbell flye",
+      "fly",
+      "flye",
+      "flyes",
+      "dumbbell flyes"
+    ]
+  },
+  "Dumbbell_Incline_Row": {
+    "name": "Row (Chest-Supported Dumbbell)",
+    "family": "Row",
+    "variant": "Chest-Supported Dumbbell",
+    "aliases": [
+      "incline row",
+      "dumbbell incline row"
+    ]
+  },
+  "Dumbbell_Incline_Shoulder_Raise": {
+    "hidden": true
+  },
+  "Dumbbell_Lunges": {
+    "name": "Lunge (Dumbbell)",
+    "family": "Lunge",
+    "variant": "Dumbbell",
+    "aliases": [
+      "dumbbell lunges"
+    ]
+  },
+  "Dumbbell_Lying_One-Arm_Rear_Lateral_Raise": {
+    "hidden": true
+  },
+  "Dumbbell_Lying_Pronation": {
+    "hidden": true
+  },
+  "Dumbbell_Lying_Rear_Lateral_Raise": {
+    "hidden": true
+  },
+  "Dumbbell_Lying_Supination": {
+    "hidden": true
+  },
+  "Dumbbell_One-Arm_Shoulder_Press": {
+    "name": "Overhead Press (Single-Arm Dumbbell)",
+    "family": "Overhead Press",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "standing palm-in one-arm dumbbell press",
+      "ohp",
+      "shoulder press",
+      "military press",
+      "dumbbell one-arm shoulder press"
+    ]
+  },
+  "Dumbbell_One-Arm_Triceps_Extension": {
+    "hidden": true
+  },
+  "Dumbbell_One-Arm_Upright_Row": {
+    "name": "Upright Row (Single-Arm Dumbbell)",
+    "family": "Upright Row",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "dumbbell one-arm upright row"
+    ]
+  },
+  "Dumbbell_Prone_Incline_Curl": {
+    "name": "Spider Curl (Dumbbell)",
+    "family": "Spider Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "prone incline curl",
+      "dumbbell prone incline curl"
+    ]
+  },
+  "Dumbbell_Raise": {
+    "hidden": true
+  },
+  "Dumbbell_Rear_Lunge": {
+    "name": "Lunge (Reverse Dumbbell)",
+    "family": "Lunge",
+    "variant": "Reverse Dumbbell",
+    "aliases": [
+      "dumbbell rear lunge"
+    ]
+  },
+  "Dumbbell_Scaption": {
+    "name": "Scaption",
+    "family": "Scaption",
+    "aliases": [
+      "scapular raise",
+      "dumbbell scaption"
+    ]
+  },
+  "Dumbbell_Seated_One-Leg_Calf_Raise": {
+    "name": "Calf Raise (Seated Single-Leg Dumbbell)",
+    "family": "Calf Raise",
+    "variant": "Seated Single-Leg Dumbbell",
+    "aliases": [
+      "dumbbell seated one-leg calf raise"
+    ]
+  },
+  "Dumbbell_Shoulder_Press": {
+    "name": "Overhead Press (Seated Dumbbell)",
+    "family": "Overhead Press",
+    "variant": "Seated Dumbbell",
+    "aliases": [
+      "seated dumbbell press",
+      "ohp",
+      "shoulder press",
+      "military press",
+      "dumbbell shoulder press"
+    ]
+  },
+  "Dumbbell_Shrug": {
+    "name": "Shrug (Dumbbell)",
+    "family": "Shrug",
+    "variant": "Dumbbell",
+    "aliases": [
+      "dumbbell shrug"
+    ]
+  },
+  "Dumbbell_Side_Bend": {
+    "name": "Side Bend (Dumbbell)",
+    "family": "Side Bend",
+    "variant": "Dumbbell",
+    "aliases": [
+      "dumbbell side bend"
+    ]
+  },
+  "Dumbbell_Squat": {
+    "name": "Squat (Dumbbell)",
+    "family": "Squat",
+    "variant": "Dumbbell",
+    "aliases": [
+      "dumbbell squat to a bench",
+      "dumbbell squat"
+    ]
+  },
+  "Dumbbell_Squat_To_A_Bench": {
+    "hidden": true
+  },
+  "Dumbbell_Step_Ups": {
+    "name": "Step-Up (Dumbbell)",
+    "family": "Step-Up",
+    "variant": "Dumbbell",
+    "aliases": [
+      "dumbbell step ups"
+    ]
+  },
+  "Dumbbell_Tricep_Extension_-Pronated_Grip": {
+    "hidden": true
+  },
+  "EZ-Bar_Curl": {
+    "name": "Biceps Curl (EZ Bar)",
+    "family": "Biceps Curl",
+    "variant": "EZ Bar",
+    "aliases": [
+      "ez curl",
+      "bicep curl",
+      "arm curl",
+      "ez-bar curl"
+    ]
+  },
+  "EZ-Bar_Skullcrusher": {
+    "name": "Skull Crusher (EZ Bar)",
+    "family": "Skull Crusher",
+    "variant": "EZ Bar",
+    "aliases": [
+      "lying triceps press",
+      "lying close-grip barbell triceps press to chin",
+      "skullcrusher",
+      "lying triceps extension",
+      "nose breaker",
+      "ez-bar skullcrusher"
+    ]
+  },
+  "Elbow_to_Knee": {
+    "hidden": true
+  },
+  "Elevated_Back_Lunge": {
+    "hidden": true
+  },
+  "Elevated_Cable_Rows": {
+    "hidden": true
   },
   "Elliptical_Trainer": {
     "import": true,
     "name": "Elliptical",
+    "family": "Elliptical",
     "equipment": "cardio_machine",
     "tracking": "duration_level",
     "aliases": [
@@ -61,195 +1525,2818 @@
     ]
   },
   "Exercise_Ball_Crunch": {
-    "equipment": "bodyweight"
+    "name": "Crunch (Stability Ball)",
+    "family": "Crunch",
+    "variant": "Stability Ball",
+    "equipment": "bodyweight",
+    "aliases": [
+      "swiss ball crunch",
+      "exercise ball crunch",
+      "ab crunch"
+    ]
   },
   "Exercise_Ball_Pull-In": {
-    "equipment": "bodyweight"
+    "name": "Knee Tuck (Stability Ball)",
+    "family": "Knee Tuck",
+    "variant": "Stability Ball",
+    "equipment": "bodyweight",
+    "aliases": [
+      "exercise ball pull-in",
+      "pull-in"
+    ]
+  },
+  "Extended_Range_One-Arm_Kettlebell_Floor_Press": {
+    "hidden": true
+  },
+  "External_Rotation": {
+    "name": "External Rotation (Dumbbell)",
+    "family": "External Rotation",
+    "variant": "Dumbbell",
+    "aliases": [
+      "rotator cuff",
+      "external rotation"
+    ]
+  },
+  "External_Rotation_with_Band": {
+    "name": "External Rotation (Band)",
+    "family": "External Rotation",
+    "variant": "Band",
+    "aliases": [
+      "external rotation with band",
+      "rotator cuff"
+    ]
+  },
+  "External_Rotation_with_Cable": {
+    "name": "External Rotation (Cable)",
+    "family": "External Rotation",
+    "variant": "Cable",
+    "aliases": [
+      "external rotation with cable",
+      "rotator cuff"
+    ]
+  },
+  "Face_Pull": {
+    "name": "Face Pull (Cable)",
+    "family": "Face Pull",
+    "variant": "Cable",
+    "aliases": [
+      "low pulley row to neck",
+      "face pull"
+    ]
   },
   "Farmers_Walk": {
-    "tracking": "duration"
+    "name": "Farmer's Carry",
+    "family": "Farmer's Carry",
+    "equipment": "dumbbell",
+    "tracking": "duration",
+    "aliases": [
+      "rickshaw carry",
+      "farmers walk",
+      "farmer's walk"
+    ]
+  },
+  "Finger_Curls": {
+    "name": "Finger Curl",
+    "family": "Finger Curl",
+    "aliases": [
+      "finger curls"
+    ]
+  },
+  "Flat_Bench_Cable_Flyes": {
+    "name": "Chest Fly (Cable, Flat Bench)",
+    "family": "Chest Fly",
+    "variant": "Cable, Flat Bench",
+    "aliases": [
+      "fly",
+      "flye",
+      "flyes",
+      "flat bench cable flyes"
+    ]
+  },
+  "Flat_Bench_Leg_Pull-In": {
+    "hidden": true
+  },
+  "Flat_Bench_Lying_Leg_Raise": {
+    "name": "Leg Raise (Lying)",
+    "family": "Leg Raise",
+    "variant": "Lying",
+    "aliases": [
+      "bottoms up",
+      "flat bench lying leg raise"
+    ]
+  },
+  "Flexor_Incline_Dumbbell_Curls": {
+    "hidden": true
   },
   "Floor_Glute-Ham_Raise": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Floor_Press": {
+    "name": "Floor Press (Barbell)",
+    "family": "Floor Press",
+    "variant": "Barbell",
+    "aliases": [
+      "one arm floor press",
+      "floor press with chains",
+      "floor press"
+    ]
+  },
+  "Floor_Press_with_Chains": {
+    "hidden": true
+  },
+  "Flutter_Kicks": {
+    "name": "Flutter Kick",
+    "family": "Flutter Kick",
+    "aliases": [
+      "flutter kicks"
+    ]
+  },
+  "Forward_Drag_with_Press": {
+    "hidden": true
+  },
+  "Frankenstein_Squat": {
+    "hidden": true
+  },
+  "Freehand_Jump_Squat": {
+    "name": "Jump Squat (Bodyweight)",
+    "family": "Jump Squat",
+    "variant": "Bodyweight",
+    "aliases": [
+      "freehand jump squat"
+    ]
+  },
+  "Frog_Sit-Ups": {
+    "hidden": true
+  },
+  "Front_Barbell_Squat": {
+    "name": "Squat (Front)",
+    "family": "Squat",
+    "variant": "Front",
+    "aliases": [
+      "front squat (clean grip)",
+      "frankenstein squat",
+      "front barbell squat to a bench",
+      "front barbell squat"
+    ]
+  },
+  "Front_Barbell_Squat_To_A_Bench": {
+    "hidden": true
+  },
+  "Front_Box_Jump": {
+    "import": true,
+    "name": "Box Jump",
+    "family": "Box Jump",
+    "equipment": "bodyweight",
+    "aliases": [
+      "front box jump"
+    ]
+  },
+  "Front_Cable_Raise": {
+    "name": "Front Raise (Cable)",
+    "family": "Front Raise",
+    "variant": "Cable",
+    "aliases": [
+      "front delt raise",
+      "front cable raise"
+    ]
+  },
+  "Front_Dumbbell_Raise": {
+    "name": "Front Raise (Dumbbell)",
+    "family": "Front Raise",
+    "variant": "Dumbbell",
+    "aliases": [
+      "front two-dumbbell raise",
+      "single dumbbell raise",
+      "standing dumbbell straight-arm front delt raise above head",
+      "front delt raise",
+      "front dumbbell raise"
+    ]
+  },
+  "Front_Incline_Dumbbell_Raise": {
+    "name": "Front Raise (Incline Dumbbell)",
+    "family": "Front Raise",
+    "variant": "Incline Dumbbell",
+    "aliases": [
+      "front delt raise",
+      "front incline dumbbell raise"
+    ]
+  },
+  "Front_Plate_Raise": {
+    "name": "Front Raise (Plate)",
+    "family": "Front Raise",
+    "variant": "Plate",
+    "equipment": "plate",
+    "aliases": [
+      "front delt raise",
+      "front plate raise"
+    ]
+  },
+  "Front_Raise_And_Pullover": {
+    "hidden": true
+  },
+  "Front_Squat_Clean_Grip": {
+    "hidden": true
+  },
+  "Front_Squats_With_Two_Kettlebells": {
+    "name": "Squat (Front, Kettlebell)",
+    "family": "Squat",
+    "variant": "Front, Kettlebell",
+    "aliases": [
+      "front squats with two kettlebells"
+    ]
+  },
+  "Front_Two-Dumbbell_Raise": {
+    "hidden": true
+  },
+  "Full_Range-Of-Motion_Lat_Pulldown": {
+    "hidden": true
   },
   "Gironda_Sternum_Chins": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Glute_Ham_Raise": {
+    "name": "Glute-Ham Raise",
+    "family": "Glute-Ham Raise",
+    "equipment": "bodyweight",
+    "aliases": [
+      "ghr",
+      "ghd raise"
+    ]
+  },
+  "Glute_Kickback": {
+    "name": "Glute Kickback (Bodyweight)",
+    "family": "Glute Kickback",
+    "variant": "Bodyweight",
+    "aliases": [
+      "donkey kick",
+      "glute kickback"
+    ]
+  },
+  "Goblet_Squat": {
+    "name": "Squat (Goblet)",
+    "family": "Squat",
+    "variant": "Goblet",
+    "equipment": "dumbbell",
+    "aliases": [
+      "goblet squat"
+    ]
+  },
+  "Good_Morning": {
+    "name": "Good Morning (Barbell)",
+    "family": "Good Morning",
+    "variant": "Barbell",
+    "aliases": [
+      "stiff leg barbell good morning",
+      "good morning off pins",
+      "hanging bar good morning",
+      "good morning"
+    ]
+  },
+  "Good_Morning_off_Pins": {
+    "hidden": true
+  },
+  "Gorilla_Chin_Crunch": {
+    "hidden": true
+  },
+  "Hack_Squat": {
+    "name": "Hack Squat (Machine)",
+    "family": "Hack Squat",
+    "variant": "Machine",
+    "loading": "plate",
+    "aliases": [
+      "narrow stance hack squats",
+      "hack squat"
+    ]
+  },
+  "Hammer_Curls": {
+    "name": "Hammer Curl (Dumbbell)",
+    "family": "Hammer Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "hammer curls"
+    ]
+  },
+  "Hammer_Grip_Incline_DB_Bench_Press": {
+    "name": "Bench Press (Incline Dumbbell, Neutral Grip)",
+    "family": "Bench Press",
+    "variant": "Incline Dumbbell, Neutral Grip",
+    "aliases": [
+      "incline dumbbell bench with palms facing in",
+      "hammer grip incline db bench press",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "Handstand_Push-Ups": {
+    "name": "Handstand Push-Up",
+    "family": "Handstand Push-Up",
+    "aliases": [
+      "hspu",
+      "handstand push-ups"
+    ]
+  },
+  "Hang_Clean": {
+    "name": "Clean (Hang)",
+    "family": "Clean",
+    "variant": "Hang",
+    "aliases": [
+      "hang clean - below the knees",
+      "squat clean",
+      "hang clean"
+    ]
+  },
+  "Hang_Clean_-_Below_the_Knees": {
+    "hidden": true
+  },
+  "Hang_Snatch": {
+    "name": "Snatch (Hang)",
+    "family": "Snatch",
+    "variant": "Hang",
+    "aliases": [
+      "hang snatch - below knees",
+      "squat snatch",
+      "hang snatch"
+    ]
+  },
+  "Hang_Snatch_-_Below_Knees": {
+    "hidden": true
+  },
+  "Hanging_Bar_Good_Morning": {
+    "hidden": true
+  },
+  "Hanging_Leg_Raise": {
+    "name": "Leg Raise (Hanging)",
+    "family": "Leg Raise",
+    "variant": "Hanging",
+    "aliases": [
+      "hanging leg raise"
+    ]
+  },
+  "Hanging_Pike": {
+    "name": "Toes-to-Bar",
+    "family": "Toes-to-Bar",
+    "aliases": [
+      "hanging pike",
+      "t2b"
+    ]
+  },
+  "Heaving_Snatch_Balance": {
+    "hidden": true
+  },
+  "High_Cable_Curls": {
+    "name": "Biceps Curl (High Cable)",
+    "family": "Biceps Curl",
+    "variant": "High Cable",
+    "aliases": [
+      "overhead cable curl",
+      "bicep curl",
+      "arm curl",
+      "high cable curls"
+    ]
+  },
+  "Hip_Extension_with_Bands": {
+    "name": "Glute Kickback (Band)",
+    "family": "Glute Kickback",
+    "variant": "Band",
+    "aliases": [
+      "hip extension with bands",
+      "donkey kick"
+    ]
+  },
+  "Hip_Flexion_with_Band": {
+    "name": "Hip Flexion (Band)",
+    "family": "Hip Flexion",
+    "variant": "Band",
+    "aliases": [
+      "hip flexion with band"
+    ]
+  },
+  "Hip_Lift_with_Band": {
+    "name": "Glute Bridge (Band)",
+    "family": "Glute Bridge",
+    "variant": "Band",
+    "aliases": [
+      "hip lift with band"
+    ]
   },
   "Hyperextensions_Back_Extensions": {
-    "equipment": "bodyweight"
+    "name": "Back Extension",
+    "family": "Back Extension",
+    "equipment": "bodyweight",
+    "aliases": [
+      "hyperextensions with no hyperextension bench",
+      "hyperextension",
+      "hyperextensions (back extensions)"
+    ]
+  },
+  "Hyperextensions_With_No_Hyperextension_Bench": {
+    "hidden": true
+  },
+  "Incline_Barbell_Triceps_Extension": {
+    "name": "Skull Crusher (Incline Barbell)",
+    "family": "Skull Crusher",
+    "variant": "Incline Barbell",
+    "aliases": [
+      "skullcrusher",
+      "lying triceps extension",
+      "nose breaker",
+      "incline barbell triceps extension"
+    ]
+  },
+  "Incline_Bench_Pull": {
+    "name": "Row (Chest-Supported Barbell)",
+    "family": "Row",
+    "variant": "Chest-Supported Barbell",
+    "aliases": [
+      "incline bench pull"
+    ]
+  },
+  "Incline_Cable_Chest_Press": {
+    "name": "Chest Press (Incline Cable)",
+    "family": "Chest Press",
+    "variant": "Incline Cable",
+    "aliases": [
+      "machine press",
+      "incline cable chest press"
+    ]
+  },
+  "Incline_Cable_Flye": {
+    "name": "Chest Fly (Incline Cable)",
+    "family": "Chest Fly",
+    "variant": "Incline Cable",
+    "aliases": [
+      "fly",
+      "flye",
+      "flyes",
+      "incline cable flye"
+    ]
+  },
+  "Incline_Dumbbell_Bench_With_Palms_Facing_In": {
+    "hidden": true
+  },
+  "Incline_Dumbbell_Curl": {
+    "name": "Incline Curl (Dumbbell)",
+    "family": "Incline Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "incline inner biceps curl",
+      "flexor incline dumbbell curls",
+      "incline dumbbell curl"
+    ]
+  },
+  "Incline_Dumbbell_Flyes": {
+    "name": "Chest Fly (Incline Dumbbell)",
+    "family": "Chest Fly",
+    "variant": "Incline Dumbbell",
+    "aliases": [
+      "incline dumbbell flyes - with a twist",
+      "fly",
+      "flye",
+      "flyes",
+      "incline dumbbell flyes"
+    ]
+  },
+  "Incline_Dumbbell_Flyes_-_With_A_Twist": {
+    "hidden": true
+  },
+  "Incline_Dumbbell_Press": {
+    "name": "Bench Press (Incline Dumbbell)",
+    "family": "Bench Press",
+    "variant": "Incline Dumbbell",
+    "aliases": [
+      "incline db press",
+      "bench",
+      "flat bench",
+      "incline dumbbell press"
+    ]
+  },
+  "Incline_Hammer_Curls": {
+    "name": "Hammer Curl (Incline Dumbbell)",
+    "family": "Hammer Curl",
+    "variant": "Incline Dumbbell",
+    "aliases": [
+      "incline hammer curls"
+    ]
+  },
+  "Incline_Inner_Biceps_Curl": {
+    "hidden": true
+  },
+  "Incline_Push-Up": {
+    "name": "Push-Up (Incline)",
+    "family": "Push-Up",
+    "variant": "Incline",
+    "aliases": [
+      "incline push-up medium",
+      "incline push-up wide",
+      "incline push-up reverse grip",
+      "incline push-up close-grip",
+      "pushup",
+      "press-up",
+      "incline push-up"
+    ]
+  },
+  "Incline_Push-Up_Close-Grip": {
+    "hidden": true
+  },
+  "Incline_Push-Up_Medium": {
+    "hidden": true
+  },
+  "Incline_Push-Up_Reverse_Grip": {
+    "hidden": true
+  },
+  "Incline_Push-Up_Wide": {
+    "hidden": true
+  },
+  "Internal_Rotation_with_Band": {
+    "name": "Internal Rotation (Band)",
+    "family": "Internal Rotation",
+    "variant": "Band",
+    "aliases": [
+      "internal rotation with band"
+    ]
   },
   "Inverted_Row": {
-    "equipment": "bodyweight"
+    "family": "Inverted Row",
+    "equipment": "bodyweight",
+    "aliases": [
+      "body row",
+      "australian pull-up"
+    ]
   },
   "Inverted_Row_with_Straps": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Iron_Cross": {
+    "hidden": true
   },
   "Isometric_Neck_Exercise_-_Front_And_Back": {
-    "tracking": "duration"
+    "name": "Neck Isometric (Front and Back)",
+    "family": "Neck Isometric",
+    "variant": "Front and Back",
+    "tracking": "duration",
+    "aliases": [
+      "isometric neck exercise - front and back"
+    ]
   },
   "Isometric_Neck_Exercise_-_Sides": {
-    "tracking": "duration"
+    "name": "Neck Isometric (Sides)",
+    "family": "Neck Isometric",
+    "variant": "Sides",
+    "tracking": "duration",
+    "aliases": [
+      "isometric neck exercise - sides"
+    ]
+  },
+  "Isometric_Wipers": {
+    "hidden": true
+  },
+  "JM_Press": {
+    "family": "JM Press"
+  },
+  "Jackknife_Sit-Up": {
+    "name": "V-Up",
+    "family": "V-Up",
+    "aliases": [
+      "jackknife sit-up",
+      "jackknife"
+    ]
+  },
+  "Janda_Sit-Up": {
+    "hidden": true
+  },
+  "Jefferson_Squats": {
+    "hidden": true
+  },
+  "Jerk_Balance": {
+    "hidden": true
+  },
+  "Jerk_Dip_Squat": {
+    "hidden": true
+  },
+  "Keg_Load": {
+    "hidden": true
+  },
+  "Kettlebell_Arnold_Press": {
+    "hidden": true
+  },
+  "Kettlebell_Dead_Clean": {
+    "hidden": true
+  },
+  "Kettlebell_Figure_8": {
+    "hidden": true
+  },
+  "Kettlebell_Hang_Clean": {
+    "hidden": true
+  },
+  "Kettlebell_One-Legged_Deadlift": {
+    "name": "Romanian Deadlift (Single-Leg Kettlebell)",
+    "family": "Romanian Deadlift",
+    "variant": "Single-Leg Kettlebell",
+    "aliases": [
+      "kettlebell one-legged deadlift",
+      "rdl"
+    ]
+  },
+  "Kettlebell_Pass_Between_The_Legs": {
+    "hidden": true
+  },
+  "Kettlebell_Pirate_Ships": {
+    "hidden": true
+  },
+  "Kettlebell_Pistol_Squat": {
+    "name": "Pistol Squat (Kettlebell)",
+    "family": "Pistol Squat",
+    "variant": "Kettlebell",
+    "aliases": [
+      "single-leg squat",
+      "kettlebell pistol squat"
+    ]
+  },
+  "Kettlebell_Seated_Press": {
+    "name": "Overhead Press (Seated Kettlebell)",
+    "family": "Overhead Press",
+    "variant": "Seated Kettlebell",
+    "aliases": [
+      "ohp",
+      "shoulder press",
+      "military press",
+      "kettlebell seated press"
+    ]
+  },
+  "Kettlebell_Seesaw_Press": {
+    "hidden": true
+  },
+  "Kettlebell_Sumo_High_Pull": {
+    "name": "High Pull (Kettlebell Sumo)",
+    "family": "High Pull",
+    "variant": "Kettlebell Sumo",
+    "aliases": [
+      "kettlebell sumo high pull"
+    ]
+  },
+  "Kettlebell_Thruster": {
+    "name": "Thruster (Kettlebell)",
+    "family": "Thruster",
+    "variant": "Kettlebell",
+    "aliases": [
+      "kettlebell thruster"
+    ]
+  },
+  "Kettlebell_Turkish_Get-Up_Lunge_style": {
+    "hidden": true
+  },
+  "Kettlebell_Turkish_Get-Up_Squat_style": {
+    "name": "Turkish Get-Up",
+    "family": "Turkish Get-Up",
+    "aliases": [
+      "kettlebell turkish get-up (lunge style)",
+      "kettlebell turkish get-up (squat style)",
+      "tgu"
+    ]
+  },
+  "Kettlebell_Windmill": {
+    "name": "Windmill (Kettlebell)",
+    "family": "Windmill",
+    "variant": "Kettlebell",
+    "aliases": [
+      "advanced kettlebell windmill",
+      "double kettlebell windmill",
+      "kettlebell windmill"
+    ]
   },
   "Kipping_Muscle_Up": {
-    "equipment": "bodyweight"
+    "name": "Muscle-Up (Kipping)",
+    "family": "Muscle-Up",
+    "variant": "Kipping",
+    "equipment": "bodyweight",
+    "aliases": [
+      "kipping muscle up"
+    ]
   },
   "Knee_Hip_Raise_On_Parallel_Bars": {
-    "equipment": "bodyweight"
+    "name": "Knee Raise (Captain's Chair)",
+    "family": "Knee Raise",
+    "variant": "Captain's Chair",
+    "equipment": "bodyweight",
+    "aliases": [
+      "knee/hip raise on parallel bars"
+    ]
+  },
+  "Knee_Tuck_Jump": {
+    "import": true,
+    "name": "Tuck Jump",
+    "family": "Tuck Jump",
+    "aliases": [
+      "knee tuck jump"
+    ]
+  },
+  "Kneeling_Cable_Crunch_With_Alternating_Oblique_Twists": {
+    "hidden": true
+  },
+  "Kneeling_Cable_Triceps_Extension": {
+    "hidden": true
+  },
+  "Kneeling_High_Pulley_Row": {
+    "name": "High Row (Cable)",
+    "family": "High Row",
+    "variant": "Cable",
+    "aliases": [
+      "kneeling high pulley row"
+    ]
+  },
+  "Kneeling_Jump_Squat": {
+    "hidden": true
+  },
+  "Kneeling_Single-Arm_High_Pulley_Row": {
+    "name": "High Row (Single-Arm Cable)",
+    "family": "High Row",
+    "variant": "Single-Arm Cable",
+    "aliases": [
+      "kneeling single-arm high pulley row"
+    ]
+  },
+  "Kneeling_Squat": {
+    "hidden": true
+  },
+  "Landmine_180s": {
+    "name": "Landmine Rotation",
+    "family": "Landmine Rotation",
+    "aliases": [
+      "landmine 180's",
+      "landmine twist"
+    ]
+  },
+  "Landmine_Linear_Jammer": {
+    "name": "Landmine Press (Two-Arm)",
+    "family": "Landmine Press",
+    "variant": "Two-Arm",
+    "aliases": [
+      "landmine linear jammer"
+    ]
+  },
+  "Lateral_Box_Jump": {
+    "import": true,
+    "name": "Box Jump (Lateral)",
+    "family": "Box Jump",
+    "variant": "Lateral",
+    "equipment": "bodyweight",
+    "aliases": [
+      "lateral box jump"
+    ]
+  },
+  "Lateral_Raise_-_With_Bands": {
+    "name": "Lateral Raise (Band)",
+    "family": "Lateral Raise",
+    "variant": "Band",
+    "aliases": [
+      "lateral raise - with bands",
+      "side raise",
+      "side lateral",
+      "lat raise"
+    ]
+  },
+  "Leg-Over_Floor_Press": {
+    "hidden": true
+  },
+  "Leg_Extensions": {
+    "name": "Leg Extension",
+    "family": "Leg Extension",
+    "loading": "stack",
+    "aliases": [
+      "quad extension",
+      "leg extensions"
+    ]
+  },
+  "Leg_Lift": {
+    "hidden": true
+  },
+  "Leg_Press": {
+    "name": "Leg Press (45 Degree)",
+    "family": "Leg Press",
+    "variant": "45 Degree",
+    "loading": "plate",
+    "aliases": [
+      "narrow stance leg press",
+      "leg press"
+    ]
+  },
+  "Leg_Pull-In": {
+    "name": "Knee Tuck (Lying)",
+    "family": "Knee Tuck",
+    "variant": "Lying",
+    "aliases": [
+      "flat bench leg pull-in",
+      "pull-in",
+      "leg pull-in"
+    ]
+  },
+  "Leverage_Chest_Press": {
+    "name": "Chest Press (Plate-Loaded)",
+    "family": "Chest Press",
+    "variant": "Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "hammer strength press",
+      "iso-lateral chest press",
+      "leverage chest press",
+      "machine press"
+    ]
+  },
+  "Leverage_Deadlift": {
+    "name": "Deadlift (Plate-Loaded)",
+    "family": "Deadlift",
+    "variant": "Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "leverage deadlift"
+    ]
+  },
+  "Leverage_Decline_Chest_Press": {
+    "name": "Chest Press (Decline Plate-Loaded)",
+    "family": "Chest Press",
+    "variant": "Decline Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "iso-lateral decline press",
+      "leverage decline chest press",
+      "machine press"
+    ]
+  },
+  "Leverage_High_Row": {
+    "name": "High Row (Plate-Loaded)",
+    "family": "High Row",
+    "variant": "Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "hammer strength high row",
+      "iso-lateral high row",
+      "leverage high row"
+    ]
+  },
+  "Leverage_Incline_Chest_Press": {
+    "name": "Chest Press (Incline Plate-Loaded)",
+    "family": "Chest Press",
+    "variant": "Incline Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "iso-lateral incline press",
+      "leverage incline chest press",
+      "machine press"
+    ]
+  },
+  "Leverage_Iso_Row": {
+    "name": "Row (Plate-Loaded)",
+    "family": "Row",
+    "variant": "Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "hammer strength row",
+      "iso-lateral row",
+      "leverage iso row"
+    ]
+  },
+  "Leverage_Shoulder_Press": {
+    "name": "Overhead Press (Plate-Loaded)",
+    "family": "Overhead Press",
+    "variant": "Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "hammer strength shoulder press",
+      "iso-lateral shoulder press",
+      "leverage shoulder press",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Leverage_Shrug": {
+    "name": "Shrug (Plate-Loaded)",
+    "family": "Shrug",
+    "variant": "Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "leverage shrug"
+    ]
+  },
+  "Log_Lift": {
+    "hidden": true
   },
   "London_Bridges": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Low_Cable_Crossover": {
+    "name": "Cable Crossover (Low to High)",
+    "family": "Cable Crossover",
+    "variant": "Low to High",
+    "aliases": [
+      "low cable fly",
+      "cable fly",
+      "crossover",
+      "low cable crossover"
+    ]
+  },
+  "Low_Cable_Triceps_Extension": {
+    "hidden": true
+  },
+  "Low_Pulley_Row_To_Neck": {
+    "hidden": true
+  },
+  "Lunge_Pass_Through": {
+    "hidden": true
+  },
+  "Lunge_Sprint": {
+    "hidden": true
+  },
+  "Lying_Cable_Curl": {
+    "name": "Biceps Curl (Lying Cable)",
+    "family": "Biceps Curl",
+    "variant": "Lying Cable",
+    "aliases": [
+      "lying close-grip bar curl on high pulley",
+      "bicep curl",
+      "arm curl",
+      "lying cable curl"
+    ]
+  },
+  "Lying_Cambered_Barbell_Row": {
+    "name": "Seal Row",
+    "family": "Row",
+    "variant": "Seal Row",
+    "aliases": [
+      "lying cambered barbell row"
+    ]
+  },
+  "Lying_Close-Grip_Bar_Curl_On_High_Pulley": {
+    "hidden": true
+  },
+  "Lying_Close-Grip_Barbell_Triceps_Extension_Behind_The_Head": {
+    "name": "Skull Crusher (Barbell)",
+    "family": "Skull Crusher",
+    "variant": "Barbell",
+    "aliases": [
+      "lying close-grip barbell triceps extension behind the head",
+      "skullcrusher",
+      "lying triceps extension",
+      "nose breaker"
+    ]
+  },
+  "Lying_Close-Grip_Barbell_Triceps_Press_To_Chin": {
+    "hidden": true
+  },
+  "Lying_Dumbbell_Tricep_Extension": {
+    "name": "Skull Crusher (Dumbbell)",
+    "family": "Skull Crusher",
+    "variant": "Dumbbell",
+    "aliases": [
+      "decline dumbbell triceps extension",
+      "dumbbell tricep extension -pronated grip",
+      "one arm pronated dumbbell triceps extension",
+      "one arm supinated dumbbell triceps extension",
+      "skullcrusher",
+      "lying triceps extension",
+      "nose breaker",
+      "lying dumbbell tricep extension"
+    ]
+  },
+  "Lying_Face_Down_Plate_Neck_Resistance": {
+    "name": "Neck Extension (Plate)",
+    "family": "Neck Extension",
+    "variant": "Plate",
+    "equipment": "plate",
+    "aliases": [
+      "lying face down plate neck resistance"
+    ]
+  },
+  "Lying_Face_Up_Plate_Neck_Resistance": {
+    "name": "Neck Flexion (Plate)",
+    "family": "Neck Flexion",
+    "variant": "Plate",
+    "equipment": "plate",
+    "aliases": [
+      "lying face up plate neck resistance",
+      "neck curl"
+    ]
+  },
+  "Lying_High_Bench_Barbell_Curl": {
+    "hidden": true
+  },
+  "Lying_Leg_Curls": {
+    "name": "Leg Curl (Lying)",
+    "family": "Leg Curl",
+    "variant": "Lying",
+    "loading": "stack",
+    "aliases": [
+      "hamstring curl",
+      "lying leg curls"
+    ]
+  },
+  "Lying_Machine_Squat": {
+    "hidden": true
+  },
+  "Lying_One-Arm_Lateral_Raise": {
+    "name": "Lateral Raise (Side-Lying Dumbbell)",
+    "family": "Lateral Raise",
+    "variant": "Side-Lying Dumbbell",
+    "aliases": [
+      "one-arm incline lateral raise",
+      "side raise",
+      "side lateral",
+      "lat raise",
+      "lying one-arm lateral raise"
+    ]
+  },
+  "Lying_Rear_Delt_Raise": {
+    "hidden": true
+  },
+  "Lying_Supine_Dumbbell_Curl": {
+    "hidden": true
+  },
+  "Lying_T-Bar_Row": {
+    "name": "Row (Chest-Supported T-Bar)",
+    "family": "Row",
+    "variant": "Chest-Supported T-Bar",
+    "loading": "plate",
+    "aliases": [
+      "lying t-bar row"
+    ]
+  },
+  "Lying_Triceps_Press": {
+    "hidden": true
+  },
+  "Machine_Bench_Press": {
+    "name": "Chest Press (Machine)",
+    "family": "Chest Press",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "machine bench press",
+      "seated chest press",
+      "machine press"
+    ]
+  },
+  "Machine_Bicep_Curl": {
+    "name": "Biceps Curl (Machine)",
+    "family": "Biceps Curl",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "bicep curl",
+      "arm curl",
+      "machine bicep curl"
+    ]
+  },
+  "Machine_Preacher_Curls": {
+    "name": "Preacher Curl (Machine)",
+    "family": "Preacher Curl",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "scott curl",
+      "machine preacher curls"
+    ]
+  },
+  "Machine_Shoulder_Military_Press": {
+    "name": "Overhead Press (Machine)",
+    "family": "Overhead Press",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "ohp",
+      "shoulder press",
+      "military press",
+      "machine shoulder (military) press"
+    ]
+  },
+  "Machine_Triceps_Extension": {
+    "name": "Triceps Extension (Machine)",
+    "family": "Triceps Extension",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "tricep extension",
+      "overhead extension",
+      "french press",
+      "machine triceps extension"
+    ]
+  },
+  "Medicine_Ball_Chest_Pass": {
+    "import": true,
+    "family": "Medicine Ball Chest Pass"
+  },
+  "Middle_Back_Shrug": {
+    "hidden": true
   },
   "Mixed_Grip_Chin": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Monster_Walk": {
+    "family": "Monster Walk",
+    "aliases": [
+      "lateral band walk"
+    ]
+  },
+  "Mountain_Climbers": {
+    "import": true,
+    "name": "Mountain Climber",
+    "family": "Mountain Climber",
+    "equipment": "bodyweight",
+    "aliases": [
+      "mountain climbers"
+    ]
+  },
+  "Muscle_Snatch": {
+    "name": "Snatch (Muscle)",
+    "family": "Snatch",
+    "variant": "Muscle",
+    "aliases": [
+      "squat snatch",
+      "muscle snatch"
+    ]
   },
   "Muscle_Up": {
+    "name": "Muscle-Up",
+    "family": "Muscle-Up",
     "equipment": "bodyweight"
+  },
+  "Narrow_Stance_Hack_Squats": {
+    "hidden": true
+  },
+  "Narrow_Stance_Leg_Press": {
+    "hidden": true
+  },
+  "Narrow_Stance_Squats": {
+    "hidden": true
+  },
+  "Natural_Glute_Ham_Raise": {
+    "name": "Nordic Curl",
+    "family": "Leg Curl",
+    "variant": "Nordic Curl",
+    "aliases": [
+      "nordic hamstring curl",
+      "floor glute-ham raise",
+      "natural glute ham raise",
+      "hamstring curl"
+    ]
+  },
+  "Neck_Press": {
+    "hidden": true
+  },
+  "Oblique_Crunches": {
+    "hidden": true
+  },
+  "Oblique_Crunches_-_On_The_Floor": {
+    "name": "Oblique Crunch (Floor)",
+    "family": "Oblique Crunch",
+    "variant": "Floor",
+    "aliases": [
+      "oblique crunches",
+      "oblique crunches - on the floor",
+      "side crunch"
+    ]
+  },
+  "Olympic_Squat": {
+    "name": "Squat (High-Bar)",
+    "family": "Squat",
+    "variant": "High-Bar",
+    "aliases": [
+      "olympic squat"
+    ]
+  },
+  "One-Arm_Dumbbell_Row": {
+    "name": "Row (Single-Arm Dumbbell)",
+    "family": "Row",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "one-arm dumbbell row"
+    ]
+  },
+  "One-Arm_Flat_Bench_Dumbbell_Flye": {
+    "hidden": true
+  },
+  "One-Arm_High-Pulley_Cable_Side_Bends": {
+    "name": "Side Bend (Cable)",
+    "family": "Side Bend",
+    "variant": "Cable",
+    "aliases": [
+      "one-arm high-pulley cable side bends"
+    ]
+  },
+  "One-Arm_Incline_Lateral_Raise": {
+    "hidden": true
+  },
+  "One-Arm_Kettlebell_Clean": {
+    "name": "Clean (Single-Arm Kettlebell)",
+    "family": "Clean",
+    "variant": "Single-Arm Kettlebell",
+    "aliases": [
+      "kettlebell hang clean",
+      "kettlebell dead clean",
+      "one-arm kettlebell clean",
+      "squat clean"
+    ]
+  },
+  "One-Arm_Kettlebell_Clean_and_Jerk": {
+    "name": "Clean and Jerk (Single-Arm Kettlebell)",
+    "family": "Clean and Jerk",
+    "variant": "Single-Arm Kettlebell",
+    "aliases": [
+      "one-arm kettlebell clean and jerk"
+    ]
+  },
+  "One-Arm_Kettlebell_Floor_Press": {
+    "name": "Floor Press (Kettlebell)",
+    "family": "Floor Press",
+    "variant": "Kettlebell",
+    "aliases": [
+      "alternating floor press",
+      "extended range one-arm kettlebell floor press",
+      "leg-over floor press",
+      "one-arm kettlebell floor press"
+    ]
+  },
+  "One-Arm_Kettlebell_Jerk": {
+    "name": "Jerk (Single-Arm Kettlebell)",
+    "family": "Jerk",
+    "variant": "Single-Arm Kettlebell",
+    "aliases": [
+      "one-arm kettlebell split jerk",
+      "one-arm kettlebell jerk"
+    ]
+  },
+  "One-Arm_Kettlebell_Military_Press_To_The_Side": {
+    "name": "Overhead Press (Single-Arm Kettlebell)",
+    "family": "Overhead Press",
+    "variant": "Single-Arm Kettlebell",
+    "aliases": [
+      "one-arm kettlebell para press",
+      "one-arm kettlebell military press to the side",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "One-Arm_Kettlebell_Para_Press": {
+    "hidden": true
+  },
+  "One-Arm_Kettlebell_Push_Press": {
+    "name": "Push Press (Single-Arm Kettlebell)",
+    "family": "Push Press",
+    "variant": "Single-Arm Kettlebell",
+    "aliases": [
+      "one-arm kettlebell push press"
+    ]
+  },
+  "One-Arm_Kettlebell_Row": {
+    "name": "Row (Single-Arm Kettlebell)",
+    "family": "Row",
+    "variant": "Single-Arm Kettlebell",
+    "aliases": [
+      "one-arm kettlebell row"
+    ]
+  },
+  "One-Arm_Kettlebell_Snatch": {
+    "name": "Kettlebell Snatch (Single-Arm)",
+    "family": "Kettlebell Snatch",
+    "variant": "Single-Arm",
+    "aliases": [
+      "one-arm kettlebell split snatch",
+      "one-arm kettlebell snatch"
+    ]
+  },
+  "One-Arm_Kettlebell_Split_Jerk": {
+    "hidden": true
+  },
+  "One-Arm_Kettlebell_Split_Snatch": {
+    "hidden": true
+  },
+  "One-Arm_Kettlebell_Swings": {
+    "name": "Kettlebell Swing (Single-Arm)",
+    "family": "Kettlebell Swing",
+    "variant": "Single-Arm",
+    "aliases": [
+      "one-arm kettlebell swings",
+      "kb swing",
+      "russian swing"
+    ]
+  },
+  "One-Arm_Long_Bar_Row": {
+    "name": "Meadows Row",
+    "family": "Row",
+    "variant": "Meadows Row",
+    "aliases": [
+      "bent over one-arm long bar row",
+      "one-arm long bar row"
+    ]
+  },
+  "One-Arm_Medicine_Ball_Slam": {
+    "name": "Medicine Ball Slam (Single-Arm)",
+    "family": "Medicine Ball Slam",
+    "variant": "Single-Arm",
+    "aliases": [
+      "one-arm medicine ball slam",
+      "ball slam"
+    ]
+  },
+  "One-Arm_Open_Palm_Kettlebell_Clean": {
+    "hidden": true
+  },
+  "One-Arm_Overhead_Kettlebell_Squats": {
+    "hidden": true
+  },
+  "One-Arm_Side_Deadlift": {
+    "hidden": true
+  },
+  "One-Arm_Side_Laterals": {
+    "name": "Lateral Raise (Single-Arm Dumbbell)",
+    "family": "Lateral Raise",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "one-arm side laterals",
+      "side raise",
+      "side lateral",
+      "lat raise"
+    ]
+  },
+  "One-Legged_Cable_Kickback": {
+    "name": "Glute Kickback (Cable)",
+    "family": "Glute Kickback",
+    "variant": "Cable",
+    "aliases": [
+      "one-legged cable kickback",
+      "donkey kick"
+    ]
   },
   "One_Arm_Chin-Up": {
-    "equipment": "bodyweight"
+    "name": "Chin-Up (Single-Arm)",
+    "family": "Chin-Up",
+    "variant": "Single-Arm",
+    "equipment": "bodyweight",
+    "aliases": [
+      "one arm chin-up"
+    ]
+  },
+  "One_Arm_Dumbbell_Bench_Press": {
+    "name": "Bench Press (Single-Arm Dumbbell)",
+    "family": "Bench Press",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "one arm dumbbell bench press",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "One_Arm_Dumbbell_Preacher_Curl": {
+    "name": "Preacher Curl (Single-Arm Dumbbell)",
+    "family": "Preacher Curl",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "standing one-arm dumbbell curl over incline bench",
+      "scott curl",
+      "one arm dumbbell preacher curl"
+    ]
+  },
+  "One_Arm_Floor_Press": {
+    "hidden": true
+  },
+  "One_Arm_Lat_Pulldown": {
+    "name": "Lat Pulldown (Single-Arm)",
+    "family": "Lat Pulldown",
+    "variant": "Single-Arm",
+    "aliases": [
+      "one arm lat pulldown",
+      "lat pull",
+      "pull down"
+    ]
+  },
+  "One_Arm_Pronated_Dumbbell_Triceps_Extension": {
+    "hidden": true
+  },
+  "One_Arm_Supinated_Dumbbell_Triceps_Extension": {
+    "hidden": true
+  },
+  "One_Leg_Barbell_Squat": {
+    "name": "Split Squat (Bulgarian Barbell)",
+    "family": "Split Squat",
+    "variant": "Bulgarian Barbell",
+    "aliases": [
+      "bss",
+      "one leg barbell squat",
+      "rfess",
+      "rear foot elevated split squat"
+    ]
+  },
+  "Open_Palm_Kettlebell_Clean": {
+    "hidden": true
+  },
+  "Otis-Up": {
+    "hidden": true
+  },
+  "Overhead_Cable_Curl": {
+    "hidden": true
+  },
+  "Overhead_Slam": {
+    "import": true,
+    "name": "Medicine Ball Slam",
+    "family": "Medicine Ball Slam",
+    "aliases": [
+      "overhead slam",
+      "ball slam"
+    ]
+  },
+  "Overhead_Squat": {
+    "name": "Squat (Overhead)",
+    "family": "Squat",
+    "variant": "Overhead",
+    "aliases": [
+      "overhead squat"
+    ]
+  },
+  "Pallof_Press": {
+    "name": "Pallof Press (Cable)",
+    "family": "Pallof Press",
+    "variant": "Cable",
+    "aliases": [
+      "pallof press with rotation",
+      "pallof press"
+    ]
+  },
+  "Pallof_Press_With_Rotation": {
+    "hidden": true
+  },
+  "Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench": {
+    "name": "Reverse Wrist Curl (Dumbbell)",
+    "family": "Reverse Wrist Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "seated dumbbell palms-down wrist curl",
+      "palms-down dumbbell wrist curl over a bench",
+      "wrist extension"
+    ]
+  },
+  "Palms-Down_Wrist_Curl_Over_A_Bench": {
+    "name": "Reverse Wrist Curl (Barbell)",
+    "family": "Reverse Wrist Curl",
+    "variant": "Barbell",
+    "aliases": [
+      "seated palms-down barbell wrist curl",
+      "palms-down wrist curl over a bench",
+      "wrist extension"
+    ]
+  },
+  "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench": {
+    "name": "Wrist Curl (Barbell)",
+    "family": "Wrist Curl",
+    "variant": "Barbell",
+    "aliases": [
+      "seated palm-up barbell wrist curl",
+      "palms-up barbell wrist curl over a bench"
+    ]
+  },
+  "Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench": {
+    "name": "Wrist Curl (Dumbbell)",
+    "family": "Wrist Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "seated dumbbell palms-up wrist curl",
+      "palms-up dumbbell wrist curl over a bench"
+    ]
+  },
+  "Panatta_3D_Abductor": {
+    "family": "Hip Abduction",
+    "variant": "Panatta 3D Abductor",
+    "brand": "Panatta",
+    "aliases": [
+      "abductor",
+      "outer thigh"
+    ]
+  },
+  "Panatta_Back_Deltoids": {
+    "family": "Rear Delt Fly",
+    "variant": "Panatta Back Deltoids",
+    "brand": "Panatta",
+    "aliases": [
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise"
+    ]
+  },
+  "Panatta_Gluteus_Machine": {
+    "family": "Glute Kickback",
+    "variant": "Panatta Gluteus Machine",
+    "brand": "Panatta",
+    "aliases": [
+      "donkey kick"
+    ]
+  },
+  "Panatta_Hip_Thrust": {
+    "family": "Hip Thrust",
+    "variant": "Panatta Hip Thrust",
+    "brand": "Panatta"
+  },
+  "Panatta_Lateral_Deltoids": {
+    "family": "Lateral Raise",
+    "variant": "Panatta Lateral Deltoids",
+    "brand": "Panatta",
+    "aliases": [
+      "side raise",
+      "side lateral",
+      "lat raise"
+    ]
+  },
+  "Panatta_Leg_Curling": {
+    "family": "Leg Curl",
+    "variant": "Panatta Leg Curling",
+    "brand": "Panatta",
+    "aliases": [
+      "hamstring curl"
+    ]
+  },
+  "Panatta_Leg_Extension": {
+    "family": "Leg Extension",
+    "variant": "Panatta Leg Extension",
+    "brand": "Panatta",
+    "aliases": [
+      "quad extension"
+    ]
+  },
+  "Panatta_Super_Declined_Chest_Press": {
+    "family": "Chest Press",
+    "variant": "Panatta Super Declined Chest Press",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "machine press"
+    ]
+  },
+  "Panatta_Super_Deltoid_Press": {
+    "family": "Overhead Press",
+    "variant": "Panatta Super Deltoid Press",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Panatta_Super_Hack_Squat": {
+    "family": "Hack Squat",
+    "variant": "Panatta Super Hack Squat",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_High_Row": {
+    "family": "High Row",
+    "variant": "Panatta Super High Row",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_Horizontal_Bench_Press": {
+    "family": "Chest Press",
+    "variant": "Panatta Super Horizontal Bench Press",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "machine press"
+    ]
+  },
+  "Panatta_Super_Horizontal_Multi_Press": {
+    "family": "Chest Press",
+    "variant": "Panatta Super Horizontal Multi Press",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "machine press"
+    ]
+  },
+  "Panatta_Super_Inclined_Bench_Press": {
+    "family": "Chest Press",
+    "variant": "Panatta Super Inclined Bench Press",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "machine press"
+    ]
+  },
+  "Panatta_Super_Inclined_Chest_Press": {
+    "family": "Chest Press",
+    "variant": "Panatta Super Inclined Chest Press",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "machine press"
+    ]
+  },
+  "Panatta_Super_Lat_Machine_Convergent": {
+    "family": "Lat Pulldown",
+    "variant": "Panatta Super Lat Machine Convergent",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "lat pull",
+      "pull down"
+    ]
+  },
+  "Panatta_Super_Leg_Press_45_Degree": {
+    "family": "Leg Press",
+    "variant": "Panatta Super Leg Press 45 Degree",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_Low_Row": {
+    "family": "Row",
+    "variant": "Panatta Super Low Row",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_Middle_Chest_Flight_Machine": {
+    "family": "Chest Fly",
+    "variant": "Panatta Super Middle Chest Flight Machine",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "fly",
+      "flye",
+      "flyes"
+    ]
+  },
+  "Panatta_Super_Pendulum_Squat": {
+    "family": "Pendulum Squat",
+    "variant": "Panatta Super Pendulum Squat",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_Pullover_Machine": {
+    "family": "Pullover",
+    "variant": "Panatta Super Pullover Machine",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_Rowing": {
+    "family": "Row",
+    "variant": "Panatta Super Rowing",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_Shrug_Machine": {
+    "family": "Shrug",
+    "variant": "Panatta Super Shrug Machine",
+    "brand": "Panatta",
+    "loading": "plate"
+  },
+  "Panatta_Super_Upper_Chest_Flight_Machine": {
+    "family": "Chest Fly",
+    "variant": "Panatta Super Upper Chest Flight Machine",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "fly",
+      "flye",
+      "flyes"
+    ]
+  },
+  "Panatta_Super_Vertical_Chest_Press": {
+    "family": "Chest Press",
+    "variant": "Panatta Super Vertical Chest Press",
+    "brand": "Panatta",
+    "loading": "plate",
+    "aliases": [
+      "machine press"
+    ]
+  },
+  "Panatta_Three_Angles_Biceps_Machine": {
+    "family": "Biceps Curl",
+    "variant": "Panatta Three Angles Biceps Machine",
+    "brand": "Panatta",
+    "aliases": [
+      "bicep curl",
+      "arm curl"
+    ]
+  },
+  "Panatta_Three_Angles_Triceps_Machine": {
+    "family": "Triceps Extension",
+    "variant": "Panatta Three Angles Triceps Machine",
+    "brand": "Panatta",
+    "aliases": [
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
   },
   "Parallel_Bar_Dip": {
-    "equipment": "bodyweight"
+    "name": "Dip",
+    "family": "Dip",
+    "equipment": "bodyweight",
+    "aliases": [
+      "parallel bar dip",
+      "triceps dip",
+      "dips - triceps version",
+      "dips"
+    ]
   },
   "Physioball_Hip_Bridge": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Pin_Presses": {
+    "name": "Pin Press",
+    "family": "Bench Press",
+    "variant": "Pin Press",
+    "aliases": [
+      "pin presses",
+      "bench",
+      "flat bench"
+    ]
   },
   "Plank": {
-    "tracking": "duration"
+    "name": "Plank (Front)",
+    "family": "Plank",
+    "variant": "Front",
+    "tracking": "duration",
+    "aliases": [
+      "plank"
+    ]
   },
   "Plate_Pinch": {
-    "tracking": "duration"
+    "name": "Grip (Plate Pinch)",
+    "family": "Grip",
+    "variant": "Plate Pinch",
+    "equipment": "plate",
+    "tracking": "duration",
+    "aliases": [
+      "standing olympic plate hand squeeze",
+      "grip strength",
+      "plate pinch"
+    ]
+  },
+  "Plate_Twist": {
+    "name": "Russian Twist (Plate)",
+    "family": "Russian Twist",
+    "variant": "Plate",
+    "equipment": "plate",
+    "aliases": [
+      "plate twist"
+    ]
   },
   "Platform_Hamstring_Slides": {
-    "equipment": "bodyweight"
+    "name": "Leg Curl (Slider)",
+    "family": "Leg Curl",
+    "variant": "Slider",
+    "equipment": "bodyweight",
+    "aliases": [
+      "platform hamstring slides",
+      "hamstring curl"
+    ]
+  },
+  "Plie_Dumbbell_Squat": {
+    "name": "Squat (Sumo Dumbbell)",
+    "family": "Squat",
+    "variant": "Sumo Dumbbell",
+    "aliases": [
+      "plie squat",
+      "plie dumbbell squat"
+    ]
+  },
+  "Plyo_Kettlebell_Pushups": {
+    "hidden": true
+  },
+  "Power_Clean": {
+    "name": "Clean (Power)",
+    "family": "Clean",
+    "variant": "Power",
+    "aliases": [
+      "power clean from blocks",
+      "squat clean",
+      "power clean"
+    ]
+  },
+  "Power_Clean_from_Blocks": {
+    "hidden": true
+  },
+  "Power_Jerk": {
+    "name": "Jerk (Power)",
+    "family": "Jerk",
+    "variant": "Power",
+    "aliases": [
+      "push jerk",
+      "power jerk"
+    ]
+  },
+  "Power_Partials": {
+    "hidden": true
+  },
+  "Power_Snatch": {
+    "name": "Snatch (Power)",
+    "family": "Snatch",
+    "variant": "Power",
+    "aliases": [
+      "power snatch from blocks",
+      "squat snatch",
+      "power snatch"
+    ]
+  },
+  "Power_Snatch_from_Blocks": {
+    "hidden": true
+  },
+  "Power_Stairs": {
+    "hidden": true
+  },
+  "Preacher_Curl": {
+    "name": "Preacher Curl (Barbell)",
+    "family": "Preacher Curl",
+    "variant": "Barbell",
+    "aliases": [
+      "scott curl",
+      "preacher curl"
+    ]
+  },
+  "Preacher_Hammer_Dumbbell_Curl": {
+    "name": "Hammer Curl (Preacher)",
+    "family": "Hammer Curl",
+    "variant": "Preacher",
+    "aliases": [
+      "preacher hammer dumbbell curl"
+    ]
+  },
+  "Press_Sit-Up": {
+    "hidden": true
   },
   "Prone_Manual_Hamstring": {
+    "hidden": true,
     "equipment": "bodyweight"
   },
+  "Prowler_Sprint": {
+    "import": true,
+    "name": "Sled Sprint",
+    "family": "Sled Sprint",
+    "equipment": "sled",
+    "tracking": "duration_distance",
+    "aliases": [
+      "prowler sprint"
+    ]
+  },
+  "Pull_Through": {
+    "name": "Pull-Through (Cable)",
+    "family": "Pull-Through",
+    "variant": "Cable",
+    "aliases": [
+      "pull through"
+    ]
+  },
+  "Pullups": {
+    "name": "Pull-Up",
+    "family": "Pull-Up",
+    "aliases": [
+      "pullups"
+    ]
+  },
+  "Push-Up_Wide": {
+    "name": "Push-Up (Wide)",
+    "family": "Push-Up",
+    "variant": "Wide",
+    "aliases": [
+      "pushup",
+      "press-up"
+    ]
+  },
+  "Push-Ups_-_Close_Triceps_Position": {
+    "name": "Push-Up (Diamond)",
+    "family": "Push-Up",
+    "variant": "Diamond",
+    "aliases": [
+      "close-grip push-up",
+      "triceps push-up",
+      "close-grip push-up off of a dumbbell",
+      "push-ups - close triceps position",
+      "pushup",
+      "press-up"
+    ]
+  },
+  "Push-Ups_With_Feet_Elevated": {
+    "hidden": true
+  },
   "Push-Ups_With_Feet_On_An_Exercise_Ball": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Push_Press": {
+    "name": "Push Press (Barbell)",
+    "family": "Push Press",
+    "variant": "Barbell",
+    "aliases": [
+      "push press - behind the neck",
+      "push press"
+    ]
+  },
+  "Push_Press_-_Behind_the_Neck": {
+    "hidden": true
+  },
+  "Push_Up_to_Side_Plank": {
+    "hidden": true
+  },
+  "Pushups": {
+    "name": "Push-Up",
+    "family": "Push-Up",
+    "aliases": [
+      "pushups (close and wide hand positions)",
+      "pushup",
+      "press-up",
+      "pushups"
+    ]
+  },
+  "Pushups_Close_and_Wide_Hand_Positions": {
+    "hidden": true
+  },
+  "Rack_Delivery": {
+    "hidden": true
+  },
+  "Rack_Pull_with_Bands": {
+    "hidden": true
+  },
+  "Rack_Pulls": {
+    "name": "Rack Pull",
+    "family": "Rack Pull",
+    "aliases": [
+      "rack pull with bands",
+      "block pull",
+      "rack pulls"
+    ]
   },
   "Recumbent_Bike": {
     "import": true,
+    "name": "Stationary Bike (Recumbent)",
+    "family": "Stationary Bike",
+    "variant": "Recumbent",
     "equipment": "cardio_machine",
-    "tracking": "duration_distance"
+    "tracking": "duration_distance",
+    "aliases": [
+      "exercise bike",
+      "recumbent bike"
+    ]
+  },
+  "Reverse_Band_Bench_Press": {
+    "hidden": true
+  },
+  "Reverse_Band_Box_Squat": {
+    "hidden": true
+  },
+  "Reverse_Band_Deadlift": {
+    "hidden": true
+  },
+  "Reverse_Band_Power_Squat": {
+    "hidden": true
+  },
+  "Reverse_Band_Sumo_Deadlift": {
+    "hidden": true
+  },
+  "Reverse_Barbell_Curl": {
+    "name": "Reverse Curl (Barbell)",
+    "family": "Reverse Curl",
+    "variant": "Barbell",
+    "aliases": [
+      "reverse barbell curl"
+    ]
+  },
+  "Reverse_Barbell_Preacher_Curls": {
+    "name": "Preacher Curl (EZ Bar, Reverse-Grip)",
+    "family": "Preacher Curl",
+    "variant": "EZ Bar, Reverse-Grip",
+    "aliases": [
+      "reverse barbell preacher curls",
+      "scott curl"
+    ]
+  },
+  "Reverse_Cable_Curl": {
+    "name": "Reverse Curl (Cable)",
+    "family": "Reverse Curl",
+    "variant": "Cable",
+    "aliases": [
+      "reverse cable curl"
+    ]
+  },
+  "Reverse_Crunch": {
+    "family": "Reverse Crunch",
+    "aliases": [
+      "bent-knee hip raise"
+    ]
+  },
+  "Reverse_Flyes": {
+    "name": "Rear Delt Fly (Incline Dumbbell)",
+    "family": "Rear Delt Fly",
+    "variant": "Incline Dumbbell",
+    "aliases": [
+      "chest-supported rear delt fly",
+      "dumbbell lying rear lateral raise",
+      "lying rear delt raise",
+      "dumbbell lying one-arm rear lateral raise",
+      "reverse flyes with external rotation",
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise",
+      "reverse flyes"
+    ]
+  },
+  "Reverse_Flyes_With_External_Rotation": {
+    "hidden": true
+  },
+  "Reverse_Grip_Bent-Over_Rows": {
+    "name": "Row (Barbell, Underhand)",
+    "family": "Row",
+    "variant": "Barbell, Underhand",
+    "aliases": [
+      "yates row",
+      "reverse grip bent-over rows"
+    ]
+  },
+  "Reverse_Grip_Triceps_Pushdown": {
+    "name": "Triceps Pushdown (Reverse-Grip)",
+    "family": "Triceps Pushdown",
+    "variant": "Reverse-Grip",
+    "aliases": [
+      "pressdown",
+      "tricep pushdown",
+      "reverse grip triceps pushdown"
+    ]
+  },
+  "Reverse_Hyperextension": {
+    "family": "Reverse Hyperextension",
+    "loading": "plate",
+    "aliases": [
+      "reverse hyper"
+    ]
+  },
+  "Reverse_Machine_Flyes": {
+    "name": "Rear Delt Fly (Reverse Pec Deck)",
+    "family": "Rear Delt Fly",
+    "variant": "Reverse Pec Deck",
+    "loading": "stack",
+    "aliases": [
+      "rear delt machine",
+      "reverse machine fly",
+      "reverse machine flyes",
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise"
+    ]
+  },
+  "Reverse_Plate_Curls": {
+    "hidden": true
+  },
+  "Reverse_Triceps_Bench_Press": {
+    "name": "Bench Press (Reverse-Grip)",
+    "family": "Bench Press",
+    "variant": "Reverse-Grip",
+    "aliases": [
+      "reverse grip bench",
+      "reverse triceps bench press",
+      "bench",
+      "flat bench"
+    ]
   },
   "Rickshaw_Carry": {
+    "hidden": true,
     "tracking": "duration"
   },
+  "Rickshaw_Deadlift": {
+    "hidden": true
+  },
   "Ring_Dips": {
-    "equipment": "bodyweight"
+    "name": "Dip (Ring)",
+    "family": "Dip",
+    "variant": "Ring",
+    "equipment": "bodyweight",
+    "aliases": [
+      "dips",
+      "ring dips"
+    ]
+  },
+  "Rocking_Standing_Calf_Raise": {
+    "hidden": true
   },
   "Rocky_Pull-Ups_Pulldowns": {
+    "hidden": true,
     "equipment": "bodyweight"
   },
+  "Romanian_Deadlift": {
+    "name": "Romanian Deadlift (Barbell)",
+    "family": "Romanian Deadlift",
+    "variant": "Barbell",
+    "aliases": [
+      "rdl",
+      "romanian deadlift"
+    ]
+  },
+  "Romanian_Deadlift_from_Deficit": {
+    "name": "Romanian Deadlift (Deficit)",
+    "family": "Romanian Deadlift",
+    "variant": "Deficit",
+    "aliases": [
+      "romanian deadlift from deficit",
+      "rdl"
+    ]
+  },
   "Rope_Climb": {
+    "family": "Rope Climb",
     "equipment": "bodyweight"
+  },
+  "Rope_Crunch": {
+    "hidden": true
   },
   "Rope_Jumping": {
     "import": true,
     "name": "Jump Rope",
+    "family": "Jump Rope",
     "equipment": "bodyweight",
     "tracking": "duration",
     "aliases": [
       "rope jumping",
-      "skipping"
+      "skipping",
+      "skipping rope",
+      "double unders"
+    ]
+  },
+  "Rope_Straight-Arm_Pulldown": {
+    "name": "Straight-Arm Pulldown (Rope)",
+    "family": "Straight-Arm Pulldown",
+    "variant": "Rope",
+    "aliases": [
+      "straight arm pushdown",
+      "rope straight-arm pulldown"
     ]
   },
   "Rowing_Stationary": {
     "import": true,
     "name": "Rowing Machine",
+    "family": "Rowing Machine",
     "equipment": "cardio_machine",
     "tracking": "duration_distance",
     "aliases": [
       "rower",
       "erg",
-      "rowing"
+      "rowing",
+      "concept2",
+      "rowing, stationary"
     ]
   },
   "Running_Treadmill": {
     "import": true,
-    "name": "Treadmill Run",
+    "hidden": true,
     "equipment": "cardio_machine",
     "tracking": "duration_distance",
+    "name": "Treadmill Run"
+  },
+  "Russian_Twist": {
+    "name": "Russian Twist (Bodyweight)",
+    "family": "Russian Twist",
+    "variant": "Bodyweight",
     "aliases": [
-      "running",
-      "jogging",
-      "treadmill"
+      "russian twist"
     ]
   },
+  "Sandbag_Load": {
+    "hidden": true
+  },
   "Scapular_Pull-Up": {
-    "equipment": "bodyweight"
+    "family": "Scapular Pull-Up",
+    "equipment": "bodyweight",
+    "aliases": [
+      "scap pull-up"
+    ]
+  },
+  "Seated_Band_Hamstring_Curl": {
+    "name": "Leg Curl (Band)",
+    "family": "Leg Curl",
+    "variant": "Band",
+    "equipment": "bands",
+    "aliases": [
+      "seated band hamstring curl",
+      "hamstring curl"
+    ]
+  },
+  "Seated_Barbell_Military_Press": {
+    "name": "Overhead Press (Seated Barbell)",
+    "family": "Overhead Press",
+    "variant": "Seated Barbell",
+    "aliases": [
+      "barbell shoulder press",
+      "ohp",
+      "shoulder press",
+      "military press",
+      "seated barbell military press"
+    ]
+  },
+  "Seated_Barbell_Twist": {
+    "hidden": true
+  },
+  "Seated_Bent-Over_One-Arm_Dumbbell_Triceps_Extension": {
+    "hidden": true
+  },
+  "Seated_Bent-Over_Rear_Delt_Raise": {
+    "name": "Rear Delt Fly (Seated Dumbbell)",
+    "family": "Rear Delt Fly",
+    "variant": "Seated Dumbbell",
+    "aliases": [
+      "reverse fly",
+      "rear delt raise",
+      "rear fly",
+      "bent-over raise",
+      "seated bent-over rear delt raise"
+    ]
+  },
+  "Seated_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension": {
+    "hidden": true
+  },
+  "Seated_Cable_Rows": {
+    "name": "Row (Seated Cable)",
+    "family": "Row",
+    "variant": "Seated Cable",
+    "aliases": [
+      "low row",
+      "elevated cable rows",
+      "seated cable rows"
+    ]
+  },
+  "Seated_Cable_Shoulder_Press": {
+    "name": "Overhead Press (Seated Cable)",
+    "family": "Overhead Press",
+    "variant": "Seated Cable",
+    "aliases": [
+      "ohp",
+      "shoulder press",
+      "military press",
+      "seated cable shoulder press"
+    ]
+  },
+  "Seated_Calf_Raise": {
+    "name": "Calf Raise (Seated Machine)",
+    "family": "Calf Raise",
+    "variant": "Seated Machine",
+    "loading": "plate",
+    "aliases": [
+      "seated calf raise"
+    ]
+  },
+  "Seated_Close-Grip_Concentration_Barbell_Curl": {
+    "hidden": true
+  },
+  "Seated_Dumbbell_Curl": {
+    "name": "Biceps Curl (Seated Dumbbell)",
+    "family": "Biceps Curl",
+    "variant": "Seated Dumbbell",
+    "aliases": [
+      "seated dumbbell inner biceps curl",
+      "bicep curl",
+      "arm curl",
+      "seated dumbbell curl"
+    ]
+  },
+  "Seated_Dumbbell_Inner_Biceps_Curl": {
+    "hidden": true
+  },
+  "Seated_Dumbbell_Palms-Down_Wrist_Curl": {
+    "hidden": true
+  },
+  "Seated_Dumbbell_Palms-Up_Wrist_Curl": {
+    "hidden": true
+  },
+  "Seated_Dumbbell_Press": {
+    "hidden": true
+  },
+  "Seated_Flat_Bench_Leg_Pull-In": {
+    "hidden": true
+  },
+  "Seated_Good_Mornings": {
+    "name": "Good Morning (Seated)",
+    "family": "Good Morning",
+    "variant": "Seated",
+    "aliases": [
+      "seated good mornings"
+    ]
+  },
+  "Seated_Head_Harness_Neck_Resistance": {
+    "hidden": true
+  },
+  "Seated_Leg_Curl": {
+    "name": "Leg Curl (Seated)",
+    "family": "Leg Curl",
+    "variant": "Seated",
+    "loading": "stack",
+    "aliases": [
+      "hamstring curl",
+      "seated leg curl"
+    ]
+  },
+  "Seated_Leg_Tucks": {
+    "name": "Knee Tuck (Seated)",
+    "family": "Knee Tuck",
+    "variant": "Seated",
+    "aliases": [
+      "seated flat bench leg pull-in",
+      "pull-in",
+      "seated leg tucks"
+    ]
+  },
+  "Seated_One-Arm_Dumbbell_Palms-Down_Wrist_Curl": {
+    "name": "Reverse Wrist Curl (Single-Arm Dumbbell)",
+    "family": "Reverse Wrist Curl",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "seated one-arm dumbbell palms-down wrist curl",
+      "wrist extension"
+    ]
+  },
+  "Seated_One-Arm_Dumbbell_Palms-Up_Wrist_Curl": {
+    "name": "Wrist Curl (Single-Arm Dumbbell)",
+    "family": "Wrist Curl",
+    "variant": "Single-Arm Dumbbell",
+    "aliases": [
+      "seated one-arm dumbbell palms-up wrist curl"
+    ]
+  },
+  "Seated_One-arm_Cable_Pulley_Rows": {
+    "name": "Row (Seated Cable, Single-Arm)",
+    "family": "Row",
+    "variant": "Seated Cable, Single-Arm",
+    "aliases": [
+      "shotgun row",
+      "seated one-arm cable pulley rows"
+    ]
+  },
+  "Seated_Palm-Up_Barbell_Wrist_Curl": {
+    "hidden": true
+  },
+  "Seated_Palms-Down_Barbell_Wrist_Curl": {
+    "hidden": true
+  },
+  "Seated_Side_Lateral_Raise": {
+    "name": "Lateral Raise (Seated Dumbbell)",
+    "family": "Lateral Raise",
+    "variant": "Seated Dumbbell",
+    "aliases": [
+      "side raise",
+      "side lateral",
+      "lat raise",
+      "seated side lateral raise"
+    ]
+  },
+  "Seated_Triceps_Press": {
+    "name": "Triceps Extension (Seated Overhead Dumbbell)",
+    "family": "Triceps Extension",
+    "variant": "Seated Overhead Dumbbell",
+    "aliases": [
+      "tricep extension",
+      "overhead extension",
+      "french press",
+      "seated triceps press"
+    ]
+  },
+  "Seated_Two-Arm_Palms-Up_Low-Pulley_Wrist_Curl": {
+    "hidden": true
+  },
+  "See-Saw_Press_Alternating_Side_Press": {
+    "hidden": true
+  },
+  "Shotgun_Row": {
+    "hidden": true
+  },
+  "Shoulder_Press_-_With_Bands": {
+    "name": "Overhead Press (Band)",
+    "family": "Overhead Press",
+    "variant": "Band",
+    "aliases": [
+      "shoulder press - with bands",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
   },
   "Side_Bridge": {
-    "tracking": "duration"
+    "name": "Plank (Side)",
+    "family": "Plank",
+    "variant": "Side",
+    "tracking": "duration",
+    "aliases": [
+      "side bridge"
+    ]
+  },
+  "Side_Jackknife": {
+    "hidden": true
+  },
+  "Side_Lateral_Raise": {
+    "name": "Lateral Raise (Dumbbell)",
+    "family": "Lateral Raise",
+    "variant": "Dumbbell",
+    "aliases": [
+      "power partials",
+      "side raise",
+      "side lateral",
+      "lat raise",
+      "side lateral raise"
+    ]
+  },
+  "Side_Laterals_to_Front_Raise": {
+    "hidden": true
   },
   "Side_To_Side_Chins": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Single-Arm_Cable_Crossover": {
+    "name": "Cable Crossover (Single-Arm)",
+    "family": "Cable Crossover",
+    "variant": "Single-Arm",
+    "aliases": [
+      "cable fly",
+      "crossover",
+      "single-arm cable crossover"
+    ]
+  },
+  "Single-Arm_Linear_Jammer": {
+    "name": "Landmine Press (Single-Arm)",
+    "family": "Landmine Press",
+    "variant": "Single-Arm",
+    "aliases": [
+      "linear jammer",
+      "single-arm linear jammer"
+    ]
+  },
+  "Single-Arm_Push-Up": {
+    "name": "Push-Up (Single-Arm)",
+    "family": "Push-Up",
+    "variant": "Single-Arm",
+    "aliases": [
+      "one-arm push-up",
+      "pushup",
+      "press-up",
+      "single-arm push-up"
+    ]
   },
   "Single-Leg_High_Box_Squat": {
+    "hidden": true,
     "equipment": "bodyweight"
   },
+  "Single-Leg_Kneeling_Leg_Curl": {
+    "family": "Leg Curl",
+    "variant": "Single-Leg Kneeling Leg Curl",
+    "loading": "stack",
+    "aliases": [
+      "hamstring curl"
+    ]
+  },
+  "Single-Leg_Leg_Extension": {
+    "name": "Leg Extension (Single-Leg)",
+    "family": "Leg Extension",
+    "variant": "Single-Leg",
+    "loading": "stack",
+    "aliases": [
+      "quad extension",
+      "single-leg leg extension"
+    ]
+  },
+  "Single_Dumbbell_Raise": {
+    "hidden": true
+  },
+  "Single_Leg_Glute_Bridge": {
+    "name": "Glute Bridge (Single-Leg)",
+    "family": "Glute Bridge",
+    "variant": "Single-Leg",
+    "aliases": [
+      "single leg glute bridge"
+    ]
+  },
+  "Sit-Up": {
+    "family": "Sit-Up",
+    "aliases": [
+      "3/4 sit-up",
+      "frog sit-ups",
+      "janda sit-up",
+      "situp"
+    ]
+  },
+  "Sled_Drag_-_Harness": {
+    "name": "Sled Pull (Forward)",
+    "family": "Sled Pull",
+    "variant": "Forward",
+    "equipment": "sled",
+    "aliases": [
+      "sled drag - harness",
+      "sled drag"
+    ]
+  },
+  "Sled_Overhead_Backward_Walk": {
+    "hidden": true
+  },
+  "Sled_Overhead_Triceps_Extension": {
+    "hidden": true
+  },
+  "Sled_Push": {
+    "family": "Sled Push",
+    "equipment": "sled",
+    "aliases": [
+      "prowler push"
+    ]
+  },
+  "Sled_Reverse_Flye": {
+    "hidden": true
+  },
+  "Sled_Row": {
+    "hidden": true
+  },
   "Smith_Incline_Shoulder_Raise": {
+    "hidden": true,
     "equipment": "smith_machine"
   },
   "Smith_Machine_Behind_the_Back_Shrug": {
-    "equipment": "smith_machine"
+    "name": "Shrug (Smith, Behind the Back)",
+    "family": "Shrug",
+    "variant": "Smith, Behind the Back",
+    "equipment": "smith_machine",
+    "aliases": [
+      "smith machine behind the back shrug"
+    ]
   },
   "Smith_Machine_Bench_Press": {
-    "equipment": "smith_machine"
+    "name": "Bench Press (Smith)",
+    "family": "Bench Press",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "smith bench",
+      "bench",
+      "flat bench",
+      "smith machine bench press"
+    ]
   },
   "Smith_Machine_Bent_Over_Row": {
-    "equipment": "smith_machine"
+    "name": "Row (Smith)",
+    "family": "Row",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "smith machine bent over row"
+    ]
   },
   "Smith_Machine_Calf_Raise": {
-    "equipment": "smith_machine"
+    "name": "Calf Raise (Smith)",
+    "family": "Calf Raise",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "smith machine calf raise"
+    ]
   },
   "Smith_Machine_Close-Grip_Bench_Press": {
-    "equipment": "smith_machine"
+    "name": "Close-Grip Bench Press (Smith)",
+    "family": "Close-Grip Bench Press",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "cgbp",
+      "smith machine close-grip bench press"
+    ]
   },
   "Smith_Machine_Decline_Press": {
-    "equipment": "smith_machine"
+    "name": "Bench Press (Decline Smith)",
+    "family": "Bench Press",
+    "variant": "Decline Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "decline smith press",
+      "bench",
+      "flat bench",
+      "smith machine decline press"
+    ]
   },
   "Smith_Machine_Hang_Power_Clean": {
+    "hidden": true,
     "equipment": "smith_machine"
   },
   "Smith_Machine_Hip_Raise": {
+    "hidden": true,
     "equipment": "smith_machine"
   },
   "Smith_Machine_Incline_Bench_Press": {
-    "equipment": "smith_machine"
+    "name": "Bench Press (Incline Smith)",
+    "family": "Bench Press",
+    "variant": "Incline Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "bench",
+      "flat bench",
+      "smith machine incline bench press"
+    ]
   },
   "Smith_Machine_Leg_Press": {
+    "hidden": true,
     "equipment": "smith_machine"
   },
   "Smith_Machine_One-Arm_Upright_Row": {
+    "hidden": true,
     "equipment": "smith_machine"
   },
   "Smith_Machine_Overhead_Shoulder_Press": {
-    "equipment": "smith_machine"
+    "name": "Overhead Press (Smith)",
+    "family": "Overhead Press",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "ohp",
+      "shoulder press",
+      "military press",
+      "smith machine overhead shoulder press"
+    ]
   },
   "Smith_Machine_Pistol_Squat": {
+    "hidden": true,
     "equipment": "smith_machine"
   },
   "Smith_Machine_Reverse_Calf_Raises": {
-    "equipment": "smith_machine"
+    "name": "Tibialis Raise (Smith)",
+    "family": "Tibialis Raise",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "reverse calf raise",
+      "tib raise",
+      "smith machine reverse calf raises"
+    ]
   },
   "Smith_Machine_Squat": {
-    "equipment": "smith_machine"
+    "name": "Squat (Smith)",
+    "family": "Squat",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "chair squat",
+      "smith machine squat"
+    ]
   },
   "Smith_Machine_Stiff-Legged_Deadlift": {
-    "equipment": "smith_machine"
+    "name": "Stiff-Leg Deadlift (Smith)",
+    "family": "Stiff-Leg Deadlift",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "smith machine stiff-legged deadlift",
+      "sldl",
+      "straight-leg deadlift"
+    ]
   },
   "Smith_Machine_Upright_Row": {
-    "equipment": "smith_machine"
+    "name": "Upright Row (Smith)",
+    "family": "Upright Row",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "smith machine one-arm upright row",
+      "smith machine upright row"
+    ]
   },
   "Smith_Single-Leg_Split_Squat": {
-    "equipment": "smith_machine"
+    "name": "Split Squat (Bulgarian Smith)",
+    "family": "Split Squat",
+    "variant": "Bulgarian Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "bss",
+      "smith single-leg split squat",
+      "rfess",
+      "rear foot elevated split squat"
+    ]
+  },
+  "Snatch": {
+    "family": "Snatch",
+    "aliases": [
+      "snatch from blocks",
+      "squat snatch"
+    ]
+  },
+  "Snatch_Balance": {
+    "family": "Snatch Balance",
+    "aliases": [
+      "heaving snatch balance"
+    ]
+  },
+  "Snatch_Deadlift": {
+    "name": "Deadlift (Snatch-Grip)",
+    "family": "Deadlift",
+    "variant": "Snatch-Grip",
+    "aliases": [
+      "snatch deadlift"
+    ]
+  },
+  "Snatch_Pull": {
+    "family": "Snatch Pull",
+    "aliases": [
+      "snatch shrug"
+    ]
+  },
+  "Snatch_Shrug": {
+    "hidden": true
+  },
+  "Snatch_from_Blocks": {
+    "hidden": true
+  },
+  "Speed_Band_Overhead_Triceps": {
+    "name": "Triceps Extension (Overhead Band)",
+    "family": "Triceps Extension",
+    "variant": "Overhead Band",
+    "aliases": [
+      "speed band overhead triceps",
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
+  },
+  "Speed_Box_Squat": {
+    "hidden": true
+  },
+  "Speed_Squats": {
+    "hidden": true
+  },
+  "Spell_Caster": {
+    "hidden": true
+  },
+  "Spider_Crawl": {
+    "hidden": true
+  },
+  "Spider_Curl": {
+    "name": "Spider Curl (EZ Bar)",
+    "family": "Spider Curl",
+    "variant": "EZ Bar",
+    "aliases": [
+      "spider curl"
+    ]
+  },
+  "Split_Clean": {
+    "hidden": true
+  },
+  "Split_Jerk": {
+    "name": "Jerk (Split)",
+    "family": "Jerk",
+    "variant": "Split",
+    "aliases": [
+      "split jerk"
+    ]
+  },
+  "Split_Jump": {
+    "import": true,
+    "name": "Jumping Lunge",
+    "family": "Jumping Lunge",
+    "aliases": [
+      "split jump"
+    ]
+  },
+  "Split_Snatch": {
+    "hidden": true
+  },
+  "Split_Squat_with_Dumbbells": {
+    "name": "Split Squat (Dumbbell)",
+    "family": "Split Squat",
+    "variant": "Dumbbell",
+    "aliases": [
+      "split squat with dumbbells",
+      "rfess",
+      "rear foot elevated split squat"
+    ]
+  },
+  "Squat_Jerk": {
+    "name": "Jerk (Squat)",
+    "family": "Jerk",
+    "variant": "Squat",
+    "aliases": [
+      "squat jerk"
+    ]
+  },
+  "Squat_with_Bands": {
+    "hidden": true
+  },
+  "Squat_with_Chains": {
+    "hidden": true
+  },
+  "Squat_with_Plate_Movers": {
+    "hidden": true
+  },
+  "Squats_-_With_Bands": {
+    "name": "Squat (Band)",
+    "family": "Squat",
+    "variant": "Band",
+    "aliases": [
+      "squats - with bands"
+    ]
   },
   "Stairmaster": {
     "import": true,
     "name": "Stair Climber",
+    "family": "Stair Climber",
     "equipment": "cardio_machine",
     "tracking": "duration_level",
     "aliases": [
@@ -258,9 +4345,309 @@
       "stair machine"
     ]
   },
+  "Standing_Alternating_Dumbbell_Press": {
+    "name": "Overhead Press (Alternating Dumbbell)",
+    "family": "Overhead Press",
+    "variant": "Alternating Dumbbell",
+    "aliases": [
+      "see-saw press (alternating side press)",
+      "standing alternating dumbbell press",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Standing_Barbell_Calf_Raise": {
+    "name": "Calf Raise (Standing Barbell)",
+    "family": "Calf Raise",
+    "variant": "Standing Barbell",
+    "aliases": [
+      "rocking standing calf raise",
+      "standing barbell calf raise"
+    ]
+  },
+  "Standing_Barbell_Press_Behind_Neck": {
+    "name": "Overhead Press (Behind the Neck)",
+    "family": "Overhead Press",
+    "variant": "Behind the Neck",
+    "aliases": [
+      "btn press",
+      "standing barbell press behind neck",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Standing_Bent-Over_One-Arm_Dumbbell_Triceps_Extension": {
+    "hidden": true
+  },
+  "Standing_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension": {
+    "hidden": true
+  },
+  "Standing_Biceps_Cable_Curl": {
+    "name": "Biceps Curl (Cable)",
+    "family": "Biceps Curl",
+    "variant": "Cable",
+    "aliases": [
+      "standing biceps cable curl",
+      "bicep curl",
+      "arm curl"
+    ]
+  },
+  "Standing_Bradford_Press": {
+    "name": "Bradford Press",
+    "family": "Overhead Press",
+    "variant": "Bradford Press",
+    "aliases": [
+      "bradford/rocky presses",
+      "standing bradford press",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Standing_Cable_Chest_Press": {
+    "name": "Chest Press (Standing Cable)",
+    "family": "Chest Press",
+    "variant": "Standing Cable",
+    "aliases": [
+      "machine press",
+      "standing cable chest press"
+    ]
+  },
+  "Standing_Cable_Lift": {
+    "name": "Woodchop (Low to High)",
+    "family": "Woodchop",
+    "variant": "Low to High",
+    "aliases": [
+      "standing cable lift",
+      "wood chop",
+      "cable chop"
+    ]
+  },
+  "Standing_Cable_Wood_Chop": {
+    "name": "Woodchop (High to Low)",
+    "family": "Woodchop",
+    "variant": "High to Low",
+    "aliases": [
+      "standing cable wood chop",
+      "wood chop",
+      "cable chop"
+    ]
+  },
+  "Standing_Calf_Raises": {
+    "name": "Calf Raise (Standing Machine)",
+    "family": "Calf Raise",
+    "variant": "Standing Machine",
+    "loading": "stack",
+    "aliases": [
+      "standing calf raises"
+    ]
+  },
+  "Standing_Concentration_Curl": {
+    "name": "Concentration Curl (Standing Dumbbell)",
+    "family": "Concentration Curl",
+    "variant": "Standing Dumbbell",
+    "aliases": [
+      "standing concentration curl"
+    ]
+  },
+  "Standing_Dumbbell_Calf_Raise": {
+    "name": "Calf Raise (Standing Dumbbell)",
+    "family": "Calf Raise",
+    "variant": "Standing Dumbbell",
+    "aliases": [
+      "standing dumbbell calf raise"
+    ]
+  },
+  "Standing_Dumbbell_Press": {
+    "name": "Overhead Press (Dumbbell)",
+    "family": "Overhead Press",
+    "variant": "Dumbbell",
+    "aliases": [
+      "standing dumbbell press",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Standing_Dumbbell_Reverse_Curl": {
+    "name": "Reverse Curl (Dumbbell)",
+    "family": "Reverse Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "standing dumbbell reverse curl"
+    ]
+  },
+  "Standing_Dumbbell_Straight-Arm_Front_Delt_Raise_Above_Head": {
+    "hidden": true
+  },
+  "Standing_Dumbbell_Triceps_Extension": {
+    "name": "Triceps Extension (Overhead Dumbbell)",
+    "family": "Triceps Extension",
+    "variant": "Overhead Dumbbell",
+    "aliases": [
+      "standing dumbbell triceps extension",
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
+  },
+  "Standing_Dumbbell_Upright_Row": {
+    "name": "Upright Row (Dumbbell)",
+    "family": "Upright Row",
+    "variant": "Dumbbell",
+    "aliases": [
+      "dumbbell raise",
+      "standing dumbbell upright row"
+    ]
+  },
+  "Standing_Front_Barbell_Raise_Over_Head": {
+    "name": "Front Raise (Barbell)",
+    "family": "Front Raise",
+    "variant": "Barbell",
+    "aliases": [
+      "straight raises on incline bench",
+      "standing front barbell raise over head",
+      "front delt raise"
+    ]
+  },
+  "Standing_Inner-Biceps_Curl": {
+    "hidden": true
+  },
+  "Standing_Leg_Curl": {
+    "name": "Leg Curl (Standing)",
+    "family": "Leg Curl",
+    "variant": "Standing",
+    "loading": "stack",
+    "aliases": [
+      "hamstring curl",
+      "standing leg curl"
+    ]
+  },
+  "Standing_Long_Jump": {
+    "import": true,
+    "name": "Broad Jump",
+    "family": "Broad Jump",
+    "aliases": [
+      "standing long jump"
+    ]
+  },
+  "Standing_Low-Pulley_Deltoid_Raise": {
+    "name": "Lateral Raise (Cable)",
+    "family": "Lateral Raise",
+    "variant": "Cable",
+    "aliases": [
+      "standing low-pulley deltoid raise",
+      "side raise",
+      "side lateral",
+      "lat raise"
+    ]
+  },
+  "Standing_Low-Pulley_One-Arm_Triceps_Extension": {
+    "name": "Triceps Extension (Single-Arm Overhead Cable)",
+    "family": "Triceps Extension",
+    "variant": "Single-Arm Overhead Cable",
+    "aliases": [
+      "standing low-pulley one-arm triceps extension",
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
+  },
+  "Standing_Military_Press": {
+    "name": "Overhead Press (Barbell)",
+    "family": "Overhead Press",
+    "variant": "Barbell",
+    "aliases": [
+      "standing press",
+      "strict press",
+      "ohp",
+      "shoulder press",
+      "military press",
+      "standing military press"
+    ]
+  },
+  "Standing_Olympic_Plate_Hand_Squeeze": {
+    "hidden": true
+  },
+  "Standing_One-Arm_Cable_Curl": {
+    "name": "Biceps Curl (Single-Arm Cable)",
+    "family": "Biceps Curl",
+    "variant": "Single-Arm Cable",
+    "aliases": [
+      "standing one-arm cable curl",
+      "bicep curl",
+      "arm curl"
+    ]
+  },
+  "Standing_One-Arm_Dumbbell_Curl_Over_Incline_Bench": {
+    "hidden": true
+  },
+  "Standing_One-Arm_Dumbbell_Triceps_Extension": {
+    "name": "Triceps Extension (Single-Arm Overhead Dumbbell)",
+    "family": "Triceps Extension",
+    "variant": "Single-Arm Overhead Dumbbell",
+    "aliases": [
+      "dumbbell one-arm triceps extension",
+      "standing one-arm dumbbell triceps extension",
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
+  },
+  "Standing_Overhead_Barbell_Triceps_Extension": {
+    "name": "Triceps Extension (Overhead Barbell)",
+    "family": "Triceps Extension",
+    "variant": "Overhead Barbell",
+    "aliases": [
+      "standing overhead barbell triceps extension",
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
+  },
+  "Standing_Palm-In_One-Arm_Dumbbell_Press": {
+    "hidden": true
+  },
+  "Standing_Palms-In_Dumbbell_Press": {
+    "name": "Overhead Press (Dumbbell, Neutral Grip)",
+    "family": "Overhead Press",
+    "variant": "Dumbbell, Neutral Grip",
+    "aliases": [
+      "standing palms-in dumbbell press",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Standing_Palms-Up_Barbell_Behind_The_Back_Wrist_Curl": {
+    "name": "Wrist Curl (Barbell, Behind the Back)",
+    "family": "Wrist Curl",
+    "variant": "Barbell, Behind the Back",
+    "aliases": [
+      "standing palms-up barbell behind the back wrist curl"
+    ]
+  },
+  "Standing_Rope_Crunch": {
+    "name": "Crunch (Standing Cable)",
+    "family": "Crunch",
+    "variant": "Standing Cable",
+    "aliases": [
+      "standing rope crunch",
+      "ab crunch"
+    ]
+  },
+  "Standing_Towel_Triceps_Extension": {
+    "hidden": true
+  },
+  "Step-up_with_Knee_Raise": {
+    "hidden": true
+  },
   "Step_Mill": {
     "import": true,
     "name": "Stepmill",
+    "family": "Stepmill",
     "equipment": "cardio_machine",
     "tracking": "duration_level",
     "aliases": [
@@ -268,50 +4655,1223 @@
       "revolving stairs"
     ]
   },
+  "Stiff-Legged_Barbell_Deadlift": {
+    "name": "Stiff-Leg Deadlift (Barbell)",
+    "family": "Stiff-Leg Deadlift",
+    "variant": "Barbell",
+    "aliases": [
+      "wide stance stiff legs",
+      "stiff-legged barbell deadlift",
+      "sldl",
+      "straight-leg deadlift"
+    ]
+  },
+  "Stiff-Legged_Dumbbell_Deadlift": {
+    "name": "Stiff-Leg Deadlift (Dumbbell)",
+    "family": "Stiff-Leg Deadlift",
+    "variant": "Dumbbell",
+    "aliases": [
+      "stiff-legged dumbbell deadlift",
+      "sldl",
+      "straight-leg deadlift"
+    ]
+  },
+  "Stiff_Leg_Barbell_Good_Morning": {
+    "hidden": true
+  },
+  "Straight-Arm_Dumbbell_Pullover": {
+    "hidden": true
+  },
+  "Straight-Arm_Pulldown": {
+    "name": "Straight-Arm Pulldown (Bar)",
+    "family": "Straight-Arm Pulldown",
+    "variant": "Bar",
+    "aliases": [
+      "straight arm pushdown",
+      "straight-arm pulldown"
+    ]
+  },
+  "Straight_Bar_Bench_Mid_Rows": {
+    "hidden": true
+  },
+  "Straight_Raises_on_Incline_Bench": {
+    "hidden": true
+  },
+  "Sumo_Deadlift": {
+    "name": "Deadlift (Sumo)",
+    "family": "Deadlift",
+    "variant": "Sumo",
+    "aliases": [
+      "sumo deadlift with bands",
+      "sumo deadlift with chains",
+      "reverse band sumo deadlift",
+      "sumo deadlift"
+    ]
+  },
+  "Sumo_Deadlift_with_Bands": {
+    "hidden": true
+  },
+  "Sumo_Deadlift_with_Chains": {
+    "hidden": true
+  },
   "Suspended_Fallout": {
-    "equipment": "bodyweight"
+    "name": "Ab Wheel Rollout (Suspension)",
+    "family": "Ab Wheel Rollout",
+    "variant": "Suspension",
+    "equipment": "suspension",
+    "aliases": [
+      "trx fallout",
+      "suspended fallout",
+      "ab rollout"
+    ]
   },
   "Suspended_Push-Up": {
-    "equipment": "bodyweight"
+    "name": "Push-Up (Suspension)",
+    "family": "Push-Up",
+    "variant": "Suspension",
+    "equipment": "suspension",
+    "aliases": [
+      "trx push-up",
+      "ring push-up",
+      "suspended push-up",
+      "pushup",
+      "press-up"
+    ]
   },
   "Suspended_Reverse_Crunch": {
-    "equipment": "bodyweight"
+    "name": "Knee Tuck (Suspension)",
+    "family": "Knee Tuck",
+    "variant": "Suspension",
+    "equipment": "suspension",
+    "aliases": [
+      "suspended reverse crunch",
+      "pull-in"
+    ]
   },
   "Suspended_Row": {
-    "equipment": "bodyweight"
+    "name": "Inverted Row (Suspension)",
+    "family": "Inverted Row",
+    "variant": "Suspension",
+    "equipment": "suspension",
+    "aliases": [
+      "trx row",
+      "ring row",
+      "inverted row with straps",
+      "suspended row",
+      "body row",
+      "australian pull-up"
+    ]
   },
   "Suspended_Split_Squat": {
+    "hidden": true,
     "equipment": "bodyweight"
+  },
+  "Svend_Press": {
+    "family": "Svend Press",
+    "equipment": "plate",
+    "aliases": [
+      "plate press"
+    ]
+  },
+  "T-Bar_Row_with_Handle": {
+    "name": "Row (T-Bar)",
+    "family": "Row",
+    "variant": "T-Bar",
+    "aliases": [
+      "landmine row",
+      "bent over two-arm long bar row",
+      "t-bar row with handle"
+    ]
+  },
+  "Tate_Press": {
+    "family": "Tate Press"
+  },
+  "Thigh_Abductor": {
+    "name": "Hip Abduction (Machine)",
+    "family": "Hip Abduction",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "abductor",
+      "outer thigh",
+      "thigh abductor"
+    ]
+  },
+  "Thigh_Adductor": {
+    "name": "Hip Adduction (Machine)",
+    "family": "Hip Adduction",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "adductor",
+      "inner thigh",
+      "thigh adductor"
+    ]
+  },
+  "Tire_Flip": {
+    "family": "Tire Flip",
+    "tracking": "reps"
+  },
+  "Trap_Bar_Deadlift": {
+    "name": "Deadlift (Trap Bar)",
+    "family": "Deadlift",
+    "variant": "Trap Bar",
+    "equipment": "trap_bar",
+    "aliases": [
+      "hex bar deadlift",
+      "trap bar deadlift"
+    ]
+  },
+  "Tricep_Dumbbell_Kickback": {
+    "name": "Kickback (Dumbbell)",
+    "family": "Kickback",
+    "variant": "Dumbbell",
+    "aliases": [
+      "seated bent-over one-arm dumbbell triceps extension",
+      "seated bent-over two-arm dumbbell triceps extension",
+      "standing bent-over one-arm dumbbell triceps extension",
+      "standing bent-over two-arm dumbbell triceps extension",
+      "triceps kickback",
+      "tricep dumbbell kickback"
+    ]
+  },
+  "Triceps_Overhead_Extension_with_Rope": {
+    "hidden": true
+  },
+  "Triceps_Pushdown": {
+    "name": "Triceps Pushdown (Bar)",
+    "family": "Triceps Pushdown",
+    "variant": "Bar",
+    "aliases": [
+      "straight bar pushdown",
+      "pressdown",
+      "tricep pushdown",
+      "triceps pushdown"
+    ]
+  },
+  "Triceps_Pushdown_-_Rope_Attachment": {
+    "name": "Triceps Pushdown (Rope)",
+    "family": "Triceps Pushdown",
+    "variant": "Rope",
+    "aliases": [
+      "triceps pushdown - rope attachment",
+      "pressdown",
+      "tricep pushdown"
+    ]
+  },
+  "Triceps_Pushdown_-_V-Bar_Attachment": {
+    "name": "Triceps Pushdown (V-Bar)",
+    "family": "Triceps Pushdown",
+    "variant": "V-Bar",
+    "aliases": [
+      "triceps pushdown - v-bar attachment",
+      "pressdown",
+      "tricep pushdown"
+    ]
+  },
+  "Tuck_Crunch": {
+    "hidden": true
+  },
+  "Two-Arm_Dumbbell_Preacher_Curl": {
+    "name": "Preacher Curl (Dumbbell)",
+    "family": "Preacher Curl",
+    "variant": "Dumbbell",
+    "aliases": [
+      "two-arm dumbbell preacher curl",
+      "scott curl"
+    ]
+  },
+  "Two-Arm_Kettlebell_Clean": {
+    "name": "Clean (Kettlebell)",
+    "family": "Clean",
+    "variant": "Kettlebell",
+    "aliases": [
+      "alternating hang clean",
+      "double kettlebell alternating hang clean",
+      "two-arm kettlebell clean",
+      "squat clean"
+    ]
+  },
+  "Two-Arm_Kettlebell_Jerk": {
+    "name": "Jerk (Kettlebell)",
+    "family": "Jerk",
+    "variant": "Kettlebell",
+    "aliases": [
+      "double kettlebell jerk",
+      "two-arm kettlebell jerk"
+    ]
+  },
+  "Two-Arm_Kettlebell_Military_Press": {
+    "name": "Overhead Press (Kettlebell)",
+    "family": "Overhead Press",
+    "variant": "Kettlebell",
+    "aliases": [
+      "alternating kettlebell press",
+      "kettlebell seesaw press",
+      "kettlebell arnold press",
+      "two-arm kettlebell military press",
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
+  },
+  "Two-Arm_Kettlebell_Row": {
+    "name": "Row (Kettlebell)",
+    "family": "Row",
+    "variant": "Kettlebell",
+    "aliases": [
+      "alternating kettlebell row",
+      "two-arm kettlebell row"
+    ]
+  },
+  "Underhand_Cable_Pulldowns": {
+    "name": "Lat Pulldown (Underhand)",
+    "family": "Lat Pulldown",
+    "variant": "Underhand",
+    "aliases": [
+      "reverse-grip pulldown",
+      "lat pull",
+      "pull down",
+      "underhand cable pulldowns"
+    ]
+  },
+  "Upright_Barbell_Row": {
+    "name": "Upright Row (Barbell)",
+    "family": "Upright Row",
+    "variant": "Barbell",
+    "aliases": [
+      "upright barbell row"
+    ]
+  },
+  "Upright_Cable_Row": {
+    "name": "Upright Row (Cable)",
+    "family": "Upright Row",
+    "variant": "Cable",
+    "aliases": [
+      "upright cable row"
+    ]
+  },
+  "Upright_Row_-_With_Bands": {
+    "name": "Upright Row (Band)",
+    "family": "Upright Row",
+    "variant": "Band",
+    "aliases": [
+      "upright row - with bands"
+    ]
+  },
+  "V-Bar_Pulldown": {
+    "name": "Lat Pulldown (Neutral-Grip)",
+    "family": "Lat Pulldown",
+    "variant": "Neutral-Grip",
+    "aliases": [
+      "v-bar pulldown",
+      "lat pull",
+      "pull down"
+    ]
+  },
+  "V-Bar_Pullup": {
+    "name": "Pull-Up (Neutral-Grip)",
+    "family": "Pull-Up",
+    "variant": "Neutral-Grip",
+    "aliases": [
+      "v-bar pull-up",
+      "v-bar pullup"
+    ]
   },
   "Walking_Treadmill": {
     "import": true,
-    "name": "Treadmill Walk",
+    "name": "Treadmill",
+    "family": "Treadmill",
     "equipment": "cardio_machine",
     "tracking": "duration_distance",
     "aliases": [
+      "running",
+      "jogging",
       "walking",
-      "incline walk"
+      "incline walk",
+      "treadmill run",
+      "walking, treadmill",
+      "treadmill walk"
     ]
   },
   "Weighted_Ball_Hyperextension": {
+    "hidden": true,
     "equipment": "weighted_bodyweight"
+  },
+  "Weighted_Ball_Side_Bend": {
+    "hidden": true
   },
   "Weighted_Bench_Dip": {
-    "equipment": "weighted_bodyweight"
+    "name": "Bench Dip (Weighted)",
+    "family": "Bench Dip",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "weighted bench dip"
+    ]
   },
   "Weighted_Crunches": {
-    "equipment": "weighted_bodyweight"
+    "name": "Crunch (Weighted)",
+    "family": "Crunch",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "weighted crunches",
+      "ab crunch"
+    ]
+  },
+  "Weighted_Jump_Squat": {
+    "name": "Jump Squat (Barbell)",
+    "family": "Jump Squat",
+    "variant": "Barbell",
+    "aliases": [
+      "weighted jump squat"
+    ]
   },
   "Weighted_Pull_Ups": {
-    "equipment": "weighted_bodyweight"
+    "name": "Pull-Up (Weighted)",
+    "family": "Pull-Up",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "weighted pull ups"
+    ]
+  },
+  "Weighted_Sissy_Squat": {
+    "name": "Sissy Squat (Weighted)",
+    "family": "Sissy Squat",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "weighted sissy squat"
+    ]
   },
   "Weighted_Sit-Ups_-_With_Bands": {
+    "hidden": true,
     "equipment": "weighted_bodyweight"
   },
   "Weighted_Squat": {
-    "equipment": "weighted_bodyweight"
+    "name": "Belt Squat (Dip Belt)",
+    "family": "Belt Squat",
+    "variant": "Dip Belt",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "weighted squat"
+    ]
+  },
+  "Wide-Grip_Barbell_Bench_Press": {
+    "name": "Bench Press (Wide-Grip)",
+    "family": "Bench Press",
+    "variant": "Wide-Grip",
+    "aliases": [
+      "bench",
+      "flat bench",
+      "wide-grip barbell bench press"
+    ]
+  },
+  "Wide-Grip_Decline_Barbell_Bench_Press": {
+    "hidden": true
+  },
+  "Wide-Grip_Decline_Barbell_Pullover": {
+    "hidden": true
+  },
+  "Wide-Grip_Lat_Pulldown": {
+    "name": "Lat Pulldown (Wide-Grip)",
+    "family": "Lat Pulldown",
+    "variant": "Wide-Grip",
+    "aliases": [
+      "lat pull",
+      "pull down",
+      "wide-grip lat pulldown"
+    ]
+  },
+  "Wide-Grip_Pulldown_Behind_The_Neck": {
+    "name": "Lat Pulldown (Behind the Neck)",
+    "family": "Lat Pulldown",
+    "variant": "Behind the Neck",
+    "aliases": [
+      "wide-grip pulldown behind the neck",
+      "lat pull",
+      "pull down"
+    ]
+  },
+  "Wide-Grip_Rear_Pull-Up": {
+    "name": "Pull-Up (Behind the Neck)",
+    "family": "Pull-Up",
+    "variant": "Behind the Neck",
+    "aliases": [
+      "wide-grip rear pull-up"
+    ]
+  },
+  "Wide-Grip_Standing_Barbell_Curl": {
+    "name": "Biceps Curl (Barbell, Wide-Grip)",
+    "family": "Biceps Curl",
+    "variant": "Barbell, Wide-Grip",
+    "aliases": [
+      "wide-grip standing barbell curl",
+      "bicep curl",
+      "arm curl"
+    ]
+  },
+  "Wide_Stance_Barbell_Squat": {
+    "hidden": true
+  },
+  "Wide_Stance_Stiff_Legs": {
+    "hidden": true
+  },
+  "Wind_Sprints": {
+    "hidden": true
+  },
+  "Wrist_Roller": {
+    "family": "Wrist Roller",
+    "equipment": "plate"
+  },
+  "Wrist_Rotations_with_Straight_Bar": {
+    "hidden": true
   },
   "Yoke_Walk": {
+    "name": "Yoke",
+    "family": "Yoke",
+    "tracking": "duration",
+    "aliases": [
+      "yoke walk",
+      "yoke carry"
+    ]
+  },
+  "Zercher_Squats": {
+    "name": "Squat (Zercher)",
+    "family": "Squat",
+    "variant": "Zercher",
+    "aliases": [
+      "zercher squats"
+    ]
+  },
+  "Zottman_Curl": {
+    "family": "Zottman Curl"
+  },
+  "Zottman_Preacher_Curl": {
+    "hidden": true
+  },
+  "local:air-bike": {
+    "import": true,
+    "family": "Stationary Bike",
+    "variant": "Air Bike",
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance",
+    "aliases": [
+      "assault bike",
+      "echo bike",
+      "airdyne",
+      "exercise bike"
+    ]
+  },
+  "local:arc-trainer": {
+    "import": true,
+    "family": "Arc Trainer",
+    "equipment": "cardio_machine",
+    "tracking": "duration_level"
+  },
+  "local:back-extension-machine": {
+    "family": "Back Extension",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "hyperextension"
+    ]
+  },
+  "local:back-extension-weighted": {
+    "family": "Back Extension",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "weighted ball hyperextension",
+      "hyperextension"
+    ]
+  },
+  "local:bayesian-curl": {
+    "family": "Bayesian Curl",
+    "aliases": [
+      "behind-the-body cable curl"
+    ]
+  },
+  "local:belt-squat-machine": {
+    "family": "Belt Squat",
+    "variant": "Machine",
+    "loading": "plate"
+  },
+  "local:bench-press-paused": {
+    "family": "Bench Press",
+    "variant": "Paused",
+    "aliases": [
+      "pause bench",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "local:biceps-curl-band": {
+    "family": "Biceps Curl",
+    "variant": "Band",
+    "aliases": [
+      "bicep curl",
+      "arm curl"
+    ]
+  },
+  "local:bird-dog": {
+    "family": "Bird Dog"
+  },
+  "local:burpee": {
+    "family": "Burpee"
+  },
+  "local:cable-crossover-mid": {
+    "family": "Cable Crossover",
+    "variant": "Mid",
+    "aliases": [
+      "cable fly",
+      "crossover"
+    ]
+  },
+  "local:calf-raise-bodyweight": {
+    "family": "Calf Raise",
+    "variant": "Bodyweight"
+  },
+  "local:calf-raise-single-leg-dumbbell": {
+    "family": "Calf Raise",
+    "variant": "Single-Leg Dumbbell"
+  },
+  "local:chest-press-decline-machine": {
+    "family": "Chest Press",
+    "variant": "Decline Machine",
+    "loading": "stack",
+    "aliases": [
+      "machine press"
+    ]
+  },
+  "local:chest-press-incline-machine": {
+    "family": "Chest Press",
+    "variant": "Incline Machine",
+    "loading": "stack",
+    "aliases": [
+      "incline machine press",
+      "machine press"
+    ]
+  },
+  "local:chin-up-weighted": {
+    "family": "Chin-Up",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight"
+  },
+  "local:clamshell": {
+    "family": "Clamshell"
+  },
+  "local:clean-hang-power": {
+    "family": "Clean",
+    "variant": "Hang Power",
+    "aliases": [
+      "squat clean"
+    ]
+  },
+  "local:copenhagen-plank": {
+    "family": "Copenhagen Plank",
     "tracking": "duration"
+  },
+  "local:cossack-squat": {
+    "family": "Cossack Squat"
+  },
+  "local:dead-hang": {
+    "family": "Dead Hang",
+    "tracking": "duration",
+    "aliases": [
+      "bar hang"
+    ]
+  },
+  "local:deadlift-dumbbell": {
+    "family": "Deadlift",
+    "variant": "Dumbbell"
+  },
+  "local:deadlift-kettlebell": {
+    "family": "Deadlift",
+    "variant": "Kettlebell"
+  },
+  "local:deadlift-paused": {
+    "family": "Deadlift",
+    "variant": "Paused",
+    "aliases": [
+      "pause deadlift"
+    ]
+  },
+  "local:dip-assisted-machine": {
+    "family": "Dip",
+    "variant": "Assisted Machine",
+    "tracking": "assisted_reps",
+    "loading": "stack",
+    "aliases": [
+      "assisted dip",
+      "dips"
+    ]
+  },
+  "local:dip-weighted": {
+    "family": "Dip",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "dips"
+    ]
+  },
+  "local:dragon-flag": {
+    "family": "Dragon Flag"
+  },
+  "local:face-pull-band": {
+    "family": "Face Pull",
+    "variant": "Band"
+  },
+  "local:farmer-s-hold": {
+    "family": "Farmer's Hold",
+    "tracking": "duration"
+  },
+  "local:glute-kickback-machine": {
+    "family": "Glute Kickback",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "donkey kick"
+    ]
+  },
+  "local:grip-gripper": {
+    "family": "Grip",
+    "variant": "Gripper",
+    "tracking": "reps",
+    "aliases": [
+      "hand gripper",
+      "grip strength"
+    ]
+  },
+  "local:hex-press": {
+    "family": "Bench Press",
+    "variant": "Hex Press",
+    "aliases": [
+      "squeeze press",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "local:high-pull-barbell": {
+    "family": "High Pull",
+    "variant": "Barbell"
+  },
+  "local:hip-abduction-band": {
+    "family": "Hip Abduction",
+    "variant": "Band",
+    "aliases": [
+      "abductor",
+      "outer thigh"
+    ]
+  },
+  "local:hip-abduction-cable": {
+    "family": "Hip Abduction",
+    "variant": "Cable",
+    "aliases": [
+      "abductor",
+      "outer thigh"
+    ]
+  },
+  "local:hip-thrust-dumbbell": {
+    "family": "Hip Thrust",
+    "variant": "Dumbbell"
+  },
+  "local:hip-thrust-machine": {
+    "family": "Hip Thrust",
+    "variant": "Machine",
+    "loading": "plate"
+  },
+  "local:hip-thrust-single-leg": {
+    "family": "Hip Thrust",
+    "variant": "Single-Leg"
+  },
+  "local:hip-thrust-smith": {
+    "family": "Hip Thrust",
+    "variant": "Smith",
+    "equipment": "smith_machine"
+  },
+  "local:hollow-hold": {
+    "family": "Hollow Hold",
+    "tracking": "duration",
+    "aliases": [
+      "hollow body hold"
+    ]
+  },
+  "local:kettlebell-swing": {
+    "family": "Kettlebell Swing",
+    "aliases": [
+      "kb swing",
+      "russian swing"
+    ]
+  },
+  "local:kickback-cable": {
+    "family": "Kickback",
+    "variant": "Cable",
+    "aliases": [
+      "triceps kickback"
+    ]
+  },
+  "local:knee-raise-hanging": {
+    "family": "Knee Raise",
+    "variant": "Hanging",
+    "aliases": [
+      "wind sprints"
+    ]
+  },
+  "local:kroc-row": {
+    "family": "Row",
+    "variant": "Kroc Row"
+  },
+  "local:l-sit": {
+    "family": "L-Sit",
+    "tracking": "duration"
+  },
+  "local:larsen-press": {
+    "family": "Bench Press",
+    "variant": "Larsen Press",
+    "aliases": [
+      "feet-up bench press",
+      "bench",
+      "flat bench"
+    ]
+  },
+  "local:lat-pulldown-plate-loaded": {
+    "family": "Lat Pulldown",
+    "variant": "Plate-Loaded",
+    "loading": "plate",
+    "aliases": [
+      "hammer strength pulldown",
+      "iso-lateral pulldown",
+      "lat pull",
+      "pull down"
+    ]
+  },
+  "local:lateral-raise-lean-away": {
+    "family": "Lateral Raise",
+    "variant": "Lean-Away",
+    "aliases": [
+      "leaning lateral raise",
+      "side raise",
+      "side lateral",
+      "lat raise"
+    ]
+  },
+  "local:lateral-raise-machine": {
+    "family": "Lateral Raise",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "side raise",
+      "side lateral",
+      "lat raise"
+    ]
+  },
+  "local:leg-press-horizontal": {
+    "family": "Leg Press",
+    "variant": "Horizontal",
+    "loading": "stack",
+    "aliases": [
+      "seated leg press"
+    ]
+  },
+  "local:leg-press-single-leg": {
+    "family": "Leg Press",
+    "variant": "Single-Leg",
+    "loading": "plate"
+  },
+  "local:leg-raise-captain-s-chair": {
+    "family": "Leg Raise",
+    "variant": "Captain's Chair"
+  },
+  "local:lunge-bodyweight": {
+    "family": "Lunge",
+    "variant": "Bodyweight"
+  },
+  "local:lunge-curtsy": {
+    "family": "Lunge",
+    "variant": "Curtsy"
+  },
+  "local:lunge-lateral": {
+    "family": "Lunge",
+    "variant": "Lateral",
+    "aliases": [
+      "side lunge"
+    ]
+  },
+  "local:lunge-reverse-barbell": {
+    "family": "Lunge",
+    "variant": "Reverse Barbell",
+    "aliases": [
+      "elevated back lunge"
+    ]
+  },
+  "local:lunge-walking-dumbbell": {
+    "family": "Lunge",
+    "variant": "Walking Dumbbell"
+  },
+  "local:outdoor-run": {
+    "import": true,
+    "family": "Outdoor Run",
+    "tracking": "duration_distance",
+    "aliases": [
+      "outdoor running",
+      "outdoor jogging",
+      "road run",
+      "trail run"
+    ]
+  },
+  "local:outdoor-walk": {
+    "import": true,
+    "family": "Outdoor Walk",
+    "tracking": "duration_distance",
+    "aliases": [
+      "outdoor walking",
+      "hiking"
+    ]
+  },
+  "local:pallof-press-band": {
+    "family": "Pallof Press",
+    "variant": "Band"
+  },
+  "local:pendlay-row": {
+    "family": "Row",
+    "variant": "Pendlay Row"
+  },
+  "local:pendulum-squat": {
+    "family": "Pendulum Squat",
+    "loading": "plate"
+  },
+  "local:pistol-squat": {
+    "family": "Pistol Squat",
+    "aliases": [
+      "single-leg high box squat",
+      "single-leg squat"
+    ]
+  },
+  "local:plank-weighted": {
+    "family": "Plank",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "tracking": "duration"
+  },
+  "local:preacher-curl-ez-bar": {
+    "family": "Preacher Curl",
+    "variant": "EZ Bar",
+    "aliases": [
+      "scott curl"
+    ]
+  },
+  "local:pull-up-assisted-machine": {
+    "family": "Pull-Up",
+    "variant": "Assisted Machine",
+    "tracking": "assisted_reps",
+    "loading": "stack",
+    "aliases": [
+      "assisted pull-up"
+    ]
+  },
+  "local:pull-up-wide-grip": {
+    "family": "Pull-Up",
+    "variant": "Wide-Grip"
+  },
+  "local:pullover-cable": {
+    "family": "Pullover",
+    "variant": "Cable"
+  },
+  "local:pullover-machine": {
+    "family": "Pullover",
+    "variant": "Machine",
+    "loading": "stack"
+  },
+  "local:push-press-dumbbell": {
+    "family": "Push Press",
+    "variant": "Dumbbell"
+  },
+  "local:push-up-archer": {
+    "family": "Push-Up",
+    "variant": "Archer",
+    "aliases": [
+      "pushup",
+      "press-up"
+    ]
+  },
+  "local:push-up-clap": {
+    "family": "Push-Up",
+    "variant": "Clap",
+    "aliases": [
+      "plyo push-up",
+      "pushup",
+      "press-up"
+    ]
+  },
+  "local:push-up-deficit": {
+    "family": "Push-Up",
+    "variant": "Deficit",
+    "aliases": [
+      "pushup",
+      "press-up"
+    ]
+  },
+  "local:push-up-knee": {
+    "family": "Push-Up",
+    "variant": "Knee",
+    "aliases": [
+      "kneeling push-up",
+      "pushup",
+      "press-up"
+    ]
+  },
+  "local:push-up-pike": {
+    "family": "Push-Up",
+    "variant": "Pike",
+    "aliases": [
+      "pike push-up",
+      "pushup",
+      "press-up"
+    ]
+  },
+  "local:push-up-weighted": {
+    "family": "Push-Up",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "pushup",
+      "press-up"
+    ]
+  },
+  "local:reverse-curl-ez-bar": {
+    "family": "Reverse Curl",
+    "variant": "EZ Bar"
+  },
+  "local:reverse-nordic": {
+    "family": "Reverse Nordic"
+  },
+  "local:romanian-deadlift-dumbbell": {
+    "family": "Romanian Deadlift",
+    "variant": "Dumbbell",
+    "aliases": [
+      "rdl"
+    ]
+  },
+  "local:romanian-deadlift-single-leg-dumbbell": {
+    "family": "Romanian Deadlift",
+    "variant": "Single-Leg Dumbbell",
+    "aliases": [
+      "rdl"
+    ]
+  },
+  "local:romanian-deadlift-smith": {
+    "family": "Romanian Deadlift",
+    "variant": "Smith",
+    "equipment": "smith_machine",
+    "aliases": [
+      "rdl"
+    ]
+  },
+  "local:row-band": {
+    "family": "Row",
+    "variant": "Band"
+  },
+  "local:row-machine": {
+    "family": "Row",
+    "variant": "Machine",
+    "loading": "stack",
+    "aliases": [
+      "seated row machine"
+    ]
+  },
+  "local:row-seated-cable-wide-grip": {
+    "family": "Row",
+    "variant": "Seated Cable, Wide-Grip"
+  },
+  "local:shrug-smith": {
+    "family": "Shrug",
+    "variant": "Smith",
+    "equipment": "smith_machine"
+  },
+  "local:shrug-trap-bar": {
+    "family": "Shrug",
+    "variant": "Trap Bar",
+    "equipment": "trap_bar"
+  },
+  "local:sissy-squat": {
+    "family": "Sissy Squat"
+  },
+  "local:sit-up-decline": {
+    "family": "Sit-Up",
+    "variant": "Decline",
+    "aliases": [
+      "weighted sit-ups - with bands",
+      "situp"
+    ]
+  },
+  "local:sit-up-weighted": {
+    "family": "Sit-Up",
+    "variant": "Weighted",
+    "equipment": "weighted_bodyweight",
+    "aliases": [
+      "situp"
+    ]
+  },
+  "local:skierg": {
+    "import": true,
+    "family": "SkiErg",
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance",
+    "aliases": [
+      "ski erg"
+    ]
+  },
+  "local:split-squat-bulgarian-dumbbell": {
+    "family": "Split Squat",
+    "variant": "Bulgarian Dumbbell",
+    "aliases": [
+      "bss",
+      "rear-foot-elevated split squat",
+      "suspended split squat",
+      "rfess",
+      "rear foot elevated split squat"
+    ]
+  },
+  "local:split-squat-front-foot-elevated": {
+    "family": "Split Squat",
+    "variant": "Front-Foot Elevated",
+    "aliases": [
+      "rfess",
+      "rear foot elevated split squat"
+    ]
+  },
+  "local:spoto-press": {
+    "family": "Bench Press",
+    "variant": "Spoto Press",
+    "aliases": [
+      "bench",
+      "flat bench"
+    ]
+  },
+  "local:squat-low-bar": {
+    "family": "Squat",
+    "variant": "Low-Bar"
+  },
+  "local:squat-paused": {
+    "family": "Squat",
+    "variant": "Paused",
+    "aliases": [
+      "pause squat"
+    ]
+  },
+  "local:squat-safety-bar": {
+    "family": "Squat",
+    "variant": "Safety Bar",
+    "aliases": [
+      "ssb squat"
+    ]
+  },
+  "local:stationary-bike-spin": {
+    "import": true,
+    "family": "Stationary Bike",
+    "variant": "Spin",
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance",
+    "aliases": [
+      "spin bike",
+      "indoor cycling",
+      "exercise bike"
+    ]
+  },
+  "local:step-up-bodyweight": {
+    "family": "Step-Up",
+    "variant": "Bodyweight",
+    "aliases": [
+      "step-up with knee raise"
+    ]
+  },
+  "local:suitcase-carry": {
+    "family": "Suitcase Carry",
+    "tracking": "duration"
+  },
+  "local:superman": {
+    "family": "Superman"
+  },
+  "local:swimming": {
+    "import": true,
+    "family": "Swimming",
+    "tracking": "duration_distance"
+  },
+  "local:thruster-barbell": {
+    "family": "Thruster",
+    "variant": "Barbell"
+  },
+  "local:thruster-dumbbell": {
+    "family": "Thruster",
+    "variant": "Dumbbell"
+  },
+  "local:tibialis-raise": {
+    "family": "Tibialis Raise",
+    "aliases": [
+      "tib raise"
+    ]
+  },
+  "local:triceps-extension-cross-body-cable": {
+    "family": "Triceps Extension",
+    "variant": "Cross-Body Cable",
+    "aliases": [
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
+  },
+  "local:triceps-extension-overhead-ez-bar": {
+    "family": "Triceps Extension",
+    "variant": "Overhead EZ Bar",
+    "aliases": [
+      "tricep extension",
+      "overhead extension",
+      "french press"
+    ]
+  },
+  "local:triceps-pushdown-band": {
+    "family": "Triceps Pushdown",
+    "variant": "Band",
+    "aliases": [
+      "pressdown",
+      "tricep pushdown"
+    ]
+  },
+  "local:upright-row-ez-bar": {
+    "family": "Upright Row",
+    "variant": "EZ Bar"
+  },
+  "local:wall-ball": {
+    "family": "Wall Ball",
+    "aliases": [
+      "wall ball shot"
+    ]
+  },
+  "local:wall-sit": {
+    "family": "Wall Sit",
+    "tracking": "duration"
+  },
+  "local:y-raise-cable": {
+    "family": "Y-Raise",
+    "variant": "Cable"
+  },
+  "local:y-raise-dumbbell": {
+    "family": "Y-Raise",
+    "variant": "Dumbbell",
+    "aliases": [
+      "prone y raise"
+    ]
+  },
+  "local:z-press": {
+    "family": "Overhead Press",
+    "variant": "Z Press",
+    "aliases": [
+      "ohp",
+      "shoulder press",
+      "military press"
+    ]
   }
 }

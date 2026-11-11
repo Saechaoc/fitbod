@@ -22,6 +22,13 @@ public struct CatalogEntry: Equatable, Sendable {
     public let trackingRaw: String?
     /// Other names people use, lowercased and joined by "|".
     public let aliasesJoined: String
+    public let familyName: String?
+    public let variantLabel: String?
+    public let brand: String?
+    public let loadingRaw: String?
+    /// Curation hides the row. The importer still lists it while a routine
+    /// or a logged workout uses it.
+    public let isHidden: Bool
     public let mechanicRaw: String
     public let forceRaw: String?
     public let levelRaw: String
@@ -51,6 +58,11 @@ public enum ExerciseCatalog {
                 equipmentRaw: curated?.equipment ?? EquipmentMapper.map(dto.equipment).rawValue,
                 trackingRaw: curated?.tracking,
                 aliasesJoined: (curated?.aliases ?? []).map { $0.lowercased() }.joined(separator: "|"),
+                familyName: curated?.family,
+                variantLabel: curated?.variant,
+                brand: curated?.brand,
+                loadingRaw: curated?.loading,
+                isHidden: curated?.hidden ?? false,
                 mechanicRaw: dto.mechanic ?? Mechanic.compound.rawValue,
                 forceRaw: dto.force,
                 levelRaw: dto.level,

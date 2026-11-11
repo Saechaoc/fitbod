@@ -83,7 +83,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertEqual(field("Session name").value as? String, "M1 Push A",
                        "Returning from the picker must preserve the unsaved name")
         tap("Add exercise")
-        pickExercise("Incline Dumbbell Press")
+        pickExercise("Bench Press (Incline Dumbbell)")
         let reorderSecond = app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label == %@", "routine.exercise.reorder.2", "Move exercise 2"
         )).firstMatch
@@ -93,7 +93,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         tap("Move up")
         XCTAssertTrue(UITestNavigation.appears(app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label BEGINSWITH %@",
-            "routine.exercise.name.1", "Incline Dumbbell Press"
+            "routine.exercise.name.1", "Bench Press (Incline Dumbbell)"
         )).firstMatch, within: 5))
         let reorderFirst = app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label == %@", "routine.exercise.reorder.1", "Move exercise 1"

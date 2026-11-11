@@ -11,7 +11,7 @@ final class TimedSetUITests: XCTestCase {
     @MainActor
     func testPlankLogsATimeAndHistoryShowsItAfterRelaunch() throws {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
-        swapFirstExercise(to: "Plank", in: app)
+        swapFirstExercise(to: "Plank (Front)", in: app)
 
         // A timed row has a time field, no reps field, and needs a time.
         let time = app.textFields["set.time.1.S1"]
@@ -24,7 +24,7 @@ final class TimedSetUITests: XCTestCase {
         type("130", into: time, in: app)
         XCTAssertEqual(time.value as? String, "1:30", "Digits typed read as minutes and seconds")
         completeFirstSetAndFinish(in: app)
-        assertHistoryShows("Plank", set: "Set 1, 1:30", in: app)
+        assertHistoryShows("Plank (Front)", set: "Set 1, 1:30", in: app)
     }
 
     /// The plan's cardio check: Stair Climber at 20:00 and level 8 finishes
@@ -61,7 +61,7 @@ final class TimedSetUITests: XCTestCase {
         let resume = app.buttons["resumeSlab.resume"]
         XCTAssertTrue(UITestNavigation.appears(resume, within: 90))
         resume.tap()
-        let bench = app.staticTexts["Barbell Bench Press - Medium Grip"].firstMatch
+        let bench = app.staticTexts["Bench Press (Barbell)"].firstMatch
         XCTAssertTrue(UITestNavigation.appears(bench))
         bench.press(forDuration: 1)
         let swap = app.buttons["Swap Exercise…"]

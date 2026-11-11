@@ -1,7 +1,8 @@
 import XCTest
 
 /// Library search finds an exercise by the words of its name in any order,
-/// and by the names people use for it, showing the name it matched (RM-022).
+/// and by the names people use for it, showing the name it matched. A row
+/// curation hides is in no list (RM-022).
 final class LibrarySearchUITests: XCTestCase {
 
     override func setUpWithError() throws {
@@ -26,8 +27,17 @@ final class LibrarySearchUITests: XCTestCase {
 
         app.buttons["Clear search"].tap()
         search.tap()
-        search.typeText("press bench barbell medium")
-        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+        search.typeText("barbell press bench")
+        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Bench Press (Barbell)")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(bench), "Words find a name in any order")
+
+        // A hidden duplicate is in no list, and its name finds the row that stays.
+        app.buttons["Clear search"].tap()
+        search.tap()
+        search.typeText("barbell shoulder press")
+        let kept = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Overhead Press (Seated Barbell)")).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(kept), "A hidden row's name finds the row that stays")
+        let hidden = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Shoulder Press,"))
+        XCTAssertEqual(hidden.count, 0, "A hidden row is in no list")
     }
 }

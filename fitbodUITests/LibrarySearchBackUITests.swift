@@ -16,8 +16,8 @@ final class LibrarySearchBackUITests: XCTestCase {
         let search = app.textFields["library.search.browser"]
         XCTAssertTrue(UITestNavigation.appears(search))
         search.tap()
-        search.typeText("Barbell Bench Press - Medium")
-        let result = app.staticTexts["Barbell Bench Press - Medium Grip"]
+        search.typeText("Bench Press (Barbell)")
+        let result = app.staticTexts["Bench Press (Barbell)"]
         XCTAssertTrue(UITestNavigation.appears(result))
         result.tap()
 

@@ -75,7 +75,8 @@ public struct ExerciseDTO: Codable, Equatable, Sendable {
 /// `id`. Upstream left many bodyweight moves without equipment, so they
 /// could not log with zero added weight; it has no notion of what a set
 /// records, so holds and carries logged reps; and its cardio rows come in
-/// only when curation asks for them, under the names people use.
+/// only when curation asks for them, under the names people use. Curation
+/// also sorts rows into families and variants and hides duplicates.
 public struct ExerciseCuration: Codable, Equatable, Sendable {
     /// Brings in a row outside the strength categories, such as cardio.
     public let imports: Bool?
@@ -88,8 +89,20 @@ public struct ExerciseCuration: Codable, Equatable, Sendable {
     public let tracking: String?
     /// Other names people use for the exercise.
     public let aliases: [String]?
+    /// The family the Library groups the row under, such as "Chest Press".
+    public let family: String?
+    /// What sets the row apart in its family, such as "Cable".
+    public let variant: String?
+    /// A `MachineBrand` raw value.
+    public let brand: String?
+    /// How a machine takes its load: "plate" (plates on its horns) or
+    /// "stack" (a pinned weight stack).
+    public let loading: String?
+    /// Hides a duplicate or an oddity; its name is an alias of the row
+    /// that stays.
+    public let hidden: Bool?
 
     enum CodingKeys: String, CodingKey {
-        case imports = "import", name, equipment, tracking, aliases
+        case imports = "import", name, equipment, tracking, aliases, family, variant, brand, loading, hidden
     }
 }

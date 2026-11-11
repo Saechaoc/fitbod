@@ -37,12 +37,12 @@
 //
 //  ## Everything runs in memory
 //
-//  `FilteredExerciseList` fetches every row, applies the facets with
-//  `applyPostFetchFilters(to:)`, then searches what is left with
-//  `ExerciseSearch`, which reads aliases and ranks its results (RM-022).
+//  `FilteredExerciseList` fetches every row, drops hidden rows and applies
+//  the facets with `applyPostFetchFilters(to:)`, then searches what is left
+//  with `ExerciseSearch`, which reads aliases and ranks its results (RM-022).
 //  No facet or search goes into a `#Predicate`: the guarded multi-facet
 //  shape pushes Swift's type checker past its budget and is a brittle SQL
-//  translation, and a predicate cannot rank. The catalog is about 720 rows.
+//  translation, and a predicate cannot rank. The catalog is about 840 rows.
 //
 
 import Foundation
@@ -128,12 +128,10 @@ public final class FilterState {
         return matchesMuscleFacet(exercise)
     }
 
-    /// Applies the facet filters to the fetched rows.
+    /// The fetched rows the list shows: those curation does not hide, that
+    /// pass the selected facets.
     public func applyPostFetchFilters(to exercises: [Exercise]) -> [Exercise] {
-        guard !isEmpty else {
-            return exercises
-        }
-
-        return exercises.filter { matchesPostFetchFacets($0) }
+        let anyFacet = !isEmpty
+        return exercises.filter { !$0.isHidden && (!anyFacet || matchesPostFetchFacets($0)) }
     }
 }

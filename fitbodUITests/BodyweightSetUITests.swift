@@ -1,7 +1,7 @@
 import XCTest
 
 /// A bodyweight move logs with no added weight, even when the upstream
-/// catalog left its equipment blank (Parallel Bar Dip had `null`).
+/// catalog left its equipment blank (Parallel Bar Dip, now Dip, had `null`).
 final class BodyweightSetUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -13,7 +13,7 @@ final class BodyweightSetUITests: XCTestCase {
         let resume = app.buttons["resumeSlab.resume"]
         XCTAssertTrue(UITestNavigation.appears(resume, within: 90))
         resume.tap()
-        let bench = app.staticTexts["Barbell Bench Press - Medium Grip"].firstMatch
+        let bench = app.staticTexts["Bench Press (Barbell)"].firstMatch
         XCTAssertTrue(UITestNavigation.appears(bench))
         bench.press(forDuration: 1)
         let swap = app.buttons["Swap Exercise…"]
@@ -22,13 +22,13 @@ final class BodyweightSetUITests: XCTestCase {
         let search = app.textFields["library.search.picker"]
         XCTAssertTrue(UITestNavigation.appears(search))
         search.tap()
-        search.typeText("Parallel Bar Dip")
+        search.typeText("Dip")
         let dip = app.buttons.matching(NSPredicate(
-            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", "Parallel Bar Dip,"
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", "Dip,"
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(dip))
         dip.tap()
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Parallel Bar Dip"].firstMatch))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Dip"].firstMatch))
 
         let skip = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Skip all warm-up sets")).firstMatch
         if skip.waitForExistence(timeout: 3) {

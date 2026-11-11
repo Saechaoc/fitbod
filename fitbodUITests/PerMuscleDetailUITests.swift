@@ -33,7 +33,7 @@ final class PerMuscleDetailUITests: XCTestCase {
     // MARK: - Chest
 
     /// The demo Push A's two chest exercises, in name order.
-    private static let tiedContributors = ["Barbell Bench Press - Medium Grip", "Incline Dumbbell Press"]
+    private static let tiedContributors = ["Bench Press (Barbell)", "Bench Press (Incline Dumbbell)"]
 
     /// The tied contributors' names from the top of the screen down, once
     /// both rows read three sets.

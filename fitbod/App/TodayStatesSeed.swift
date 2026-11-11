@@ -63,7 +63,7 @@ enum TodayStatesSeed {
 
     /// (session name, catalog IDs), so a renamed catalog row is still found.
     typealias SessionPlan = (name: String, exerciseIDs: [String])
-    private static let push: SessionPlan = ("Push A", ["Barbell_Bench_Press_-_Medium_Grip", "Barbell_Shoulder_Press"])
+    private static let push: SessionPlan = ("Push A", ["Barbell_Bench_Press_-_Medium_Grip", "Seated_Barbell_Military_Press"])
     private static let pull: SessionPlan = ("Pull A", ["Bent_Over_Barbell_Row", "Wide-Grip_Lat_Pulldown"])
     private static let legs: SessionPlan = ("Legs A", ["Barbell_Squat", "Romanian_Deadlift"])
     private static let arms: SessionPlan = (standaloneSessionName, ["Barbell_Curl", "Triceps_Pushdown"])

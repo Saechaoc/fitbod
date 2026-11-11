@@ -530,6 +530,47 @@ final class SeedTests {
         #expect(reread.exercise?.name == catalogName, "the re-seed must have renamed the bench")
     }
 
+    @Test("A row curation hides stays listed while a logged workout or a routine uses it")
+    @MainActor // LoggerFixtures is main-actor isolated.
+    func hiddenRowsInUseStayListed() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let importer = ExerciseLibraryImporter(modelContainer: container)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        func seeded(_ externalID: String, in context: ModelContext) throws -> Exercise {
+            try #require(try context.fetch(FetchDescriptor<Exercise>(
+                predicate: #Predicate { $0.externalID == externalID }
+            )).first)
+        }
+        let ctx = ModelContext(container)
+        let logged = try seeded("Barbell_Shoulder_Press", in: ctx)
+        let planned = try seeded("Running_Treadmill", in: ctx)
+        let unused = try seeded("Car_Deadlift", in: ctx)
+        #expect(logged.isHidden && planned.isHidden && unused.isHidden)
+
+        // Picked before a seed hid them.
+        let startedAt = Date(timeIntervalSince1970: 1_790_000_000)
+        _ = try LoggerFixtures.session(
+            exercise: logged, startedAt: startedAt, completedAt: startedAt.addingTimeInterval(3_600),
+            sets: [(60, 8, true)], in: ctx
+        )
+        let routine = SessionTemplate()
+        ctx.insert(routine)
+        let item = SessionExerciseTemplate()
+        ctx.insert(item)
+        item.sessionTemplate = routine
+        item.exercise = planned
+        try ctx.save()
+
+        defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let after = ModelContext(container)
+        #expect(try seeded("Barbell_Shoulder_Press", in: after).isHidden == false, "a logged exercise stays listed")
+        #expect(try seeded("Running_Treadmill", in: after).isHidden == false, "a planned exercise stays listed")
+        #expect(try seeded("Car_Deadlift", in: after).isHidden)
+    }
+
     // MARK: - Test 9: a seed that stopped partway resumes (review WR-01)
 
     @Test("A seed that stopped partway resumes: what reached disk stays, the rest is inserted once")

@@ -108,18 +108,22 @@ struct BackupCatalogFieldsTests {
 
     @Test("restore clears the seed stamp, and the next seed applies curation to the restored catalog")
     func restoreClearsTheSeedStamp() async throws {
-        // A row as an older backup holds it: a curated id, before its retag.
+        // Rows as an older backup holds them: curated ids, before their curation.
         let curationURL = try #require(Bundle.main.url(forResource: "curation", withExtension: "json"))
         let curation = try JSONDecoder().decode([String: ExerciseCuration].self, from: Data(contentsOf: curationURL))
-        let (externalID, curated) = try #require(
-            curation.sorted { $0.key < $1.key }.first { $0.value.equipment != nil }
-        )
+        let sorted = curation.sorted { $0.key < $1.key }
+        let (externalID, curated) = try #require(sorted.first { $0.value.equipment != nil && $0.value.family != nil })
+        let (machineID, machine) = try #require(sorted.first { $0.value.brand != nil && $0.value.loading != nil })
         let source = try makeContainer()
         let stale = Exercise(
             externalID: externalID, name: "Stale", canonicalName: "stale",
             equipmentRaw: Equipment.other.rawValue, mechanicRaw: Mechanic.compound.rawValue
         )
         source.mainContext.insert(stale)
+        source.mainContext.insert(Exercise(
+            externalID: machineID, name: "Stale machine", canonicalName: "stale machine",
+            equipmentRaw: Equipment.machine.rawValue, mechanicRaw: Mechanic.compound.rawValue
+        ))
         try source.mainContext.save()
         let url = try await archive(source)
         defer { try? FileManager.default.removeItem(at: url) }
@@ -138,13 +142,18 @@ struct BackupCatalogFieldsTests {
         #expect(defaults.object(forKey: ExerciseLibraryImporter.seedVersionKey) == nil)
 
         try await ExerciseLibraryImporter(modelContainer: destination).seedIfNeeded(defaults: defaults)
-        let restored = try #require(
-            try ModelContext(destination).fetch(
-                FetchDescriptor<Exercise>(predicate: #Predicate { $0.externalID == externalID })
-            ).first
-        )
-        #expect(restored.id == stale.id)
-        #expect(restored.equipmentRaw == curated.equipment)
+        func restored(_ id: String) throws -> Exercise {
+            try #require(try ModelContext(destination).fetch(
+                FetchDescriptor<Exercise>(predicate: #Predicate { $0.externalID == id })
+            ).first)
+        }
+        let row = try restored(externalID)
+        #expect(row.id == stale.id)
+        #expect(row.equipmentRaw == curated.equipment)
+        #expect(row.familyName == curated.family && row.variantLabel == curated.variant)
+        let machineRow = try restored(machineID)
+        #expect(machineRow.familyName == machine.family && machineRow.variantLabel == machine.variant)
+        #expect(machineRow.brand == machine.brand && machineRow.loadingRaw == machine.loading)
     }
 
     // MARK: - Helpers

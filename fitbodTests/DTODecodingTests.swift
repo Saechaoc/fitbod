@@ -72,7 +72,7 @@ struct DTODecodingTests {
         )
         let raw = try String(contentsOf: url, encoding: .utf8)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        #expect(Int(trimmed) == 6, "Cardio rows came at SEED_VERSION=6, got: \(trimmed)")
+        #expect(Int(trimmed) == 7, "Families, variants and hidden rows came at SEED_VERSION=7, got: \(trimmed)")
     }
 
     // MARK: - Equipment mapping (LIB-06)

@@ -24,6 +24,7 @@
 //      slugs returns the union)
 //   9. `facetsRunOverEveryRow` - the fetch takes every row, and the facets
 //      narrow it in memory
+//  10. `hiddenRowsAreNeverListed` - a row curation hides is in no list
 //
 //  ## Fixture
 //
@@ -257,5 +258,19 @@ struct FilterStatePredicateTests {
         state.selectedMuscleSlugs = ["chest"]
         #expect(try ctx.fetchCount(FetchDescriptor<Exercise>()) == 4)
         #expect(try Self.evaluate(state, search: "", in: ctx).map(\.name) == ["Barbell Bench Press"])
+    }
+
+    // MARK: - Test 10: hidden rows
+
+    @Test("A row curation hides is in no list, whatever the facets or the search")
+    func hiddenRowsAreNeverListed() throws {
+        let (_, ctx) = try Self.makeFixture()
+        let bench = try #require(try ctx.fetch(FetchDescriptor<Exercise>()).first { $0.name == "Barbell Bench Press" })
+        bench.isHidden = true
+        let state = FilterState()
+        #expect(try Self.evaluate(state, search: "", in: ctx).count == 3)
+        #expect(try Self.evaluate(state, search: "bench", in: ctx).isEmpty)
+        state.selectedEquipmentRaw = ["barbell"]
+        #expect(try Self.evaluate(state, search: "", in: ctx).map(\.name) == ["Squat"])
     }
 }

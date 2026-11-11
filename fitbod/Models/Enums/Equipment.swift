@@ -17,6 +17,8 @@ public enum Equipment: String, CaseIterable, Sendable {
     case trapBar = "trap_bar"
     case dumbbell
     case kettlebell
+    /// A weight plate held on its own, as in a plate front raise.
+    case plate
     case machine
     case smithMachine = "smith_machine"
     case cable

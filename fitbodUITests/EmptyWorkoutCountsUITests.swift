@@ -33,13 +33,10 @@ extension UITestNavigation {
 }
 
 final class EmptyWorkoutCountsUITests: XCTestCase {
-    /// Every catalog name DemoWorkoutSeed's Push A may use.
+    /// The catalog rows DemoWorkoutSeed's Push A uses.
     private let pushANames = [
-        "Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting",
-        "Incline Dumbbell Press",
-        "Barbell Shoulder Press", "Dumbbell Shoulder Press",
-        "Cable Seated Lateral Raise", "Side Lateral Raise",
-        "Triceps Pushdown", "Triceps Pushdown - Rope Attachment",
+        "Bench Press (Barbell)", "Bench Press (Incline Dumbbell)", "Overhead Press (Seated Barbell)",
+        "Lateral Raise (Seated Cable)", "Triceps Pushdown (Bar)",
     ]
 
     override func setUpWithError() throws {
@@ -53,7 +50,7 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.emptyWorkout)
         UITestNavigation.selectTab("Progress", in: app)
 
-        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press")).firstMatch
+        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Bench Press (Barbell)")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(bench), "Progress shows no bench press row")
         let settled = settle(bench, NSPredicate(format: "label CONTAINS %@", "1 session ·"))
         XCTAssertTrue(settled, "The empty workout must not count as a session: \(bench.label)")
