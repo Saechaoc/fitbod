@@ -275,6 +275,10 @@ public struct RootView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // iOS 26.7 still lays a scroll edge effect over the hidden system
+            // tab bar's 83pt, which dark mode paints as a black band over the
+            // bottom of every tab.
+            .scrollEdgeEffectHidden(true, for: .bottom)
             .environment(\.isKeyboardVisible, keyboardVisible)
 
             if showsTabBar {

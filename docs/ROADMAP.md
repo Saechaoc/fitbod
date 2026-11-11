@@ -37,7 +37,7 @@ Only the named observation/decision is unavailable; this section does not pause 
 |---|---|---|
 | [RM-007](#rm-007), FT-19 | Exact repeated prompt text/owner on phone, then allow/deny/Focus reproduction | Identifying/fixing that prompt and its release acceptance. |
 | [RM-008](#rm-008), FT-20 | Lock Screen/Island rendering, rest adjustment/expiry/end on installed build | Closing widget rendering/lifecycle acceptance; implementation plan is archived. |
-| [RM-045](#rm-045), FT-16 | Physical small/large phone heatmap reach/calf taps | Closing clipping acceptance; RM-010 development can proceed. |
+| [RM-045](#rm-045), FT-16 | Small-phone heatmap reach and calf taps on both sizes; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; RM-010 development can proceed. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
 | [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
 | [RM-021](#rm-021) | Provenance/legacy-data design | Stored unit changes. |
@@ -257,6 +257,7 @@ Count outside view rendering, keyed by finished-workout changes and the week sta
 **Verify when:** Counts/routes/advice-off at implementation; [RM-045](#rm-045) physical reach remains separate.
 **Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** [Today layouts](design-map/redesign/today-layouts.md), D-131, redesign R-7/R-21; [Progress](../fitbod/Progress/ProgressHomeView.swift), [advisor](../fitbod/Fatigue/DeloadAdvisor.swift).
+**Design review (2026-11-11):** Updated [Today snapshot](../.lavish/today-snapshot/today-snapshot.html) using first party Apple Fitness, Hevy, Things and Gentler Streak references. Proposed hierarchy: workout action → weekly counts opening Volume → three-exercise preview with full-list disclosure; retains BRU and keeps muscle analysis in Volume. HTML browser checks passed at 390/1024/1440px in light/dark: four representative states, visible weekly summary, 44px controls, disclosure, destination previews and feedback (159 assertions; no browser errors). This is design evidence only; native scope/status and the acceptance checks above remain open. No iOS build/device checks for this artifact-only update.
 
 ### <a id="rm-011"></a>RM-011 — Redesign 1.5: Program explains Now, Planned and Past
 
@@ -762,7 +763,7 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 **Done when / reproduction:** current main → Progress → Volume → FRONT/BACK; reach all lower-body regions/clear tab bar and safe area; tap calf on each and open detail. Repeat small 6.1-inch/390pt and large/440pt phone; 390pt simulator adds layout evidence but cannot replace phone pass. Capture clipping with model/width/text size/build.
 **Scope / sequence:** Observe front/back/calf reach on both physical sizes → record model/build/text/appearance → fix reproduced clipping. No heatmap redesign.
 **Requires:** Physical small/large phones; no prerequisite on completing RM-010.
-**Evidence:** Historical simulator/asset evidence below; required physical observation remains unproven.
+**Evidence:** Historical simulator/asset evidence below. 2026-11-11, iPhone 15 Pro Max (430pt), iOS 26.7.2, dark mode: an 83pt black band covered the bottom of every tab, hiding the lower heatmap above the tab bar. A view dump on the phone found a `ScrollEdgeEffectView` that iOS 26.7 lays over the hidden system tab bar's area; iOS 26.5 simulators do not add it, so they never showed the band. `RootView` now hides the bottom scroll edge effect on the tab container; the user confirmed on that phone that the band is gone. Unit 1,209/1,212 (0 failed) and `WorkoutExitUITests` passed. Still unproven: calf taps on the large phone and the small-phone pass.
 **References:** FT-16/VOL-05; [figures](../fitbod/Fatigue/BodySilhouetteView.swift).
 
 ### <a id="rm-046"></a>RM-046 — FT-21: installed app icons
