@@ -43,7 +43,7 @@ Only the named observation/decision is unavailable; this section does not pause 
 | [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
 | [RM-021](#rm-021) | Provenance/legacy-data design | Stored unit changes. |
 | [RM-063](#rm-063) | The first MetricKit report on the phone, shared from Settings | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
-| [RM-022](#rm-022), [RM-062](#rm-062) | Seed 7 checks on the phone (logged names in History, Low Cable Triceps Extension listed, "side lateral raise" found); the Arsenal Strength machine names; whether a treadmill records speed and incline | The coverage fill and treadmill tracking; the families, grouped list and editor pickers are done. |
+| [RM-022](#rm-022), [RM-062](#rm-062) | Seed 7 and grouped-list checks on the phone (logged names in History, Low Cable Triceps Extension listed, "side lateral raise" found, Bench Press folded into one line); the Arsenal Strength machine names; whether a treadmill records speed and incline | The coverage fill and treadmill tracking; the families, grouped list and editor pickers are done. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
 
@@ -428,6 +428,8 @@ Inspected at 390pt, light mode: the collapsed list, Bench Press and Chest Press 
 Beside the approved mock-ups for the Library, the picker and the custom exercise editor, the only new differences are the family line, the short variant labels and the Family and Brand rows, all chosen in the plan; the design-map screen files already list the older differences.
 Before the rebase onto `main`, the unit target passed 1,382 (1 known issue) and the full tier 1,486 with no failure, 104 of them UI tests.
 After the rebase (RM-063, RM-064, RM-053) and the review's fixes (two helpers made private, two comments), SwiftLint found nothing, the unit target passed 1,221 (1 known issue) and the Library, editor and swap UI suites passed all 9 of their tests.
+Installed on the phone on 2026-11-11 (`1cb90b5a`) after a fresh copy of its store (00:09) that matched the 23:18 copy, so seed 7 has not run there yet and the earlier rehearsal still covers it.
+Verify on the phone: once seed 7 has run, check that the Library folds Bench Press into one line that opens to its variants, and that a new machine exercise can pick a family and a brand.
 Open for the grouped list: VoiceOver, larger text and dark mode are unchecked; once a family line scrolls away, its variants show only their short labels and the indent; the Library screens in the design map wait until the workflow is stable.
 **References:** LIB-01–06/FT-05; [importer](../fitbod/ExerciseLibrary/ExerciseLibraryImporter.swift), [seed source](../fitbod/Resources/ExerciseSeed/SOURCE.md).
 
