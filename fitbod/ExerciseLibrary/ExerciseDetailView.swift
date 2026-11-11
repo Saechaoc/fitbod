@@ -381,13 +381,14 @@ struct ExerciseDetailView: View {
     }
 
     /// What the exercise's unit measures, or nil when its sets record a
-    /// time alone or a machine level.
+    /// time alone or a machine level or stair speed.
     private var unitMeasure: String? {
         switch exercise.tracking {
         case .weightReps, .reps, .assistedReps: "Weight"
-        case .duration: exercise.timedValue == .weight ? "Weight" : nil
+        case .duration: exercise.timedValues.contains(.weight) ? "Weight" : nil
         case .durationDistance: "Distance"
-        case .durationLevel: nil
+        case .durationSpeedIncline: "Speed"
+        case .durationLevel, .durationStepSpeed: nil
         }
     }
 

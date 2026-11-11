@@ -15,10 +15,25 @@ enum WorkoutSetColumns {
     static let effort: CGFloat = 56
     static let done: CGFloat = 44
     static let spacing: CGFloat = 6
-    /// A timed row has a time and one more value, each as wide as the
-    /// weight, and no reps or effort column. Last time takes the room they
-    /// leave: "20:00 2.5mi" needs it.
-    static let timedPrevious: CGFloat = previous + reps + effort - weight + spacing
+    /// A treadmill's speed and incline each take a little less room than
+    /// one value beside a time.
+    static let pairedValue: CGFloat = 52
+
+    /// How wide each of a timed row's values is, for `count` of them.
+    static func valueWidth(count: Int) -> CGFloat {
+        count > 1 ? pairedValue : weight
+    }
+
+    /// A timed row has a time and its values, and no reps or effort column.
+    /// Last time takes the room they leave in a lift row's width, "20:00
+    /// 2.5mi" needs it; a cardio row, which has no set number (RM-062),
+    /// takes that column's room too. A time alone keeps a value's room.
+    static func timedPrevious(values count: Int, numbered: Bool) -> CGFloat {
+        let liftRow = number + previous + weight + reps + effort + done + 5 * spacing
+        let valueRoom = CGFloat(max(count, 1)) * (valueWidth(count: count) + spacing)
+        let used = (numbered ? number + spacing : 0) + weight + spacing + valueRoom + done + spacing
+        return liftRow - used
+    }
 }
 
 public struct SetRow: View {
@@ -41,9 +56,11 @@ public struct SetRow: View {
     public let startsNext: Bool
 
     @State private var repsText: String = ""
-    /// A timed set's time as typed, such as "1:30", and its distance or level.
+    /// A timed set's time as typed, such as "1:30", and the values beside
+    /// it: a distance, level or speed, then a treadmill's incline.
     @State private var timeText = ""
     @State private var secondText = ""
+    @State private var thirdText = ""
     /// A load set's own time while it is being corrected, as typed.
     @State private var setTimeText = ""
     @State private var editingSetTime = false
@@ -56,7 +73,7 @@ public struct SetRow: View {
     @FocusState private var repsFocused: Bool
     @FocusState private var timedFocus: TimedField?
 
-    private enum TimedField { case time, second, setTime }
+    private enum TimedField { case time, second, third, setTime }
 
     @Environment(\.weightUnit) private var defaultUnit
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -103,14 +120,16 @@ public struct SetRow: View {
         let canComplete = draftIsCurrent && SessionSetActions.canComplete(entry, suggestion: suggestion)
         VStack(alignment: .leading, spacing: 6) {
             inputLayout {
-                setActions
+                // Cardio is one bout, with no set to number or retype (RM-062).
+                if !isCardio { setActions }
 
                 PreviousColumn(
                     exerciseID: sessionExercise.exercise?.id,
                     intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
                     currentSessionID: sessionExercise.session?.id,
                     unit: unit,
-                    machineID: sessionExercise.machine?.id
+                    machineID: sessionExercise.machine?.id,
+                    tracking: sessionExercise.exercise?.tracking
                 )
                 .frame(width: previousWidth, alignment: .leading)
 
@@ -140,8 +159,8 @@ public struct SetRow: View {
                 .disabled(!entry.isComplete && !canComplete)
                 .accessibilityLabel(
                     entry.isComplete
-                    ? "Set \(displayNumber) complete"
-                    : "Mark set \(displayNumber) complete"
+                    ? "\(rowName.capitalized) complete"
+                    : "Mark \(rowName) complete"
                 )
                 .accessibilityHint(entry.isComplete ? "Double tap to mark as not done" : completionHint)
                 .accessibilityIdentifier("set.complete.\(identifierSuffix)")
@@ -184,12 +203,10 @@ public struct SetRow: View {
         .onChange(of: entry.durationSeconds) { _, _ in
             if timedFocus != .time { timeText = storedTimeText }
         }
-        .onChange(of: entry.distanceMeters) { _, _ in
-            if timedFocus != .second { secondText = storedSecondText }
-        }
-        .onChange(of: entry.level) { _, _ in
-            if timedFocus != .second { secondText = storedSecondText }
-        }
+        .onChange(of: entry.distanceMeters) { _, _ in showStoredValues() }
+        .onChange(of: entry.level) { _, _ in showStoredValues() }
+        .onChange(of: entry.speedKmh) { _, _ in showStoredValues() }
+        .onChange(of: entry.incline) { _, _ in showStoredValues() }
         // A timed field that finished editing shows the value as stored
         // ("90" typed reads "1:30") and persists now.
         .onChange(of: timedFocus) { previous, _ in
@@ -295,7 +312,19 @@ public struct SetRow: View {
 
     private var previousWidth: CGFloat? {
         if dynamicTypeSize.isAccessibilitySize { return nil }
-        return tracking.isTimed ? WorkoutSetColumns.timedPrevious : WorkoutSetColumns.previous
+        return tracking.isTimed
+            ? WorkoutSetColumns.timedPrevious(values: timedValues.count, numbered: !isCardio)
+            : WorkoutSetColumns.previous
+    }
+
+    /// A cardio exercise logs one bout, with no set number (RM-062).
+    private var isCardio: Bool {
+        sessionExercise.exercise?.isCardio == true
+    }
+
+    /// What the row records beside a timed set's time.
+    private var timedValues: [TimedValue] {
+        sessionExercise.exercise?.timedValues ?? []
     }
 
     /// The text in the reps or time field is the value Done would save, so
@@ -313,7 +342,8 @@ public struct SetRow: View {
         case .weightReps: "Enter a weight and reps first"
         case .reps: "Enter reps first; added weight is optional"
         case .assistedReps: "Enter reps first; assistance is optional"
-        case .duration, .durationDistance, .durationLevel: "Enter a time first"
+        case .duration, .durationDistance, .durationLevel, .durationStepSpeed, .durationSpeedIncline:
+            "Enter a time first"
         }
     }
 
@@ -410,19 +440,35 @@ public struct SetRow: View {
         )
     }
 
-    /// A timed set: its time, then an optional load, a distance or a level.
+    /// A timed set: its time, then an optional load, a distance, a level or
+    /// stair speed, or a treadmill's speed and incline.
     /// A field writes its value only while it is being typed in: the text
     /// it shows is rounded, and must not be read back over the stored value.
     @ViewBuilder
     private var timedFields: some View {
         let offered = entry.isComplete ? WorkoutSetSuggestion() : suggestion
+        let values = timedValues
 
         stackedLabel("Time")
         valueField("Time", text: typedTime, offer: offered.durationSeconds.map(SetText.duration), field: .time)
             .keyboardType(.numberPad)
             .accessibilityIdentifier("set.time.\(identifierSuffix)")
 
-        switch sessionExercise.exercise?.timedValue {
+        if let first = values.first {
+            timedValueField(first, field: .second, text: $secondText, offered: offered, count: values.count)
+        }
+        if values.count > 1 {
+            timedValueField(values[1], field: .third, text: $thirdText, offered: offered, count: values.count)
+        }
+    }
+
+    /// One value beside a timed set's time, in the field `field`.
+    @ViewBuilder
+    private func timedValueField(
+        _ value: TimedValue, field: TimedField, text: Binding<String>, offered: WorkoutSetSuggestion, count: Int
+    ) -> some View {
+        let width = WorkoutSetColumns.valueWidth(count: count)
+        switch value {
         case .weight:
             stackedLabel("Weight (\(unit.rawValue))")
             weightCell()
@@ -430,39 +476,61 @@ public struct SetRow: View {
             let name = SetText.distanceUnit(unit)
             stackedLabel("Distance (\(name))")
             valueField(
-                "Distance in \(name)", text: $secondText,
+                "Distance in \(name)", text: text,
                 offer: offered.distanceMeters.map { SetText.entry(distance: $0, unit: unit, locale: locale) },
-                field: .second
+                field: field, width: width
             )
             .keyboardType(.decimalPad)
-            .onChange(of: secondText) { _, text in
-                if timedFocus == .second {
-                    entry.distanceMeters = SetText.meters(fromTyped: text, unit: unit, locale: locale)
+            .onChange(of: text.wrappedValue) { _, typed in
+                if timedFocus == field {
+                    entry.distanceMeters = SetText.meters(fromTyped: typed, unit: unit, locale: locale)
                 }
             }
             .accessibilityIdentifier("set.distance.\(identifierSuffix)")
         case .level:
-            stackedLabel("Level")
+            let name = tracking.levelName.capitalized
+            stackedLabel(name)
             valueField(
-                "Level", text: $secondText,
-                offer: offered.level.map { SetText.entry(level: $0, locale: locale) }, field: .second
+                name, text: text,
+                offer: offered.level.map { SetText.entry(level: $0, locale: locale) }, field: field, width: width
             )
-                .keyboardType(.decimalPad)
-                .onChange(of: secondText) { _, text in
-                    if timedFocus == .second {
-                        entry.level = SetText.number(fromTyped: text, locale: locale)
-                    }
-                }
-                .accessibilityIdentifier("set.level.\(identifierSuffix)")
-        case nil:
-            EmptyView()
+            .keyboardType(.decimalPad)
+            .onChange(of: text.wrappedValue) { _, typed in
+                if timedFocus == field { entry.level = SetText.number(fromTyped: typed, locale: locale) }
+            }
+            .accessibilityIdentifier("set.level.\(identifierSuffix)")
+        case .speed:
+            let name = SetText.speedUnit(unit)
+            stackedLabel("Speed (\(name))")
+            valueField(
+                "Speed in \(name)", text: text,
+                offer: offered.speedKmh.map { SetText.entry(speed: $0, unit: unit, locale: locale) },
+                field: field, width: width
+            )
+            .keyboardType(.decimalPad)
+            .onChange(of: text.wrappedValue) { _, typed in
+                if timedFocus == field { entry.speedKmh = SetText.kmh(fromTyped: typed, unit: unit, locale: locale) }
+            }
+            .accessibilityIdentifier("set.speed.\(identifierSuffix)")
+        case .incline:
+            stackedLabel("Incline (%)")
+            valueField(
+                "Incline", text: text,
+                offer: offered.incline.map { SetText.entry(level: $0, locale: locale) }, field: field, width: width
+            )
+            .keyboardType(.decimalPad)
+            .onChange(of: text.wrappedValue) { _, typed in
+                if timedFocus == field { entry.incline = SetText.number(fromTyped: typed, locale: locale) }
+            }
+            .accessibilityIdentifier("set.incline.\(identifierSuffix)")
         }
     }
 
     /// One of a timed set's text fields, styled like the reps field and as
     /// wide as the weight.
     private func valueField(
-        _ title: String, text: Binding<String>, offer: String?, field: TimedField
+        _ title: String, text: Binding<String>, offer: String?, field: TimedField,
+        width: CGFloat = WorkoutSetColumns.weight
     ) -> some View {
         TextField(title, text: text, prompt: Text(offer ?? "—").foregroundStyle(Color.bruMuted))
             .font(BRUFont.bodyEmphasis)
@@ -470,7 +538,7 @@ public struct SetRow: View {
             .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
             .focused($timedFocus, equals: field)
             .selectsAllOnFocus(timedFocus == field)
-            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : WorkoutSetColumns.weight)
+            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : width)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
             // A tap anywhere in the tall target ends the rest and gives
@@ -479,9 +547,11 @@ public struct SetRow: View {
                 if !entry.isComplete { onTapEmptyCell() }
                 timedFocus = field
             }
-            .accessibilityLabel("\(title), set \(displayNumber)")
+            .accessibilityLabel("\(title), \(rowName)")
             .accessibilityValue(text.wrappedValue.isEmpty ? offer ?? "none" : text.wrappedValue)
-            .accessibilityHint(offer != nil && text.wrappedValue.isEmpty ? "From your last set. Tap to edit." : "")
+            .accessibilityHint(offer != nil && text.wrappedValue.isEmpty
+                ? isCardio ? "From your plan or last time. Tap to edit." : "From your last set. Tap to edit."
+                : "")
     }
 
     private var storedTimeText: String {
@@ -503,17 +573,30 @@ public struct SetRow: View {
         )
     }
 
-    private var storedSecondText: String {
-        switch sessionExercise.exercise?.timedValue {
-        case .distance: entry.distanceMeters.map { SetText.entry(distance: $0, unit: unit, locale: locale) } ?? ""
-        case .level: entry.level.map { SetText.entry(level: $0, locale: locale) } ?? ""
-        case .weight, nil: ""
+    /// The stored value the value field at `index` beside the time shows.
+    private func storedText(at index: Int) -> String {
+        let values = timedValues
+        guard values.indices.contains(index) else { return "" }
+        switch values[index] {
+        case .distance: return entry.distanceMeters.map { SetText.entry(distance: $0, unit: unit, locale: locale) } ?? ""
+        case .level: return entry.level.map { SetText.entry(level: $0, locale: locale) } ?? ""
+        case .speed: return entry.speedKmh.map { SetText.entry(speed: $0, unit: unit, locale: locale) } ?? ""
+        case .incline: return entry.incline.map { SetText.entry(level: $0, locale: locale) } ?? ""
+        case .weight: return ""
         }
+    }
+
+    /// The value fields not being typed in show what is stored, such as an
+    /// accepted offer.
+    private func showStoredValues() {
+        if timedFocus != .second { secondText = storedText(at: 0) }
+        if timedFocus != .third { thirdText = storedText(at: 1) }
     }
 
     private func showStoredTimedValues() {
         timeText = storedTimeText
-        secondText = storedSecondText
+        secondText = storedText(at: 0)
+        thirdText = storedText(at: 1)
     }
 
     private var inputLayout: AnyLayout {
@@ -637,6 +720,11 @@ public struct SetRow: View {
 
     private var displayNumber: Int {
         SessionSetActions.displayNumber(of: entry)
+    }
+
+    /// "set 2", or "bout 1" for cardio, as VoiceOver names the row (RM-062).
+    private var rowName: String {
+        "\(isCardio ? "bout" : "set") \(displayNumber)"
     }
 
     /// "{exercise position}.{set label}", e.g. "1.S2", for UI test queries.

@@ -75,15 +75,18 @@ public struct BlackSlabCTA: View {
     }
 
     /// The working sets the phase yields, summed: what the factory will plan.
+    /// Cardio counts none.
     private var setCount: Int {
-        (routine.exercises ?? []).reduce(0) {
-            $0 + PeriodizationEngine.workingSetCount(targetSets: $1.targetSets, phase: phase)
-        }
+        (routine.exercises ?? []).reduce(0) { $0 + $1.workingSetCount(phase: phase) }
     }
 
-    /// Rough ~duration estimate — 3 min avg per set + 2 min overhead
+    /// Rough ~duration estimate: 3 min avg per set, the cardio's planned
+    /// time, and 2 min overhead.
     private var estimatedMinutes: Int {
-        max(1, setCount * 3 + 2)
+        let cardioSeconds = (routine.exercises ?? []).reduce(0) {
+            $0 + ($1.exercise?.isCardio == true ? $1.plannedSeconds : 0)
+        }
+        return max(1, setCount * 3 + 2 + cardioSeconds / 60)
     }
 
     // MARK: - Body
@@ -109,14 +112,17 @@ public struct BlackSlabCTA: View {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 0) {
                     metaPart(BRUCountLabel.text(exerciseCount, "exercise"))
-                    metaSeparator
-                    metaPart(BRUCountLabel.text(setCount, "set"))
+                    if setCount > 0 {
+                        metaSeparator
+                        metaPart(BRUCountLabel.text(setCount, "set"))
+                    }
                     metaSeparator
                     metaPart("~\(estimatedMinutes) min")
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     metaPart(BRUCountLabel.text(exerciseCount, "exercise"))
-                    metaPart(BRUCountLabel.text(setCount, "set"))
+                    // Cardio alone has no sets to count (RM-062).
+                    if setCount > 0 { metaPart(BRUCountLabel.text(setCount, "set")) }
                     metaPart("~\(estimatedMinutes) min")
                 }
             }

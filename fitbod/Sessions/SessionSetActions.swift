@@ -55,7 +55,8 @@ public enum SessionSetActions {
         case .reps: return reps > 0 && weight >= 0
         // Assistance is stored as a negative weight (ARCHITECTURE.md).
         case .assistedReps: return reps > 0 && weight <= 0
-        case .duration, .durationDistance, .durationLevel: return timed && weight >= 0
+        case .duration, .durationDistance, .durationLevel, .durationStepSpeed, .durationSpeedIncline:
+            return timed && weight >= 0
         case nil: return reps > 0 || timed
         }
     }
@@ -85,11 +86,15 @@ public enum SessionSetActions {
         let oldDuration = entry.durationSeconds
         let oldDistance = entry.distanceMeters
         let oldLevel = entry.level
+        let oldSpeed = entry.speedKmh
+        let oldIncline = entry.incline
         entry.weight = suggestion.weight(for: entry)
         entry.reps = suggestion.reps(for: entry)
         entry.durationSeconds = suggestion.durationSeconds(for: entry)
         entry.distanceMeters = suggestion.distanceMeters(for: entry)
         entry.level = suggestion.level(for: entry)
+        entry.speedKmh = suggestion.speedKmh(for: entry)
+        entry.incline = suggestion.incline(for: entry)
         if entry.durationSeconds == nil {
             let start = entry.startedAt ?? startedAt
             let seconds = start.flatMap { setSeconds(from: $0, to: date) }
@@ -111,6 +116,8 @@ public enum SessionSetActions {
             entry.durationSeconds = oldDuration
             entry.distanceMeters = oldDistance
             entry.level = oldLevel
+            entry.speedKmh = oldSpeed
+            entry.incline = oldIncline
             throw error
         }
     }

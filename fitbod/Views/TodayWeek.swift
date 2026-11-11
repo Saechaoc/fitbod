@@ -71,10 +71,11 @@ struct TodayWeek: Equatable {
     }
 
     /// The working sets Volume counts for a workout (`SetEntry.countsAsWork`).
+    /// Cardio logs bouts, which Volume leaves out (RM-062).
     @MainActor
     static func workingSets(in session: Session) -> Int {
         (session.exercises ?? []).reduce(0) { total, exercise in
-            total + (exercise.sets ?? []).filter(\.countsAsWork).count
+            exercise.exercise?.isCardio == true ? total : total + (exercise.sets ?? []).filter(\.countsAsWork).count
         }
     }
 }

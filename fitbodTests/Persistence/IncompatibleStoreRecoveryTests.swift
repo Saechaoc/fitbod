@@ -132,6 +132,72 @@ private enum PreMachineShape {
     }
 }
 
+/// The routine row, logged exercise and set as they were before RM-062's
+/// cardio plan, speed and incline, attribute for attribute. The
+/// relationships are left out, as above; the store still opens.
+private enum PreCardioPlanShape {
+    @Model final class SessionExerciseTemplate {
+        @Attribute(.unique) var id: UUID = UUID()
+        var orderIndex: Int = 0
+        var targetSets: Int = 3
+        var targetRepsLow: Int = 8
+        var targetRepsHigh: Int = 12
+        var targetRPE: Double? = nil
+        var targetRIR: Int? = nil
+        var prescribedRestSeconds: Int = 120
+        var tempo: String? = nil
+        var notes: String? = nil
+        var generateWarmups: Bool = false
+        var supersetGroupID: UUID? = nil
+        var tracksTempo: Bool = false
+        var tracksPartialReps: Bool = false
+        var warmupOverrideData: Data? = nil
+        init() {}
+    }
+
+    @Model final class SessionExercise {
+        @Attribute(.unique) var id: UUID = UUID()
+        var orderIndex: Int = 0
+        var targetSets: Int = 3
+        var targetRepsLow: Int = 8
+        var targetRepsHigh: Int = 12
+        var targetRPE: Double? = nil
+        var targetRIR: Int? = nil
+        var prescribedRestSeconds: Int = 120
+        var tempo: String? = nil
+        var tracksTempo: Bool = false
+        var tracksPartialReps: Bool = false
+        var prescribedWeight: Double? = nil
+        var pinnedNote: String? = nil
+        var exerciseNameSnapshot: String = ""
+        init() {}
+    }
+
+    @Model final class SetEntry {
+        @Attribute(.unique) var id: UUID = UUID()
+        var orderIndex: Int = 0
+        var weight: Double = 0
+        var reps: Int = 0
+        var rpe: Double? = nil
+        var rir: Int? = nil
+        var restAfterSeconds: Int? = nil
+        var tempoActual: String? = nil
+        var notes: String? = nil
+        var isWarmup: Bool = false
+        var setTypeRaw: String = "working"
+        var completedAt: Date = Date.now
+        var partialReps: Int? = nil
+        var clusterSubRepsJoined: String? = nil
+        var isComplete: Bool = false
+        var wasManualOverride: Bool = false
+        var startedAt: Date? = nil
+        var durationSeconds: Int? = nil
+        var distanceMeters: Double? = nil
+        var level: Double? = nil
+        init() {}
+    }
+}
+
 @MainActor
 @Suite("IncompatibleStoreRecovery", .serialized)
 struct IncompatibleStoreRecoveryTests {
@@ -364,6 +430,63 @@ struct IncompatibleStoreRecoveryTests {
         try ctx.save()
         let reread = try #require(try ModelContext(container).fetch(FetchDescriptor<SessionExercise>()).first)
         #expect(reread.machine?.displayName == "Panatta Super Hack Squat")
+    }
+
+    @Test("(b) a store from before the cardio plan opens in place with no plan, speed or incline")
+    func preCardioPlanStoreOpensInPlace() throws {
+        let dir = try makeDirectory()
+        defer { try? fm.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("default.store")
+        let (rowID, logID, setID) = (UUID(), UUID(), UUID())
+
+        do {
+            let schema = Schema([
+                PreCardioPlanShape.SessionExerciseTemplate.self, PreCardioPlanShape.SessionExercise.self,
+                PreCardioPlanShape.SetEntry.self,
+            ])
+            let container = try ModelContainer(
+                for: schema, configurations: ModelConfiguration(schema: schema, url: url)
+            )
+            let ctx = ModelContext(container)
+            let row = PreCardioPlanShape.SessionExerciseTemplate()
+            row.id = rowID
+            row.targetSets = 1
+            ctx.insert(row)
+            let log = PreCardioPlanShape.SessionExercise()
+            log.id = logID
+            log.exerciseNameSnapshot = "Treadmill"
+            ctx.insert(log)
+            let set = PreCardioPlanShape.SetEntry()
+            set.id = setID
+            set.durationSeconds = 1_800
+            set.distanceMeters = 4_000
+            set.isComplete = true
+            ctx.insert(set)
+            try ctx.save()
+        }
+
+        let container = try FitbodModelContainer.make(storeURL: url, defaults: try stampedDefaults().defaults)
+        #expect(!fm.fileExists(atPath: dir.appendingPathComponent("IncompatibleStores").path))
+
+        let ctx = ModelContext(container)
+        let row = try #require(try ctx.fetch(FetchDescriptor<SessionExerciseTemplate>()).first)
+        #expect(row.id == rowID && row.targetSets == 1)
+        #expect(row.targetDurationSeconds == nil && row.targetLevel == nil)
+        #expect(row.targetSpeedKmh == nil && row.targetIncline == nil)
+        let log = try #require(try ctx.fetch(FetchDescriptor<SessionExercise>()).first)
+        #expect(log.id == logID && log.exerciseNameSnapshot == "Treadmill")
+        #expect(log.targetDurationSeconds == nil && log.targetSpeedKmh == nil)
+        let set = try #require(try ctx.fetch(FetchDescriptor<SetEntry>()).first)
+        #expect(set.id == setID && set.durationSeconds == 1_800 && set.distanceMeters == 4_000)
+        #expect(set.speedKmh == nil && set.incline == nil)
+
+        // The new fields take values and keep them.
+        set.speedKmh = 6.4
+        row.targetIncline = 12
+        try ctx.save()
+        let reread = ModelContext(container)
+        #expect(try reread.fetch(FetchDescriptor<SetEntry>()).first?.speedKmh == 6.4)
+        #expect(try reread.fetch(FetchDescriptor<SessionExerciseTemplate>()).first?.targetIncline == 12)
     }
 
     // MARK: - (c) failures that are not the schema

@@ -124,13 +124,7 @@ public struct SessionHistoryRow: View {
 
     private var tonnage: Double { SessionHistoryFormat.tonnage(of: session) }
 
-    /// Completed, non-warm-up sets.
-    private var workingSetCount: Int {
-        (session.exercises ?? [])
-            .flatMap { $0.sets ?? [] }
-            .filter { $0.isComplete && !$0.isWarmup }
-            .count
-    }
+    private var workingSetCount: Int { SessionHistoryFormat.setCount(of: session) }
 
     private var durationMinutes: Int? {
         if let stored = session.totalDurationSeconds { return stored / 60 }
@@ -151,19 +145,20 @@ public struct SessionHistoryRow: View {
             .uppercased()
     }
 
-    /// "21 SETS · 52M", "1 SET · 1H 05M".
+    /// "21 SETS · 52M", "1 SET · 1H 05M"; cardio alone has no sets: "32M".
     private var setDurationLabel: String {
         let sets = BRUCountLabel.text(workingSetCount, "SET")
         guard let minutes = durationMinutes else { return sets }
-        return "\(sets) · \(SessionHistoryFormat.duration(minutes: minutes))"
+        let duration = SessionHistoryFormat.duration(minutes: minutes)
+        return workingSetCount > 0 ? "\(sets) · \(duration)" : duration
     }
 
     private var accessibilityText: String {
         var parts = [
             session.displayName,
             session.startedAt.formatted(.dateTime.weekday(.wide).month(.wide).day()),
-            BRUCountLabel.text(workingSetCount, "set"),
         ]
+        if workingSetCount > 0 { parts.append(BRUCountLabel.text(workingSetCount, "set")) }
         if let minutes = durationMinutes {
             parts.append(minutes == 1 ? "1 minute" : "\(minutes) minutes")
         }

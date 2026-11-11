@@ -132,6 +132,10 @@ public enum RoutineDuplicator {
             clonedRE.generateWarmups = re.generateWarmups
             clonedRE.tracksTempo = re.tracksTempo
             clonedRE.tracksPartialReps = re.tracksPartialReps
+            clonedRE.targetDurationSeconds = re.targetDurationSeconds
+            clonedRE.targetLevel = re.targetLevel
+            clonedRE.targetSpeedKmh = re.targetSpeedKmh
+            clonedRE.targetIncline = re.targetIncline
 
             // RESEARCH §6 Pitfall 6 — remap superset ID via the group
             // map. If the source row was in a group, the clone joins

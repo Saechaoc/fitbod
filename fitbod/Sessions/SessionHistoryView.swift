@@ -181,8 +181,9 @@ public struct SessionHistoryView: View {
 enum SessionHistoryFormat {
     /// An exercise's line on the workout summary and in Edit workout, such
     /// as "3 sets · 1,500 lb". A zero volume is left out.
-    static func setsLine(count: Int, volume: Double, unit: WeightUnit) -> String {
-        let sets = BRUCountLabel.text(count, "set")
+    /// "3 sets · 4,050 lb"; `noun` is "bout" for cardio (RM-062).
+    static func setsLine(count: Int, volume: Double, unit: WeightUnit, noun: String = "set") -> String {
+        let sets = BRUCountLabel.text(count, noun)
         guard volume != 0 else { return sets }
         return "\(sets) · \(roundedVolume(volume)) \(unit.rawValue)"
     }
@@ -190,6 +191,17 @@ enum SessionHistoryFormat {
     static func roundedVolume(_ volume: Double, locale: Locale = .autoupdatingCurrent) -> String {
         guard volume.isFinite, volume >= 0, let rounded = Int(exactly: volume.rounded()) else { return "—" }
         return rounded.formatted(.number.grouping(.automatic).locale(locale))
+    }
+
+    /// A finished workout's completed, non-warm-up sets. Cardio logs bouts,
+    /// which set totals leave out (RM-062); `Session.loggedSetCount` counts
+    /// them, since it decides whether a workout logged anything.
+    static func setCount(of session: Session) -> Int {
+        (session.exercises ?? [])
+            .filter { $0.exercise?.isCardio != true }
+            .flatMap { $0.sets ?? [] }
+            .filter { $0.isComplete && !$0.isWarmup }
+            .count
     }
 
     /// A workout's tonnage: the sum of `SetEntry.tonnage`.

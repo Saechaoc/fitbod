@@ -3722,7 +3722,7 @@
     "import": true,
     "hidden": true,
     "equipment": "cardio_machine",
-    "tracking": "duration_distance",
+    "tracking": "duration_speed_incline",
     "name": "Treadmill Run"
   },
   "Russian_Twist": {
@@ -4372,7 +4372,7 @@
     "name": "Stair Climber",
     "family": "Stair Climber",
     "equipment": "cardio_machine",
-    "tracking": "duration_level",
+    "tracking": "duration_step_speed",
     "aliases": [
       "stairmaster",
       "stair stepper",
@@ -4684,7 +4684,7 @@
     "name": "Stepmill",
     "family": "Stepmill",
     "equipment": "cardio_machine",
-    "tracking": "duration_level",
+    "tracking": "duration_step_speed",
     "aliases": [
       "step mill",
       "revolving stairs"
@@ -5018,7 +5018,7 @@
     "name": "Treadmill",
     "family": "Treadmill",
     "equipment": "cardio_machine",
-    "tracking": "duration_distance",
+    "tracking": "duration_speed_incline",
     "aliases": [
       "running",
       "jogging",

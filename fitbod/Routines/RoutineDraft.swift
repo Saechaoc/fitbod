@@ -320,6 +320,10 @@ public final class RoutineDraft {
             re.tracksPartialReps = exDraft.tracksPartialReps
             re.supersetGroupID = exDraft.supersetGroupID
             re.warmupOverride = exDraft.warmupOverride
+            re.targetDurationSeconds = exDraft.targetDurationSeconds
+            re.targetLevel = exDraft.targetLevel
+            re.targetSpeedKmh = exDraft.targetSpeedKmh
+            re.targetIncline = exDraft.targetIncline
 
             // Three-way merge for the per-set overrides (cascade-owned).
             let existingOverrides = re.setOverrides ?? []
@@ -368,6 +372,7 @@ public final class RoutineDraft {
                 ex.targetRPE, ex.prescribedRestSeconds, ex.tempo, ex.tracksTempo,
                 ex.tracksPartialReps, ex.supersetGroupID, ex.warmupOverride,
                 overrides.joined(separator: ";"),
+                ex.targetDurationSeconds, ex.targetLevel, ex.targetSpeedKmh, ex.targetIncline,
             ]
             return fields.map(text).joined(separator: "/")
         }
@@ -439,6 +444,13 @@ public final class RoutineExerciseDraft: Identifiable {
     /// is round-tripped through `RoutineDraft.save(into:context:)`.
     public var warmupOverride: WarmupConfig? = nil
 
+    /// A cardio plan (RM-062): the bout's time and the machine's settings,
+    /// as `SessionExerciseTemplate` stores them.
+    public var targetDurationSeconds: Int? = nil
+    public var targetLevel: Double? = nil
+    public var targetSpeedKmh: Double? = nil
+    public var targetIncline: Double? = nil
+
     public init() {}
 
     /// Round-trip from an existing `RoutineExercise` row (edit mode).
@@ -471,6 +483,10 @@ public final class RoutineExerciseDraft: Identifiable {
         self.tracksPartialReps = re.tracksPartialReps
         self.supersetGroupID = re.supersetGroupID
         self.warmupOverride = re.warmupOverride
+        self.targetDurationSeconds = re.targetDurationSeconds
+        self.targetLevel = re.targetLevel
+        self.targetSpeedKmh = re.targetSpeedKmh
+        self.targetIncline = re.targetIncline
         self.setOverrides = (re.setOverrides ?? [])
             .sorted { $0.setIndex < $1.setIndex }
             .map { PerSetOverrideDraft(override: $0) }

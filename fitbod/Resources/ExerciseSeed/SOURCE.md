@@ -29,6 +29,7 @@
   Seed version 9 (2026-11-11, RM-066) hides the 27 Panatta rows.
   A machine's maker and model are named in the workout now, never as an exercise of their own, and each Panatta row's family has a generic machine row.
   The rows keep their brand and muscle credits for a workout that still uses one.
+  Seed version 10 (2026-11-11, RM-062) tags Stair Climber and Stepmill as `duration_step_speed`, so their console number is named speed, and both treadmill rows as `duration_speed_incline`.
   Stretching stays out, and so do the cardio and plyometric rows the overlay does not import.
   A refresh keeps the overlay.
   `ExerciseCatalogTests` fails if an overlay ID or an equipment, tracking, brand or loading value does not exist, if two listed rows share a name, if a listed row has no family, if a listed row tracks a load on `other` equipment, or if an alias is in two families or names another family.

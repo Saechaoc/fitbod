@@ -343,6 +343,8 @@ public struct SessionLoggerView: View {
             return
         }
         prState.observeSave(set: entry)
+        // Cardio is one bout with no rest after it (RM-062).
+        guard se.exercise?.isCardio != true else { return }
         let prescribed = max(1, se.prescribedRestSeconds)
         engine.start(seconds: prescribed, exerciseName: se.displayName)
     }

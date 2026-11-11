@@ -648,6 +648,10 @@ public struct RoutineBuilderView: View {
         clone.tempo = exDraft.tempo
         clone.tracksTempo = exDraft.tracksTempo
         clone.tracksPartialReps = exDraft.tracksPartialReps
+        clone.targetDurationSeconds = exDraft.targetDurationSeconds
+        clone.targetLevel = exDraft.targetLevel
+        clone.targetSpeedKmh = exDraft.targetSpeedKmh
+        clone.targetIncline = exDraft.targetIncline
         clone.supersetGroupID = nil
         draft.exercises.insert(clone, at: index + 1)
         for (i, ex) in draft.exercises.enumerated() { ex.orderIndex = i }

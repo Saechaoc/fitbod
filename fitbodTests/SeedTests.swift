@@ -109,8 +109,8 @@ final class SeedTests {
         // have their own equipment.
         let plank = try seeded("Plank")
         #expect(plank.tracking == .duration)
-        #expect(plank.timedValue == nil)
-        #expect(try seeded("Farmers_Walk").timedValue == .weight)
+        #expect(plank.timedValues.isEmpty)
+        #expect(try seeded("Farmers_Walk").timedValues == [.weight])
         #expect(try seeded("Band_Assisted_Pull-Up").tracking == .assistedReps)
         #expect(try seeded("Smith_Machine_Squat").equipment == .smithMachine)
         #expect(try seeded("EZ-Bar_Curl").equipment == .ezBar)
@@ -135,13 +135,19 @@ final class SeedTests {
         let climber = try seeded("Stairmaster")
         #expect(climber.name == "Stair Climber" && climber.canonicalName == "stair climber")
         #expect(climber.equipment == .cardioMachine && climber.isCardio)
-        #expect(climber.tracking == .durationLevel && climber.timedValue == .level)
+        // Seed 10: a stair machine's console number is its speed, stored as a level.
+        #expect(climber.tracking == .durationStepSpeed && climber.timedValues == [.level])
+        #expect(try seeded("Step_Mill").tracking == .durationStepSpeed)
+        #expect(try seeded("Elliptical_Trainer").tracking == .durationLevel)
         #expect(climber.aliasesJoined.split(separator: "|").contains("stairmaster"))
         // Upstream lists quadriceps for it, which would count as leg volume.
         #expect(climber.primaryMuscleSlugsJoined.isEmpty)
         #expect((climber.muscleStimuli ?? []).isEmpty)
-        #expect(try seeded("Running_Treadmill").timedValue == .distance)
-        #expect(try seeded("Rope_Jumping").timedValue == nil, "Jump Rope logs a time alone")
+        // Seed 10: a treadmill records its speed and incline (RM-062).
+        #expect(try seeded("Walking_Treadmill").timedValues == [.speed, .incline])
+        #expect(try seeded("Running_Treadmill").timedValues == [.speed, .incline])
+        #expect(try seeded("Rowing_Stationary").timedValues == [.distance])
+        #expect(try seeded("Rope_Jumping").timedValues.isEmpty, "Jump Rope logs a time alone")
         // Cardio that curation does not import stays out, as stretching does.
         #expect(try ctx.fetchCount(FetchDescriptor<Exercise>(predicate: #Predicate { $0.externalID == "Skating" })) == 0)
 

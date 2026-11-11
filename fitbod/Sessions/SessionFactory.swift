@@ -221,6 +221,11 @@ public enum SessionFactory {
             se.tracksTempo = re.tracksTempo
             se.tracksPartialReps = re.tracksPartialReps
             se.pinnedNote = nil
+            // A cardio plan (RM-062), frozen like the rest of the prescription.
+            se.targetDurationSeconds = re.targetDurationSeconds
+            se.targetLevel = re.targetLevel
+            se.targetSpeedKmh = re.targetSpeedKmh
+            se.targetIncline = re.targetIncline
 
             context.insert(se)
             // The machine from the exercise's last finished workout (RM-066);
@@ -283,7 +288,8 @@ public enum SessionFactory {
 
             // Set rows resolve their offers from the frozen prescription and
             // logged performance. Pending model values are the lifter's drafts.
-            let plannedWorkingSetCount = PeriodizationEngine.workingSetCount(
+            // Cardio is one bout, whatever its row stores and in a deload too (RM-062).
+            let plannedWorkingSetCount = re.exercise?.isCardio == true ? 1 : PeriodizationEngine.workingSetCount(
                 targetSets: re.targetSets, phase: scheduledBlockPhase
             )
 

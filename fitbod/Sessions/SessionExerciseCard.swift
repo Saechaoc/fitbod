@@ -273,7 +273,9 @@ public struct SessionExerciseCard: View {
                             }
                         }
                         .padding(.horizontal, 16)
-                        BRUDivider(.hair)
+                        // A cardio bout has no add row under it, so its own
+                        // rule closes the exercise block (RM-062).
+                        BRUDivider(isCardio && set.id == sortedSets.last?.id ? .ink : .hair)
                     }
                     .cardRow()
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -289,26 +291,29 @@ public struct SessionExerciseCard: View {
                 }
 
                 // "+ ADD SET" signal text button per UI-SPEC line 387, then the
-                // 2pt ink rule that closes the exercise block.
-                VStack(spacing: 0) {
-                    Button {
-                        onAddSet(sessionExercise)
-                    } label: {
-                        Text("+ ADD SET")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruSignalText)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("card.addSet.\(sessionExercise.orderIndex + 1)")
-                    .padding(.vertical, 4)
+                // 2pt ink rule that closes the exercise block. Cardio is one
+                // bout: it offers a row only when its row was deleted.
+                if !isCardio || sortedSets.isEmpty {
+                    VStack(spacing: 0) {
+                        Button {
+                            onAddSet(sessionExercise)
+                        } label: {
+                            Text(isCardio ? "+ ADD BOUT" : "+ ADD SET")
+                                .font(BRUFont.labelSmall)
+                                .tracking(1.2)
+                                .textCase(.uppercase)
+                                .foregroundStyle(Color.bruSignalText)
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("card.addSet.\(sessionExercise.orderIndex + 1)")
+                        .padding(.vertical, 4)
 
-                    BRUDivider(.ink)
+                        BRUDivider(.ink)
+                    }
+                    .cardRow()
                 }
-                .cardRow()
             }
         } header: {
             // Empty header — card header is embedded in body VStack above.
@@ -542,10 +547,13 @@ public struct SessionExerciseCard: View {
         // fixed-width table headings would split into fragments.
         if !dynamicTypeSize.isAccessibilitySize {
             HStack(spacing: WorkoutSetColumns.spacing) {
-                Text("S")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .frame(width: WorkoutSetColumns.number, alignment: .leading)
+                // Cardio is one bout, with no set number (RM-062).
+                if !isCardio {
+                    Text("S")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .frame(width: WorkoutSetColumns.number, alignment: .leading)
+                }
                 // A tap says what the column shows and why it can be
                 // empty (FT-07).
                 Button {
@@ -555,7 +563,9 @@ public struct SessionExerciseCard: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .frame(
-                            width: tracking.isTimed ? WorkoutSetColumns.timedPrevious : WorkoutSetColumns.previous,
+                            width: tracking.isTimed
+                                ? WorkoutSetColumns.timedPrevious(values: timedValues.count, numbered: !isCardio)
+                                : WorkoutSetColumns.previous,
                             alignment: .leading
                         )
                         // A 44pt target in the strip; the negative padding
@@ -574,13 +584,12 @@ public struct SessionExerciseCard: View {
                     Text("Your top working set from the last finished \(intentName) workout with this exercise. It stays empty until there is one.")
                 }
                 if tracking.isTimed {
-                    // A timed row: its time, then a load, a distance or a level.
+                    // A timed row: its time, then a load, a distance, a level
+                    // or stair speed, or a treadmill's speed and incline.
                     columnHeading("TIME", width: WorkoutSetColumns.weight)
-                    switch sessionExercise.exercise?.timedValue {
-                    case .weight: columnHeading("WEIGHT", width: WorkoutSetColumns.weight)
-                    case .distance: columnHeading(unit == .lb ? "MILES" : "KM", width: WorkoutSetColumns.weight)
-                    case .level: columnHeading("LEVEL", width: WorkoutSetColumns.weight)
-                    case nil: EmptyView()
+                    let values = timedValues
+                    ForEach(values.indices, id: \.self) { index in
+                        columnHeading(heading(for: values[index]), width: WorkoutSetColumns.valueWidth(count: values.count))
                     }
                 } else {
                     columnHeading(tracking == .assistedReps ? "ASSIST" : "WEIGHT", width: WorkoutSetColumns.weight)
@@ -668,7 +677,31 @@ public struct SessionExerciseCard: View {
         Text(text)
             .font(BRUFont.labelSmall)
             .tracking(1.2)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
             .frame(width: width, alignment: .leading)
+    }
+
+    /// A timed value's column heading.
+    private func heading(for value: TimedValue) -> String {
+        switch value {
+        case .weight: "WEIGHT"
+        case .distance: unit == .lb ? "MILES" : "KM"
+        case .level: tracking.levelName.uppercased()
+        case .speed: SetText.speedUnit(unit).uppercased()
+        case .incline: "INCL %"
+        }
+    }
+
+    /// A cardio exercise logs one bout, with no set number, no added set
+    /// and no rest after it (RM-062).
+    private var isCardio: Bool {
+        sessionExercise.exercise?.isCardio == true
+    }
+
+    /// What a timed set of this exercise records beside its time.
+    private var timedValues: [TimedValue] {
+        sessionExercise.exercise?.timedValues ?? []
     }
 
     /// The exercise's actions, in its ••• menu and its long-press menu.
@@ -701,6 +734,8 @@ public struct SessionExerciseCard: View {
     /// only; warm-ups have their own ramp block above.
     private var equipmentSubline: String {
         let equip = sessionExercise.exercise?.equipment.displayName ?? "Equipment"
+        // Cardio has no sets to count; its time joins the line once logged.
+        if isCardio { return equip }
         let working = (sessionExercise.sets ?? []).filter { !$0.isWarmup }
         let done = working.filter(\.isComplete).count
         return "\(equip) · \(done)/\(BRUCountLabel.text(working.count, "set")) done"

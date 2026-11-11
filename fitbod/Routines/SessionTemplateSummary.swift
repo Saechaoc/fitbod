@@ -8,6 +8,8 @@
 //
 // Duration model: every working set costs its prescribed rest plus a fixed
 // work interval. Warm-up ramps are excluded (they are generated at start).
+// Cardio is one bout with no sets or rest; it costs its planned time
+// (RM-062).
 
 import Foundation
 
@@ -25,10 +27,11 @@ public struct SessionTemplateSummary: Equatable, Sendable {
         self.estimatedMinutes = estimatedMinutes
     }
 
-    /// Summary from (sets, rest seconds) pairs, one per exercise.
-    public init(prescriptions: [(sets: Int, restSeconds: Int)]) {
+    /// Summary from (sets, rest seconds) pairs, one per exercise, and the
+    /// planned time of the cardio among them, which counts no sets.
+    public init(prescriptions: [(sets: Int, restSeconds: Int)], cardioSeconds: Int = 0) {
         let sets = prescriptions.reduce(0) { $0 + max(0, $1.sets) }
-        let seconds = prescriptions.reduce(0) { total, p in
+        let seconds = prescriptions.reduce(max(0, cardioSeconds)) { total, p in
             total + max(0, p.sets) * (max(0, p.restSeconds) + Self.workSecondsPerSet)
         }
         self.init(
@@ -39,24 +42,37 @@ public struct SessionTemplateSummary: Equatable, Sendable {
     }
 
     public init(template: SessionTemplate) {
-        self.init(prescriptions: (template.exercises ?? []).map {
-            (sets: $0.targetSets, restSeconds: $0.prescribedRestSeconds)
-        })
+        let exercises = template.exercises ?? []
+        self.init(
+            prescriptions: exercises.map {
+                $0.exercise?.isCardio == true
+                    ? (sets: 0, restSeconds: 0)
+                    : (sets: $0.targetSets, restSeconds: $0.prescribedRestSeconds)
+            },
+            cardioSeconds: exercises.filter { $0.exercise?.isCardio == true }.reduce(0) { $0 + $1.plannedSeconds }
+        )
     }
 
     @MainActor
     public init(draft: RoutineDraft) {
-        self.init(prescriptions: draft.exercises.map {
-            (sets: $0.targetSets, restSeconds: $0.prescribedRestSeconds)
-        })
+        self.init(
+            prescriptions: draft.exercises.map {
+                $0.exercise?.isCardio == true
+                    ? (sets: 0, restSeconds: 0)
+                    : (sets: $0.targetSets, restSeconds: $0.prescribedRestSeconds)
+            },
+            cardioSeconds: draft.exercises.filter { $0.exercise?.isCardio == true }.reduce(0) { $0 + $1.plannedSeconds }
+        )
     }
 
-    /// "5 exercises · 15 sets · ~52 min". Empty templates read "No exercises yet".
+    /// "5 exercises · 15 sets · ~52 min"; a session of cardio alone has no
+    /// sets to count: "1 exercise · ~20 min". Empty templates read "No
+    /// exercises yet".
     public var line: String {
         guard exerciseCount > 0 else { return "No exercises yet" }
-        let ex = BRUCountLabel.text(exerciseCount, "exercise")
-        let sets = BRUCountLabel.text(workingSets, "set")
-        return "\(ex) · \(sets) · ~\(estimatedMinutes) min"
+        let sets = workingSets > 0 ? [BRUCountLabel.text(workingSets, "set")] : []
+        return ([BRUCountLabel.text(exerciseCount, "exercise")] + sets + ["~\(estimatedMinutes) min"])
+            .joined(separator: " · ")
     }
 }
 

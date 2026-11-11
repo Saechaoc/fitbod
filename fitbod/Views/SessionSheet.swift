@@ -229,11 +229,13 @@ struct SessionSheet: View {
     }
 
     /// "5 exercises · 15 sets", counting the working sets the phase yields, as
-    /// the hero does; "No exercises yet" for an empty session.
+    /// the hero does; "1 exercise" for cardio alone, which has no sets;
+    /// "No exercises yet" for an empty session.
     static func summary(of session: SessionTemplate, phase: BlockPhase?) -> String {
         let exercises = session.exercises ?? []
         guard !exercises.isEmpty else { return "No exercises yet" }
-        let sets = exercises.reduce(0) { $0 + PeriodizationEngine.workingSetCount(targetSets: $1.targetSets, phase: phase) }
-        return "\(BRUCountLabel.text(exercises.count, "exercise")) · \(BRUCountLabel.text(sets, "set"))"
+        let sets = exercises.reduce(0) { $0 + $1.workingSetCount(phase: phase) }
+        let count = BRUCountLabel.text(exercises.count, "exercise")
+        return sets > 0 ? "\(count) · \(BRUCountLabel.text(sets, "set"))" : count
     }
 }

@@ -250,7 +250,7 @@ public struct SessionDetailView: View {
             .accessibilityIdentifier("summary.exercise")
             if open {
                 ForEach(Array(line.sets.enumerated()), id: \.offset) { index, set in
-                    setRow(number: index + 1, set: set, isRecord: !line.prKinds.isEmpty, unit: unit)
+                    setRow(number: index + 1, set: set, isRecord: !line.prKinds.isEmpty, isBout: line.isCardio, unit: unit)
                 }
             }
         }
@@ -261,8 +261,10 @@ public struct SessionDetailView: View {
 
     /// One logged set: its number, its weight × reps or its time, the best
     /// set's tag and the RPE. The tag turns signal when the exercise set a
-    /// record.
-    private func setRow(number: Int, set: SessionSummary.LoggedSet, isRecord: Bool, unit: WeightUnit) -> some View {
+    /// record. A cardio bout has no best (RM-062).
+    private func setRow(
+        number: Int, set: SessionSummary.LoggedSet, isRecord: Bool, isBout: Bool, unit: WeightUnit
+    ) -> some View {
         HStack(spacing: 12) {
             Text("\(number)")
                 .font(BRUFont.labelSmall)
@@ -273,7 +275,7 @@ public struct SessionDetailView: View {
                 .font(BRUFont.bodyEmphasis)
                 .monospacedDigit()
                 .foregroundStyle(Color.bruInk)
-            if set.isBest {
+            if set.isBest && !isBout {
                 Text("Best")
                     .font(BRUFont.labelMicro)
                     .tracking(1.5)
@@ -290,7 +292,7 @@ public struct SessionDetailView: View {
         }
         .frame(minHeight: 28)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(setLabel(number: number, set: set, unit: unit))
+        .accessibilityLabel(setLabel(number: number, set: set, isBout: isBout, unit: unit))
     }
 
     private func notesBlock(_ notes: String) -> some View {
@@ -325,16 +327,18 @@ public struct SessionDetailView: View {
         SessionHistoryFormat.roundedVolume(volume)
     }
 
-    /// "3 sets · 4,050 lb", then the exercise's time when it has one.
+    /// "3 sets · 4,050 lb" or "1 bout", then the exercise's time when it has one.
     private func setsLine(_ line: SessionSummary.ExerciseLine, unit: WeightUnit) -> String {
-        let sets = SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: unit)
+        let sets = SessionHistoryFormat.setsLine(
+            count: line.workingSets, volume: line.volume, unit: unit, noun: line.isCardio ? "bout" : "set"
+        )
         return line.exerciseSeconds.map { sets + " · " + SetText.duration($0) } ?? sets
     }
 
-    private func setLabel(number: Int, set: SessionSummary.LoggedSet, unit: WeightUnit) -> String {
-        var label = "Set \(number), " + set.resultText(unit: unit).replacingOccurrences(of: "×", with: "by")
+    private func setLabel(number: Int, set: SessionSummary.LoggedSet, isBout: Bool, unit: WeightUnit) -> String {
+        var label = "\(isBout ? "Bout" : "Set") \(number), " + set.resultText(unit: unit).replacingOccurrences(of: "×", with: "by")
         if let rpe = set.rpe { label += ", RPE \(NumberText.weight(rpe))" }
-        if set.isBest { label += ", best set" }
+        if set.isBest && !isBout { label += ", best set" }
         return label
     }
 

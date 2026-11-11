@@ -33,6 +33,7 @@ import SwiftData
 public struct LiftListRow: View {
     /// The 32pt number column, scaled like its 22pt type.
     @ScaledMetric(relativeTo: .title2) private var numberWidth: CGFloat = 32
+    @Environment(\.weightUnit) private var defaultUnit
 
     // MARK: - Properties
 
@@ -48,6 +49,12 @@ public struct LiftListRow: View {
     }
 
     private var setSubLine: String {
+        // Cardio is one bout with a plan, and no sets (RM-062).
+        if let exercise = routineExercise.exercise, exercise.isCardio {
+            return routineExercise.planText(
+                tracking: exercise.tracking, unit: .effective(for: exercise, default: defaultUnit)
+            ) ?? "No plan yet"
+        }
         let sets = PeriodizationEngine.workingSetCount(targetSets: routineExercise.targetSets, phase: phase)
         // A timed exercise has no rep target.
         if routineExercise.exercise?.tracking.isTimed == true { return BRUCountLabel.text(sets, "set") }

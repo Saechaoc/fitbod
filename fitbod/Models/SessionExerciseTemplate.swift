@@ -54,6 +54,13 @@ public final class SessionExerciseTemplate {
     public var tracksTempo: Bool = false
     public var tracksPartialReps: Bool = false
     public var warmupOverrideData: Data? = nil
+    /// A cardio plan (RM-062), additive: the bout's time and the machine's
+    /// settings. A stair machine's speed is its `targetLevel`; a treadmill's
+    /// speed is in km/h. Nil is no plan for that value.
+    public var targetDurationSeconds: Int? = nil
+    public var targetLevel: Double? = nil
+    public var targetSpeedKmh: Double? = nil
+    public var targetIncline: Double? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \RoutineExerciseSetOverride.routineExercise)
     public var setOverrides: [RoutineExerciseSetOverride]? = []

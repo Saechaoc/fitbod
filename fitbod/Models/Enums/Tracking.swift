@@ -19,12 +19,26 @@ public enum Tracking: String, CaseIterable, Sendable {
     case duration
     /// Time and distance: treadmill, rower, bike, run.
     case durationDistance = "duration_distance"
-    /// Time and a machine level: stair climber, elliptical.
+    /// Time and a machine level: elliptical, arc trainer.
     case durationLevel = "duration_level"
+    /// Time and the speed number a stair machine's console shows. It is a
+    /// plain number like a level, so it is stored as one and named speed.
+    case durationStepSpeed = "duration_step_speed"
+    /// Time, speed and incline: treadmill. Its distance shows worked out
+    /// from the speed and the time.
+    case durationSpeedIncline = "duration_speed_incline"
 
     /// Time is the main value, and reps stay zero.
     public var isTimed: Bool {
-        self == .duration || self == .durationDistance || self == .durationLevel
+        switch self {
+        case .duration, .durationDistance, .durationLevel, .durationStepSpeed, .durationSpeedIncline: true
+        case .weightReps, .reps, .assistedReps: false
+        }
+    }
+
+    /// What a set's level is called: a stair machine's is its speed.
+    public var levelName: String {
+        self == .durationStepSpeed ? "speed" : "level"
     }
 
     /// The progression strategies prescribe a load for it. Timed and
@@ -53,11 +67,14 @@ public enum Tracking: String, CaseIterable, Sendable {
         case .duration: "Time"
         case .durationDistance: "Time and distance"
         case .durationLevel: "Time and level"
+        case .durationStepSpeed: "Time and stair speed"
+        case .durationSpeedIncline: "Time, speed and incline"
         }
     }
 }
 
-/// What a timed set records beside its time.
+/// What a timed set records beside its time. A stair machine's speed is a
+/// level; a treadmill's speed is stored in km/h, and its incline in percent.
 public enum TimedValue: Sendable {
-    case weight, distance, level
+    case weight, distance, level, speed, incline
 }

@@ -183,7 +183,7 @@ struct WorkoutEditView: View {
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(setsLine(exercise.rows, unit: exercise.unitOverride ?? weightUnit))
+                Text(setsLine(exercise, unit: exercise.unitOverride ?? weightUnit))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -195,12 +195,17 @@ struct WorkoutEditView: View {
                 // retagged exercise can hold rep sets and timed sets.
                 let previous = index > 0 ? exercise.rows[index - 1] : nil
                 if previous?.isTimed != row.isTimed || previous?.isAssisted != row.isAssisted {
-                    WorkoutEditGrid.header(for: row, timedValue: exercise.timedValue, unit: exercise.unitOverride ?? weightUnit)
+                    WorkoutEditGrid.header(
+                        for: row, numbered: !exercise.isCardio, timedValues: exercise.timedValues,
+                        tracking: exercise.tracking, unit: exercise.unitOverride ?? weightUnit
+                    )
                 }
                 WorkoutEditSetRow(
                     number: index + 1,
+                    isBout: exercise.isCardio,
                     row: row,
-                    timedValue: exercise.timedValue,
+                    timedValues: exercise.timedValues,
+                    tracking: exercise.tracking,
                     unit: exercise.unitOverride ?? weightUnit,
                     locale: locale,
                     onChange: { values, valid in update(row.id, in: exercise.id, to: values, isValid: valid) },
@@ -210,19 +215,22 @@ struct WorkoutEditView: View {
                     }
                 )
             }
-            Button {
-                draft.addSet(to: exercise.id)
-            } label: {
-                Text("+ Add set")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruInk)
-                    .frame(minHeight: 44)
-                    .contentShape(Rectangle())
+            // Cardio is one bout: one can be added back, never a second (RM-062).
+            if !exercise.isCardio || exercise.rows.isEmpty {
+                Button {
+                    draft.addSet(to: exercise.id)
+                } label: {
+                    Text(exercise.isCardio ? "+ Add bout" : "+ Add set")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruInk)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add a \(exercise.isCardio ? "bout" : "set") to \(exercise.name)")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Add a set to \(exercise.name)")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -307,9 +315,11 @@ struct WorkoutEditView: View {
 
     // MARK: - Formatting
 
-    private func setsLine(_ rows: [WorkoutEditDraft.Row], unit: WeightUnit) -> String {
-        let volume = rows.reduce(0) { $0 + SetEntry.tonnage(weight: $1.values.weight, reps: $1.values.reps) }
-        return SessionHistoryFormat.setsLine(count: rows.count, volume: volume, unit: unit)
+    private func setsLine(_ exercise: WorkoutEditDraft.Exercise, unit: WeightUnit) -> String {
+        let volume = exercise.rows.reduce(0) { $0 + SetEntry.tonnage(weight: $1.values.weight, reps: $1.values.reps) }
+        return SessionHistoryFormat.setsLine(
+            count: exercise.rows.count, volume: volume, unit: unit, noun: exercise.isCardio ? "bout" : "set"
+        )
     }
 
     enum StartPart: String, Identifiable {
@@ -326,17 +336,26 @@ private enum WorkoutEditGrid {
     static let small: CGFloat = 60
     static let delete: CGFloat = 44
     static let spacing: CGFloat = 8
-    /// A timed row's second field spans the reps and RPE columns.
+    /// A timed row's one value beside its time spans the reps and RPE
+    /// columns; a treadmill's speed and incline take one each.
     static let wide: CGFloat = small * 2 + spacing
 
-    /// The column names over rows shaped like `row`.
-    static func header(for row: WorkoutEditDraft.Row, timedValue: TimedValue?, unit: WeightUnit) -> some View {
+    static func valueWidth(count: Int) -> CGFloat {
+        count > 1 ? small : wide
+    }
+
+    /// The column names over rows shaped like `row`; a cardio bout has no
+    /// set number.
+    static func header(
+        for row: WorkoutEditDraft.Row, numbered: Bool, timedValues: [TimedValue], tracking: Tracking?, unit: WeightUnit
+    ) -> some View {
         HStack(spacing: spacing) {
-            Text("S").frame(width: number, alignment: .leading)
+            if numbered { Text("S").frame(width: number, alignment: .leading) }
             if row.isTimed {
                 Text("Time").frame(maxWidth: .infinity, alignment: .leading)
-                if let name = secondName(timedValue, unit: unit) {
-                    Text(name).frame(width: wide, alignment: .leading)
+                ForEach(timedValues.indices, id: \.self) { index in
+                    Text(name(timedValues[index], tracking: tracking, unit: unit))
+                        .frame(width: valueWidth(count: timedValues.count), alignment: .leading)
                 }
             } else {
                 Text(row.isAssisted ? "Assist" : "Weight").frame(maxWidth: .infinity, alignment: .leading)
@@ -352,25 +371,29 @@ private enum WorkoutEditGrid {
         .accessibilityHidden(true)
     }
 
-    /// A timed row's second field, as its column and VoiceOver name it.
-    static func secondName(_ value: TimedValue?, unit: WeightUnit) -> String? {
+    /// A timed value's field, as its column and VoiceOver name it.
+    static func name(_ value: TimedValue, tracking: Tracking?, unit: WeightUnit) -> String {
         switch value {
         case .weight: "Weight"
         case .distance: unit == .lb ? "Miles" : "Km"
-        case .level: "Level"
-        case nil: nil
+        case .level: (tracking?.levelName ?? "level").capitalized
+        case .speed: unit == .lb ? "Mph" : "Km/h"
+        case .incline: "Incl %"
         }
     }
 }
 
 /// One set in the grid: weight and reps fields, an RPE menu and −; a timed
-/// set has its time and its load, distance or level. A value that differs
-/// from the logged one gets a 2pt ink border, and the row says what was
-/// logged.
+/// set has its time and its load, distance, level or stair speed, or a
+/// treadmill's speed and incline. A value that differs from the logged one
+/// gets a 2pt ink border, and the row says what was logged.
 private struct WorkoutEditSetRow: View {
     let number: Int
+    /// A cardio bout, which shows no set number (RM-062).
+    let isBout: Bool
     let row: WorkoutEditDraft.Row
-    let timedValue: TimedValue?
+    let timedValues: [TimedValue]
+    let tracking: Tracking?
     let unit: WeightUnit
     let locale: Locale
     let onChange: (WorkoutEdit.Values, Bool) -> Void
@@ -385,24 +408,29 @@ private struct WorkoutEditSetRow: View {
     @State private var repsText: String
     @State private var timeText: String
     @State private var secondText: String
+    @State private var thirdText: String
     @FocusState private var focus: Field?
 
-    private enum Field { case weight, reps, time, second }
+    private enum Field { case weight, reps, time, second, third }
 
     private static let rpeOptions: [Double] = stride(from: 6.0, through: 10.0, by: 0.5).map { $0 }
 
     init(
         number: Int,
+        isBout: Bool,
         row: WorkoutEditDraft.Row,
-        timedValue: TimedValue?,
+        timedValues: [TimedValue],
+        tracking: Tracking?,
         unit: WeightUnit,
         locale: Locale,
         onChange: @escaping (WorkoutEdit.Values, Bool) -> Void,
         onDelete: @escaping () -> Void
     ) {
         self.number = number
+        self.isBout = isBout
         self.row = row
-        self.timedValue = timedValue
+        self.timedValues = timedValues
+        self.tracking = tracking
         self.unit = unit
         self.locale = locale
         self.onChange = onChange
@@ -410,17 +438,22 @@ private struct WorkoutEditSetRow: View {
         _weightText = State(initialValue: Self.weightText(row.values, locale: locale))
         _repsText = State(initialValue: Self.repsText(row.values))
         _timeText = State(initialValue: Self.timeText(row.values))
-        _secondText = State(initialValue: Self.secondText(row.values, timedValue, unit: unit, locale: locale))
+        _secondText = State(initialValue: Self.valueText(row.values, timedValues.first, unit: unit, locale: locale))
+        _thirdText = State(initialValue: Self.valueText(
+            row.values, timedValues.count > 1 ? timedValues[1] : nil, unit: unit, locale: locale
+        ))
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: WorkoutEditGrid.spacing) {
-                Text("S\(number)")
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruMuted)
-                    .frame(width: WorkoutEditGrid.number, alignment: .leading)
-                    .accessibilityHidden(true)
+                if !isBout {
+                    Text("S\(number)")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                        .frame(width: WorkoutEditGrid.number, alignment: .leading)
+                        .accessibilityHidden(true)
+                }
                 if row.isTimed {
                     timedFields
                 } else {
@@ -440,19 +473,19 @@ private struct WorkoutEditSetRow: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Delete set \(number)")
+                .accessibilityLabel("Delete \(setName)")
             }
             if row.isChanged, let logged = row.logged {
-                Text("Was \(Self.label(logged, unit: unit))")
+                Text("Was \(Self.label(logged, tracking: tracking, unit: unit))")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
-                    .padding(.leading, WorkoutEditGrid.number + WorkoutEditGrid.spacing)
+                    .padding(.leading, isBout ? 0 : WorkoutEditGrid.number + WorkoutEditGrid.spacing)
             }
         }
         .onAppear { updateValues(rpe: row.values.rpe) }
-        .onChange(of: [weightText, repsText, timeText, secondText]) { _, _ in updateValues(rpe: row.values.rpe) }
+        .onChange(of: [weightText, repsText, timeText, secondText, thirdText]) { _, _ in updateValues(rpe: row.values.rpe) }
         // A time shows its colons once editing ends ("130" reads "1:30"),
         // never while it is typed in (RM-062).
         .onChange(of: focus) { previous, _ in
@@ -462,22 +495,41 @@ private struct WorkoutEditSetRow: View {
         }
     }
 
-    /// The time, then the load, distance or level its exercise's timed sets take.
+    /// The time, then the load, distance, level or stair speed, or the
+    /// speed and incline its exercise's timed sets take.
     @ViewBuilder
     private var timedFields: some View {
         field($timeText, .time, keyboard: .numberPad, changed: row.logged.map { $0.durationSeconds != row.values.durationSeconds } ?? false)
             .frame(maxWidth: .infinity)
-            .accessibilityLabel("Time, set \(number)")
-        if let name = WorkoutEditGrid.secondName(timedValue, unit: unit) {
-            let changed = row.logged.map {
-                $0.weight != row.values.weight || $0.distanceMeters != row.values.distanceMeters || $0.level != row.values.level
-            } ?? false
-            field(timedValue == .weight ? $weightText : $secondText, timedValue == .weight ? .weight : .second, keyboard: .decimalPad, changed: changed)
-                .frame(width: WorkoutEditGrid.wide)
-                .accessibilityLabel("\(name), set \(number)")
-        } else {
+            .accessibilityLabel("Time, \(setName)")
+        if timedValues.isEmpty {
             // A time alone stays as wide as a time beside a second value.
             Color.clear.frame(width: WorkoutEditGrid.wide, height: 1)
+        }
+        ForEach(timedValues.indices, id: \.self) { index in
+            let value = timedValues[index]
+            let isWeight = value == .weight
+            field(
+                isWeight ? $weightText : index == 0 ? $secondText : $thirdText,
+                isWeight ? .weight : index == 0 ? .second : .third,
+                keyboard: .decimalPad, changed: row.logged.map { !Self.same(value, $0, row.values) } ?? false
+            )
+            .frame(width: WorkoutEditGrid.valueWidth(count: timedValues.count))
+            .accessibilityLabel("\(WorkoutEditGrid.name(value, tracking: tracking, unit: unit)), \(setName)")
+        }
+    }
+
+    /// "set 2", or "bout 1" for cardio, as VoiceOver names the row.
+    private var setName: String { "\(isBout ? "bout" : "set") \(number)" }
+
+    /// Whether two sets hold the same `value`.
+    private static func same(_ value: TimedValue, _ a: WorkoutEdit.Values, _ b: WorkoutEdit.Values) -> Bool {
+        switch value {
+        case .weight: a.weight == b.weight
+        case .distance: a.distanceMeters == b.distanceMeters
+        case .level: a.level == b.level
+        case .speed: a.speedKmh == b.speedKmh
+        case .incline: a.incline == b.incline
         }
     }
 
@@ -532,21 +584,24 @@ private struct WorkoutEditSetRow: View {
             let seconds = SetText.seconds(fromTyped: timeText)
             isValid = seconds != nil
             if timeText != Self.timeText(opened), let seconds { values.durationSeconds = seconds }
-            switch timedValue {
-            case .weight:
-                isValid = readWeight(into: &values) && isValid
-            case .distance, .level:
-                let number = SetText.number(fromTyped: secondText, locale: locale)
-                isValid = (secondText.isEmpty || number != nil) && isValid
-                if secondText != Self.secondText(opened, timedValue, unit: unit, locale: locale) {
-                    if timedValue == .level {
-                        values.level = number
-                    } else {
-                        values.distanceMeters = SetText.meters(fromTyped: secondText, unit: unit, locale: locale)
-                    }
+            for (index, value) in timedValues.enumerated() {
+                if value == .weight {
+                    isValid = readWeight(into: &values) && isValid
+                    continue
                 }
-            case nil:
-                break
+                let text = index == 0 ? secondText : thirdText
+                let number = SetText.number(fromTyped: text, locale: locale)
+                isValid = (text.isEmpty || number != nil) && isValid
+                // A field writes only once its text has changed: a shown
+                // distance or speed is rounded.
+                guard text != Self.valueText(opened, value, unit: unit, locale: locale) else { continue }
+                switch value {
+                case .distance: values.distanceMeters = SetText.meters(fromTyped: text, unit: unit, locale: locale)
+                case .level: values.level = number
+                case .speed: values.speedKmh = SetText.kmh(fromTyped: text, unit: unit, locale: locale)
+                case .incline: values.incline = number
+                case .weight: break
+                }
             }
         } else {
             let reps = WorkoutCorrectionInput.reps(repsText)
@@ -581,20 +636,23 @@ private struct WorkoutEditSetRow: View {
         values.durationSeconds.map(SetText.duration) ?? ""
     }
 
-    private static func secondText(
-        _ values: WorkoutEdit.Values, _ timedValue: TimedValue?, unit: WeightUnit, locale: Locale
+    private static func valueText(
+        _ values: WorkoutEdit.Values, _ value: TimedValue?, unit: WeightUnit, locale: Locale
     ) -> String {
-        switch timedValue {
+        switch value {
         case .distance: values.distanceMeters.map { SetText.entry(distance: $0, unit: unit, locale: locale) } ?? ""
         case .level: values.level.map { SetText.entry(level: $0, locale: locale) } ?? ""
+        case .speed: values.speedKmh.map { SetText.entry(speed: $0, unit: unit, locale: locale) } ?? ""
+        case .incline: values.incline.map { SetText.entry(level: $0, locale: locale) } ?? ""
         case .weight, nil: ""
         }
     }
 
-    private static func label(_ values: WorkoutEdit.Values, unit: WeightUnit) -> String {
+    private static func label(_ values: WorkoutEdit.Values, tracking: Tracking?, unit: WeightUnit) -> String {
         let base = SetText.result(
             weight: values.weight, reps: values.reps,
             durationSeconds: values.durationSeconds, distanceMeters: values.distanceMeters, level: values.level,
+            speedKmh: values.speedKmh, incline: values.incline, tracking: tracking,
             unit: unit
         )
         return values.rpe.map { "\(base) @ \(NumberText.weight($0))" } ?? base

@@ -119,6 +119,9 @@ struct WorkoutWeightGuidance: View {
             if let rpe = exercise.targetRPE, rpe.isFinite {
                 parts.append("Target RPE \(NumberText.weight(rpe))")
             }
+        } else if let plan = exercise.planText(tracking: tracking, unit: unit) {
+            // A cardio plan (RM-062); its values are the set's offers too.
+            parts.append("Plan \(plan)")
         }
         if suggestion == nil, loggedWeight == nil {
             switch tracking {
@@ -134,7 +137,7 @@ struct WorkoutWeightGuidance: View {
                 if !hasSetOffer {
                     parts.append(programmed ? "Choose your assistance" : "Enter your assistance and reps")
                 }
-            case .duration, .durationDistance, .durationLevel:
+            case .duration, .durationDistance, .durationLevel, .durationStepSpeed, .durationSpeedIncline:
                 if !hasSetOffer { parts.append("Enter your time") }
             }
         }

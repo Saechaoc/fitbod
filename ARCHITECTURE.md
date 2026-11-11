@@ -32,15 +32,15 @@ A move-aside that fails partway puts the moved files back and throws.
 | `MuscleGroup` | Catalog muscles with stimulus links/volume targets |
 | `ExerciseMuscleStimulus` | Exercise↔muscle join, stimulus weight, primary/secondary role |
 | `SessionTemplate` | Name, intent/progression and owned prescription children |
-| `SessionExerciseTemplate` | Exercise targets/rest/warmup/tempo options and stored overrides |
+| `SessionExerciseTemplate` | Exercise targets/rest/warmup/tempo options, a cardio plan and stored overrides |
 | `Split` | Routine with slots and inverse block references |
 | `SplitSessionSlot` | Routine↔template join, explicit position, optional references, workout inverse |
 | `Block` | Start/end/active state, split, mode, stored days, phases/archive |
 | `BlockPhase` | Ordered kind/weeks/volume/intensity owned by block |
 | `Session` | Workout timestamps, template/name snapshot, block/optional slot, exercises |
-| `SessionExercise` | Frozen evaluated prescription/name, actual sets and the optional machine it was done on |
+| `SessionExercise` | Frozen evaluated prescription/name and cardio plan, actual sets and the optional machine it was done on |
 | `MachineProfile` | A machine the lifter named: optional maker and model; nullified on its logs when deleted |
-| `SetEntry` | Weight/reps/RPE/completion/type/notes/tempo/partial/cluster actuals; optional start, duration, distance and level |
+| `SetEntry` | Weight/reps/RPE/completion/type/notes/tempo/partial/cluster actuals; optional start, duration, distance, level, treadmill speed and incline |
 | `MuscleVolumeTarget` | Per-muscle MV/MEV/MAV/MRV |
 | `PlateInventory` | Equipment bar/plates/counts/increments |
 | `UserSettings` | Units/calibration/fatigue thresholds/presentation settings |
@@ -59,7 +59,8 @@ Restore clears the exercise seed stamp, so the next launch re-seeds the restored
 Workouts and custom exercises stay.
 `Exercise.tracking` reads the stored tracking type; unset, bodyweight and weighted-bodyweight equipment track reps with optional load and everything else tracks weight and reps, so custom and uncurated rows need no stored value.
 The importer writes a seeded row's tracking from `curation.json` alone, so a row curation stops listing returns to the derived value.
-`Exercise.timedValue` names what a timed set records beside its time: an optional load for a hold or carry that is not bodyweight, a distance, or a machine level.
+`Exercise.timedValues` names what a timed set records beside its time: an optional load for a hold or carry that is not bodyweight, a distance, a machine level, or a treadmill's speed and incline.
+A stair machine's number is its speed: `Tracking.durationStepSpeed` stores it as a level and names it speed wherever the set or its plan is shown, so older stair logs read as speed too.
 A custom copy of an exercise carries its stored tracking, so a copy of a timed exercise stays timed.
 `ExerciseCatalog` resolves the three seed files into the rows the importer writes: `exercises.json` (the upstream snapshot, byte for byte), `additions.json` (local rows) and `curation.json` (the overlay: name, family, variant, equipment, tracking, brand, loading, aliases, hidden, import).
 Seed checks read the same entries with no store, so they cannot drift from the importer.
@@ -68,7 +69,7 @@ The importer keeps a hidden row listed while a routine or a logged workout uses 
 A row outside the strength categories is in the catalog only when curation imports it.
 A cardio row gets no stimulus rows and an empty `primaryMuscleSlugsJoined`, so cardio adds no muscle volume.
 Unset, a cardio machine tracks time and distance (`Tracking.implied(by:)`).
-A custom exercise stores a tracking choice only when it differs from what its equipment implies; one that tracks a time with a distance or a level is cardio and needs no primary muscle.
+A custom exercise stores a tracking choice only when it differs from what its equipment implies; one that tracks a time with a distance, a level, a stair speed or a speed and incline is cardio and needs no primary muscle.
 Code finds a catalog row by its `externalID`, never by its name, because curation renames rows: the debug seeds are keyed by ID, and `muscles.json` keys its variant overrides by ID.
 A catalog exercise's stimulus rows match its muscle credits exactly (RM-065): `muscles.json` gives each family, and each variant that differs, its primary muscles (1.0 of a set) and secondary muscles (0.5 or 0.25); a row it does not cover keeps the upstream tags at 1.0 and 0.5.
 The muscles are the 17 upstream slugs with "shoulders" split into front, side and rear delts; a seed moves the shoulders credit of an exercise outside the catalog (a custom one, or a row a newer dataset dropped) to the delt its family credits most, or to the front delts, and deletes the shoulders muscle.
@@ -142,7 +143,15 @@ Entered values, including numbers stored by older versions, take priority per fi
 Swapping after logging keeps completed sets attached to the original lift and applies a fresh prescription to the replacement's pending sets.
 Timed and assisted exercises have no load to progress: `SessionFactory.prescription` returns no weight without calling a strategy, and no warm-up ramp is built.
 A pending timed set is offered the time, and the load, distance or level its row shows, of the set just completed, else of the same set in the last finished matching-intent workout.
+A cardio bout is offered its frozen plan first, value by value: a planned time, level or stair speed, or treadmill speed and incline wins over last time's.
 An assisted set follows the rep offers above and carries its assistance forward.
+
+Cardio (`Exercise.isCardio`) is one bout with a plan, never sets and rest (RM-062).
+A routine row plans a time and the machine's level or stair speed, or a treadmill's speed and incline, in place of sets and rest; `SessionFactory.start` copies the plan to the logged exercise and makes one bout, whatever sets the row stores.
+The logger shows a cardio bout with no set number, offers no Add set row while a bout exists, and starts no rest on Done.
+Planned and logged set counts leave bouts out (`SessionExerciseTemplate.workingSetCount(phase:)`, `SessionSummary.workingSetCount`, `SessionHistoryFormat.setCount(of:)`, `TodayWeek.workingSets(in:)`), as Volume does, and History and Edit workout call a cardio entry a bout.
+`Session.loggedSetCount` still counts a bout, because it decides whether a workout logged anything.
+A swap to cardio keeps one pending row; Undo restores the rows it removed.
 The next prescription reads earlier sets only in the shape the exercise tracks now, a time for a timed exercise and reps otherwise; Last time shows the latest logged set in any shape.
 
 A workout's place in time is Session.startedAt; completedAt marks finish/duration.
@@ -152,7 +161,7 @@ SessionEditService.block(runningAt:in:) picks the latest applicable start.
 Date correction may rewrite Session.block, never Session.slot; the resolver ignores a slot outside the block's split.
 Other frozen fields stay unchanged.
 
-SessionEditService.save validates one WorkoutEdit before applying weight/reps/RPE, a timed set's time/distance/level, additions/deletions/reindexing and date movement in one transaction.
+SessionEditService.save validates one WorkoutEdit before applying weight/reps/RPE, a timed set's time/distance/level/speed/incline, additions/deletions/reindexing and date movement in one transaction.
 Only changed and added sets are validated: a changed set by the shape it was logged in, an added set by what its exercise tracks now.
 A set left alone is never judged again, so an old set cannot block a correction to the rest of its workout.
 New sets get ordered timestamps clamped inside the workout.
@@ -177,6 +186,7 @@ Machines are one machine when they show the same name, whatever the case, spacin
 Changing the machine mid-workout relabels the log with its finished sets, or keeps those sets on a copy of the log under the old machine; the log is then represcribed.
 Progress charts, volume, tonnage, workout counts, the weekly recap and the PR list stay exercise-level aggregates across machines; exercise history can filter by machine.
 Backup format 4 carries the machines and each log's machine, and formats 1 to 3 still restore; CSV adds a machine column.
+Backup format 5 carries the cardio plan on routine rows and logged exercises and a treadmill set's speed and incline, and formats 1 to 4 still restore; CSV adds `speed_kmh` and `incline_pct` at the end (RM-062).
 Order workouts by start even when finish order differs; the former handoff's proposed universal equal-order invariant is not required by the current resolver.
 
 ## Units and aggregates
@@ -186,7 +196,8 @@ Workout load fields parse the entire ungrouped decimal in the current locale, in
 Plate inventory readers expose one finite positive denomination per weight, combining legacy duplicate counts without rewriting saved bytes. New plate additions validate before mutation and roll back failed saves; the editor keeps the entered text for retry.
 Session-editor and logger tempo writes share `TempoParts.join`: exactly four parts, blank positions preserved, no pasted dash inside a part. A rejected paste leaves the previous tempo unchanged and explains the required input.
 There is no per-set unit provenance yet; do not call mixed-unit totals converted/comparable ([RM-021](docs/ROADMAP.md#rm-021)).
-Distance is the exception: `SetEntry.distanceMeters` is stored in meters and converted for entry and display, so it never needs provenance.
+Distance and a treadmill's speed are the exception: `SetEntry.distanceMeters` is stored in meters and `SetEntry.speedKmh` in km/h, each converted for entry and display (miles and mph with lb, kilometers and km/h with kg), so neither needs provenance.
+A treadmill set's distance shows worked out from its speed and time when none was logged.
 
 `SessionSetActions.isValidSet` is the one rule for completing a set, by what its exercise tracks.
 Weight and reps need both above zero; bodyweight reps take zero or more added load; assisted reps take a weight of zero or less, because assistance is stored negative; a timed set needs a time and stores zero reps.

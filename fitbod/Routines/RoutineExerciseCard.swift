@@ -39,6 +39,7 @@ import SwiftUI
 
 public struct RoutineExerciseCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.weightUnit) private var defaultUnit
     @Bindable public var draft: RoutineExerciseDraft
     public let hasBlock: Bool
     public let index: Int
@@ -261,6 +262,11 @@ public struct RoutineExerciseCard: View {
     /// target, and its rest is named so it is not read as the time to
     /// hold: "1 set · 3:00 rest".
     private var prescriptionSummary: String {
+        // Cardio is one bout with a plan, and no sets or rest (RM-062).
+        if draft.exercise?.isCardio == true {
+            let unit = WeightUnit.effective(for: draft.exercise, default: defaultUnit)
+            return draft.planText(tracking: draft.exercise?.tracking, unit: unit) ?? "No plan yet"
+        }
         let rest = NumberText.minutesSeconds(draft.prescribedRestSeconds)
         if draft.exercise?.tracking.isTimed == true {
             return "\(BRUCountLabel.text(draft.targetSets, "set")) · \(rest) rest"

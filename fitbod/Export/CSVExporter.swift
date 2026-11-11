@@ -10,8 +10,8 @@
 //  - UTF-8 with BOM (`EF BB BF`) — Excel opens UTF-8 CSVs correctly
 //    only when the BOM is present (Microsoft docs + Apple Numbers
 //    parity).
-//  - 28 columns: CONTEXT D-25 order, then the set fields and the machine
-//    (see headerColumns below).
+//  - 30 columns: CONTEXT D-25 order, then the set fields, the machine and
+//    a treadmill set's speed (km/h) and incline (see headerColumns below).
 //  - RFC 4180 quoting: fields containing `,` `"` `\r` `\n` are wrapped
 //    in double quotes; embedded `"` is escaped as `""`. Line terminator
 //    is `\r\n` per RFC 4180.
@@ -46,6 +46,8 @@
 //  | set_note           | setEntry.notes ("" if nil) |
 //  | unit               | UserSettings.unitsRaw ("kg" / "lb") |
 //  | machine            | sessionExercise.machine?.displayName ("" if none, RM-066) |
+//  | speed_kmh          | setEntry.speedKmh, a treadmill's speed in km/h ("" if nil, RM-062) |
+//  | incline_pct        | setEntry.incline, a treadmill's incline in percent ("" if nil, RM-062) |
 //
 //  [CITED: CONTEXT D-25/D-26 + RESEARCH §Don't Hand-Roll RFC 4180 +
 //   Pitfall 8 ISO-8601 timezone defaults]
@@ -70,7 +72,7 @@ public enum CSVExporter {
         "was_manual_override", "partial_reps", "tempo",
         "rest_taken_sec", "e1rm", "set_note", "unit",
         "set_started_at", "duration_sec", "distance_m", "level",
-        "machine",
+        "machine", "speed_kmh", "incline_pct",
     ]
 
     /// UTF-8 BOM bytes — emitted at the very start of every CSV.
@@ -155,6 +157,8 @@ public enum CSVExporter {
             entry.distanceMeters.map(formatDouble) ?? "",
             entry.level.map(formatDouble) ?? "",
             se?.machine?.displayName ?? "",
+            entry.speedKmh.map(formatDouble) ?? "",
+            entry.incline.map(formatDouble) ?? "",
         ]
         return columns.map(rfc4180Quote).joined(separator: ",")
     }
@@ -185,11 +189,10 @@ public enum CSVExporter {
 
     /// `Double` formatter — emits compact representation; integer
     /// values render without a fractional component, decimals render
-    /// the natural precision via `%g`.
+    /// the natural precision via `%g`. A whole number too big for an `Int`,
+    /// which only a hand-edited backup can restore, prints with `%g`
+    /// instead of crashing the export.
     static func formatDouble(_ value: Double) -> String {
-        if value.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(value))
-        }
-        return String(format: "%g", value)
+        NumberText.weight(value)
     }
 }

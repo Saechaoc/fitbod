@@ -535,6 +535,10 @@ public final class BackupRestorer {
                 re.tracksTempo = reDTO.tracksTempo
                 re.tracksPartialReps = reDTO.tracksPartialReps
                 re.warmupOverrideData = reDTO.warmupOverrideData
+                re.targetDurationSeconds = reDTO.targetDurationSeconds
+                re.targetLevel = reDTO.targetLevel
+                re.targetSpeedKmh = reDTO.targetSpeedKmh
+                re.targetIncline = reDTO.targetIncline
                 re.sessionTemplate = r
                 if let exID = reDTO.exerciseID, let ex = exercisesByID[exID] {
                     re.exercise = ex
@@ -620,6 +624,10 @@ public final class BackupRestorer {
                 se.prescribedWeight = seDTO.prescribedWeight
                 se.pinnedNote = seDTO.pinnedNote
                 se.exerciseNameSnapshot = seDTO.exerciseNameSnapshot ?? seDTO.exerciseName
+                se.targetDurationSeconds = seDTO.targetDurationSeconds
+                se.targetLevel = seDTO.targetLevel
+                se.targetSpeedKmh = seDTO.targetSpeedKmh
+                se.targetIncline = seDTO.targetIncline
                 se.session = s
                 if let exID = seDTO.exerciseID, let ex = exercisesByID[exID] {
                     se.exercise = ex
@@ -649,6 +657,8 @@ public final class BackupRestorer {
                     e.durationSeconds = setDTO.durationSeconds
                     e.distanceMeters = setDTO.distanceMeters
                     e.level = setDTO.level
+                    e.speedKmh = setDTO.speedKmh
+                    e.incline = setDTO.incline
                     e.sessionExercise = se
                     ctx.insert(e)
                 }

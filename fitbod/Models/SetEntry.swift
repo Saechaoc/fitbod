@@ -54,6 +54,10 @@ public final class SetEntry {
     public var durationSeconds: Int? = nil
     public var distanceMeters: Double? = nil
     public var level: Double? = nil
+    // A treadmill's speed, stored in km/h and shown in mph or km/h as a
+    // distance is, and its incline in percent. Additive, like the above.
+    public var speedKmh: Double? = nil
+    public var incline: Double? = nil
 
     public init() {}
 }

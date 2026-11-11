@@ -32,7 +32,9 @@ struct WorkoutEditDraft: Equatable {
         /// What the exercise tracks now; nil when it is gone.
         let tracking: Tracking?
         /// What its timed rows edit beside their time.
-        let timedValue: TimedValue?
+        let timedValues: [TimedValue]
+        /// Cardio logs one bout, with no set number (RM-062).
+        let isCardio: Bool
         var rows: [Row]
         var deleted: Set<UUID> = []
     }
@@ -60,7 +62,8 @@ struct WorkoutEditDraft: Equatable {
                     name: exercise.displayName,
                     unitOverride: exercise.exercise?.unitOverride,
                     tracking: tracking,
-                    timedValue: exercise.exercise?.timedValue,
+                    timedValues: exercise.exercise?.timedValues ?? [],
+                    isCardio: exercise.exercise?.isCardio == true,
                     rows: SessionSetActions.ordered(exercise)
                         .filter(\.countsAsWork)
                         .map { set in

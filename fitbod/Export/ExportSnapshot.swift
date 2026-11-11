@@ -156,7 +156,11 @@ enum ExportSnapshot {
             tracksTempo: re.tracksTempo,
             tracksPartialReps: re.tracksPartialReps,
             warmupOverrideData: re.warmupOverrideData,
-            setOverrides: overrides
+            setOverrides: overrides,
+            targetDurationSeconds: re.targetDurationSeconds,
+            targetLevel: re.targetLevel,
+            targetSpeedKmh: re.targetSpeedKmh,
+            targetIncline: re.targetIncline
         )
     }
 
@@ -213,7 +217,11 @@ enum ExportSnapshot {
             pinnedNote: se.pinnedNote,
             exerciseNameSnapshot: se.exerciseNameSnapshot,
             machineID: se.machine?.id,
-            sets: sets
+            sets: sets,
+            targetDurationSeconds: se.targetDurationSeconds,
+            targetLevel: se.targetLevel,
+            targetSpeedKmh: se.targetSpeedKmh,
+            targetIncline: se.targetIncline
         )
     }
 
@@ -234,7 +242,9 @@ enum ExportSnapshot {
             startedAt: e.startedAt,
             durationSeconds: e.durationSeconds,
             distanceMeters: e.distanceMeters,
-            level: e.level
+            level: e.level,
+            speedKmh: e.speedKmh,
+            incline: e.incline
         )
     }
 

@@ -53,6 +53,13 @@ public final class SessionExercise {
     public var tracksPartialReps: Bool = false
     public var prescribedWeight: Double? = nil
     public var pinnedNote: String? = nil
+    /// The cardio plan copied from the routine at start (RM-062), additive: the bout's time and the machine's
+    /// settings. A stair machine's speed is its `targetLevel`; a treadmill's
+    /// speed is in km/h. Nil is no plan for that value.
+    public var targetDurationSeconds: Int? = nil
+    public var targetLevel: Double? = nil
+    public var targetSpeedKmh: Double? = nil
+    public var targetIncline: Double? = nil
 
     /// Log-time snapshot of the exercise name. Written by
     /// `SessionFactory.start` and whenever an exercise is added or swapped

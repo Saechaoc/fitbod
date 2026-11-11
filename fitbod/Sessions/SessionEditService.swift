@@ -27,10 +27,13 @@ public struct WorkoutEdit: Equatable, Sendable {
         public var durationSeconds: Int?
         public var distanceMeters: Double?
         public var level: Double?
+        public var speedKmh: Double?
+        public var incline: Double?
 
         public init(
             weight: Double, reps: Int, rpe: Double?,
-            durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil
+            durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil,
+            speedKmh: Double? = nil, incline: Double? = nil
         ) {
             self.weight = weight
             self.reps = reps
@@ -38,12 +41,15 @@ public struct WorkoutEdit: Equatable, Sendable {
             self.durationSeconds = durationSeconds
             self.distanceMeters = distanceMeters
             self.level = level
+            self.speedKmh = speedKmh
+            self.incline = incline
         }
 
         init(_ set: SetEntry) {
             self.init(
                 weight: set.weight, reps: set.reps, rpe: set.rpe,
-                durationSeconds: set.durationSeconds, distanceMeters: set.distanceMeters, level: set.level
+                durationSeconds: set.durationSeconds, distanceMeters: set.distanceMeters, level: set.level,
+                speedKmh: set.speedKmh, incline: set.incline
             )
         }
 
@@ -54,6 +60,8 @@ public struct WorkoutEdit: Equatable, Sendable {
             set.durationSeconds = durationSeconds
             set.distanceMeters = distanceMeters
             set.level = level
+            set.speedKmh = speedKmh
+            set.incline = incline
         }
     }
 
@@ -236,7 +244,7 @@ public enum SessionEditService {
         let rpeIsValid = values.rpe.map { $0.isFinite && (0...10).contains($0) } ?? true
         // Assistance is a negative weight, so the size is what must be representable.
         let load = abs(values.weight)
-        let extrasAreValid = [values.distanceMeters, values.level]
+        let extrasAreValid = [values.distanceMeters, values.level, values.speedKmh, values.incline]
             .allSatisfy { $0.map(WorkoutCorrectionInput.isSupported) ?? true }
             && values.durationSeconds.map { (0..<WorkoutCorrectionInput.durationLimit).contains($0) } ?? true
         return rpeIsValid && extrasAreValid

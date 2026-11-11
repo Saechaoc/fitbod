@@ -78,7 +78,8 @@ struct TodayWeekBoard: View {
     private func tile(_ day: TodayWeek.Day) -> some View {
         let done = day.workouts > 0
         let lines: [String] = if done {
-            [day.workoutName ?? "Workout", "\(day.workingSets)"]
+            // A day of cardio alone has no sets to count (RM-062).
+            [day.workoutName ?? "Workout"] + (day.workingSets > 0 ? ["\(day.workingSets)"] : [])
         } else if day.isToday, let todayNote {
             [todayNote]
         } else {

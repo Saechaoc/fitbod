@@ -109,6 +109,11 @@ struct VariationUndoSnapshot {
         /// The machine (RM-066): a copy of finished sets keeps the machine
         /// they were done on, and undo brings it back.
         let machine: MachineProfile?
+        /// The cardio plan (RM-062).
+        let targetDurationSeconds: Int?
+        let targetLevel: Double?
+        let targetSpeedKmh: Double?
+        let targetIncline: Double?
 
         init(_ exercise: SessionExercise) {
             targetSets = exercise.targetSets
@@ -123,6 +128,10 @@ struct VariationUndoSnapshot {
             prescribedWeight = exercise.prescribedWeight
             pinnedNote = exercise.pinnedNote
             machine = exercise.machine
+            targetDurationSeconds = exercise.targetDurationSeconds
+            targetLevel = exercise.targetLevel
+            targetSpeedKmh = exercise.targetSpeedKmh
+            targetIncline = exercise.targetIncline
         }
 
         func apply(to exercise: SessionExercise) {
@@ -138,6 +147,10 @@ struct VariationUndoSnapshot {
             exercise.prescribedWeight = prescribedWeight
             exercise.pinnedNote = pinnedNote
             exercise.machine = machine
+            exercise.targetDurationSeconds = targetDurationSeconds
+            exercise.targetLevel = targetLevel
+            exercise.targetSpeedKmh = targetSpeedKmh
+            exercise.targetIncline = targetIncline
         }
     }
 
@@ -162,6 +175,8 @@ struct VariationUndoSnapshot {
         let durationSeconds: Int?
         let distanceMeters: Double?
         let level: Double?
+        let speedKmh: Double?
+        let incline: Double?
 
         init(_ set: SetEntry) {
             id = set.id
@@ -184,6 +199,8 @@ struct VariationUndoSnapshot {
             durationSeconds = set.durationSeconds
             distanceMeters = set.distanceMeters
             level = set.level
+            speedKmh = set.speedKmh
+            incline = set.incline
         }
 
         func apply(to set: SetEntry) {
@@ -207,6 +224,8 @@ struct VariationUndoSnapshot {
             set.durationSeconds = durationSeconds
             set.distanceMeters = distanceMeters
             set.level = level
+            set.speedKmh = speedKmh
+            set.incline = incline
         }
     }
 }
@@ -299,8 +318,15 @@ public struct SwapExerciseSheet: View {
         rebuildPendingWarmups(of: sessionExercise, in: session, prescription: prescription, context: context)
 
         // Offers now come from the replacement's history and prescription.
-        let replacementRows = SessionSetActions.ordered(sessionExercise).filter {
+        var replacementRows = SessionSetActions.ordered(sessionExercise).filter {
             !$0.isDeleted && $0.sessionExercise?.id == sessionExercise.id
+        }
+        // Cardio is one bout (RM-062): a lift's other pending rows go.
+        if sessionExercise.exercise?.isCardio == true {
+            let pending = replacementRows.filter { !$0.isComplete && !$0.isWarmup }
+            for extra in pending.dropFirst() { context.delete(extra) }
+            let extraIDs = Set(pending.dropFirst().map(\.id))
+            replacementRows.removeAll { extraIDs.contains($0.id) }
         }
         for (index, set) in replacementRows.enumerated() {
             set.orderIndex = index
@@ -313,6 +339,8 @@ public struct SwapExerciseSheet: View {
             set.durationSeconds = nil
             set.distanceMeters = nil
             set.level = nil
+            set.speedKmh = nil
+            set.incline = nil
         }
         do {
             try SessionSetActions.saveOrRollBack(context)

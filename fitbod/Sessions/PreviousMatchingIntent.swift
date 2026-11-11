@@ -48,6 +48,8 @@ public struct PreviousMatchingIntentHit: Sendable {
     public let durationSeconds: Int?
     public let distanceMeters: Double?
     public let level: Double?
+    public let speedKmh: Double?
+    public let incline: Double?
     /// True when the set was done on another machine than the one asked
     /// about, or without one (RM-066): a reference, never a base for a load.
     public let onOtherMachine: Bool
@@ -57,6 +59,7 @@ public struct PreviousMatchingIntentHit: Sendable {
     public init(
         weight: Double, reps: Int, rpe: Double?, sessionStartedAt: Date,
         durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil,
+        speedKmh: Double? = nil, incline: Double? = nil,
         onOtherMachine: Bool = false, machineName: String? = nil
     ) {
         self.weight = weight
@@ -66,6 +69,8 @@ public struct PreviousMatchingIntentHit: Sendable {
         self.durationSeconds = durationSeconds
         self.distanceMeters = distanceMeters
         self.level = level
+        self.speedKmh = speedKmh
+        self.incline = incline
         self.onOtherMachine = onOtherMachine
         self.machineName = machineName
     }
@@ -142,6 +147,8 @@ public enum PreviousMatchingIntent {
             durationSeconds: topSet.durationSeconds,
             distanceMeters: topSet.distanceMeters,
             level: topSet.level,
+            speedKmh: topSet.speedKmh,
+            incline: topSet.incline,
             onOtherMachine: onOtherMachine,
             machineName: topSet.sessionExercise?.machine?.displayName
         )

@@ -7,16 +7,21 @@ public struct WorkoutSetSuggestion: Equatable, Sendable {
     public let durationSeconds: Int?
     public let distanceMeters: Double?
     public let level: Double?
+    public let speedKmh: Double?
+    public let incline: Double?
 
     public init(
         weight: Double? = nil, reps: Int? = nil,
-        durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil
+        durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil,
+        speedKmh: Double? = nil, incline: Double? = nil
     ) {
         self.weight = weight
         self.reps = reps
         self.durationSeconds = durationSeconds
         self.distanceMeters = distanceMeters
         self.level = level
+        self.speedKmh = speedKmh
+        self.incline = incline
     }
 
     func durationSeconds(for entry: SetEntry) -> Int? {
@@ -29,6 +34,14 @@ public struct WorkoutSetSuggestion: Equatable, Sendable {
 
     func level(for entry: SetEntry) -> Double? {
         entry.level ?? (entry.isComplete ? nil : level)
+    }
+
+    func speedKmh(for entry: SetEntry) -> Double? {
+        entry.speedKmh ?? (entry.isComplete ? nil : speedKmh)
+    }
+
+    func incline(for entry: SetEntry) -> Double? {
+        entry.incline ?? (entry.isComplete ? nil : incline)
     }
 
     func weight(for entry: SetEntry) -> Double {
@@ -88,17 +101,20 @@ struct WorkoutSetSuggestions {
             }
             let previous = prior.isEmpty ? nil : prior[min(index, prior.count - 1)]
             if tracking?.isTimed == true {
-                // No progression: repeat the set just done, or the same set last time.
-                // Only the value its row shows comes along with the time.
-                if let reference = lastCompleted ?? previous {
-                    let value = exercise.exercise?.timedValue
-                    offers[entry.id] = WorkoutSetSuggestion(
-                        weight: value == .weight && reference.weight > 0 ? reference.weight : nil,
-                        durationSeconds: reference.durationSeconds,
-                        distanceMeters: value == .distance ? reference.distanceMeters : nil,
-                        level: value == .level ? reference.level : nil
-                    )
-                }
+                // No progression: a cardio plan's values first (RM-062), then
+                // the set just done, or the same set last time. Only the
+                // values its row shows come along with the time.
+                let reference = lastCompleted ?? previous
+                let values = exercise.exercise?.timedValues ?? []
+                let offer = WorkoutSetSuggestion(
+                    weight: values.contains(.weight) ? reference.flatMap { $0.weight > 0 ? $0.weight : nil } : nil,
+                    durationSeconds: exercise.targetDurationSeconds ?? reference?.durationSeconds,
+                    distanceMeters: values.contains(.distance) ? reference?.distanceMeters : nil,
+                    level: values.contains(.level) ? exercise.targetLevel ?? reference?.level : nil,
+                    speedKmh: values.contains(.speed) ? exercise.targetSpeedKmh ?? reference?.speedKmh : nil,
+                    incline: values.contains(.incline) ? exercise.targetIncline ?? reference?.incline : nil
+                )
+                if offer != WorkoutSetSuggestion() { offers[entry.id] = offer }
                 continue
             }
             let fromCurrent = !blockProgrammed && lastCompleted != nil

@@ -26,6 +26,7 @@ public struct SessionTemplateDetailView: View {
 
     @Environment(\.modelContext) private var ctx
     @Environment(\.calendar) private var calendar
+    @Environment(\.weightUnit) private var defaultUnit
     @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
     @Bindable public var template: SessionTemplate
     /// The routine this session was opened from, which decides the slot a
@@ -180,14 +181,19 @@ public struct SessionTemplateDetailView: View {
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(prescriptionLine(
-                    sets: item.targetSets,
-                    repsLow: item.targetRepsLow,
-                    repsHigh: item.targetRepsHigh,
-                    rpe: item.targetRPE,
-                    restSeconds: item.prescribedRestSeconds,
-                    isTimed: item.exercise?.tracking.isTimed == true
-                ))
+                // Cardio is one bout with a plan, and no sets or rest (RM-062).
+                Text(item.exercise?.isCardio == true
+                    ? item.planText(
+                        tracking: item.exercise?.tracking, unit: .effective(for: item.exercise, default: defaultUnit)
+                    ) ?? "No plan yet"
+                    : prescriptionLine(
+                        sets: item.targetSets,
+                        repsLow: item.targetRepsLow,
+                        repsHigh: item.targetRepsHigh,
+                        rpe: item.targetRPE,
+                        restSeconds: item.prescribedRestSeconds,
+                        isTimed: item.exercise?.tracking.isTimed == true
+                    ))
                 .font(BRUFont.labelSmall)
                 .tracking(1.0)
                 .textCase(.uppercase)

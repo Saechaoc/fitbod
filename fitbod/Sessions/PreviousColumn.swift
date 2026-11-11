@@ -40,17 +40,20 @@ public struct PreviousColumn: View {
     /// The machine this log is on (RM-066), nil for none: the column shows
     /// that machine's last set, or another machine's for reference.
     public let machineID: UUID?
+    /// The exercise's, which names a stair machine's level as speed.
+    public let tracking: Tracking?
     @State private var hint: PreviousMatchingIntentHit?
 
     public init(
         exerciseID: UUID?, intentRaw: String, currentSessionID: UUID? = nil,
-        unit: WeightUnit = .default, machineID: UUID? = nil
+        unit: WeightUnit = .default, machineID: UUID? = nil, tracking: Tracking? = nil
     ) {
         self.exerciseID = exerciseID
         self.intentRaw = intentRaw
         self.currentSessionID = currentSessionID
         self.unit = unit
         self.machineID = machineID
+        self.tracking = tracking
     }
 
     /// What the column asks about: a swap or a machine change asks again.
@@ -71,6 +74,12 @@ public struct PreviousColumn: View {
                 ViewThatFits(in: .horizontal) {
                     hintText(compactHint(hit, includeRPE: true))
                     hintText(compactHint(hit, includeRPE: false))
+                    // A treadmill's time, speed and incline can outgrow the
+                    // column: the incline goes first, then the speed.
+                    if hit.speedKmh != nil || hit.incline != nil {
+                        hintText(compactHint(hit, includeRPE: false, keepsIncline: false))
+                        hintText(compactHint(hit, includeRPE: false, keepsIncline: false, keepsSpeed: false))
+                    }
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
@@ -110,18 +119,23 @@ public struct PreviousColumn: View {
     }
 
     /// The set by its own values, so a timed set reads as its time.
-    private func result(_ hit: PreviousMatchingIntentHit, compact: Bool) -> String {
+    private func result(
+        _ hit: PreviousMatchingIntentHit, compact: Bool, keepsIncline: Bool = true, keepsSpeed: Bool = true
+    ) -> String {
         SetText.result(
             weight: hit.weight, reps: hit.reps,
             durationSeconds: hit.durationSeconds, distanceMeters: hit.distanceMeters, level: hit.level,
-            unit: unit, compact: compact
+            speedKmh: keepsSpeed ? hit.speedKmh : nil, incline: keepsIncline ? hit.incline : nil,
+            tracking: tracking, unit: unit, compact: compact
         )
     }
 
     /// "175×8 @8", or "175×8" without the RPE (also when none was logged).
-    /// A timed set reads "20:00 L8".
-    private func compactHint(_ hit: PreviousMatchingIntentHit, includeRPE: Bool) -> String {
-        let set = result(hit, compact: true)
+    /// A timed set reads "20:00 L8", a treadmill's "30:00 3.5mph 12%".
+    private func compactHint(
+        _ hit: PreviousMatchingIntentHit, includeRPE: Bool, keepsIncline: Bool = true, keepsSpeed: Bool = true
+    ) -> String {
+        let set = result(hit, compact: true, keepsIncline: keepsIncline, keepsSpeed: keepsSpeed)
         guard includeRPE, let rpe = hit.rpe else { return set }
         return "\(set) @\(NumberText.weight(rpe))"
     }

@@ -268,7 +268,7 @@ struct ExportDocumentSnapshotTests {
         let doc = Self.makeFixture()
         let data = try JSONEncoder.exportConfigured().encode(doc)
         let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(json["formatVersion"] as? Int == 4)
+        #expect(json["formatVersion"] as? Int == 5)
         #expect(json["schemaVersion"] as? String == "v7")
         let splits = try #require(json["splits"] as? [[String: Any]])
         #expect(splits.count == 1)

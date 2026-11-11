@@ -86,7 +86,9 @@ public struct DoneTodaySlab: View {
         if let seconds = session.totalDurationSeconds {
             parts.append(SessionHistoryFormat.duration(minutes: seconds / 60))
         }
-        parts.append(BRUCountLabel.text(session.loggedSetCount, "set"))
+        // Cardio logs bouts, not sets (RM-062): cardio alone shows no count.
+        let sets = SessionHistoryFormat.setCount(of: session)
+        if sets > 0 || parts.isEmpty { parts.append(BRUCountLabel.text(sets, "set")) }
         if prCount > 0 {
             parts.append(BRUCountLabel.text(prCount, "PR"))
         }

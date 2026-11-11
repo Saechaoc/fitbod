@@ -123,10 +123,14 @@ public final class CustomExerciseDraft {
     /// editor or copied from the source exercise. Nil stands alone.
     public var familyName: String? = nil
 
-    /// Time with a distance or a machine level is cardio. It adds no muscle
-    /// volume, so it can be saved without a muscle.
+    /// Time with a distance, a machine level or speed, or a treadmill's
+    /// speed and incline is cardio. It adds no muscle volume, so it can be
+    /// saved without a muscle.
     public var isCardio: Bool {
-        effectiveTracking == .durationDistance || effectiveTracking == .durationLevel
+        switch effectiveTracking {
+        case .durationDistance, .durationLevel, .durationStepSpeed, .durationSpeedIncline: true
+        case .weightReps, .reps, .assistedReps, .duration: false
+        }
     }
 
     /// The tracking to store: nil when it is what the equipment implies, so

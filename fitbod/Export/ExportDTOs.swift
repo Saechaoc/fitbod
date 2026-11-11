@@ -89,10 +89,12 @@ public struct ExportDocument: Codable, Equatable, Sendable {
     /// The format this build writes, in the document and in a backup's
     /// manifest. Format 3 adds the optional catalog fields on exercises and
     /// the optional duration, distance and level on sets; format 4 adds the
-    /// machines and each logged exercise's machine. Formats 1 to 3 still
-    /// restore. A higher number is refused: restoring it would drop fields
-    /// this build does not know.
-    public static let currentFormatVersion = 4
+    /// machines and each logged exercise's machine; format 5 adds a cardio
+    /// plan on routine rows and logged exercises, and a treadmill set's
+    /// speed and incline (RM-062). Formats 1 to 4 still restore. A higher
+    /// number is refused: restoring it would drop fields this build does not
+    /// know.
+    public static let currentFormatVersion = 5
 
     public init(
         formatVersion: Int,
@@ -314,6 +316,11 @@ public struct ExportRoutineExerciseDTO: Codable, Equatable, Sendable {
     public let tracksPartialReps: Bool
     public let warmupOverrideData: Data?
     public let setOverrides: [ExportRoutineExerciseSetOverrideDTO]
+    // Format 5; absent in older documents (RM-062).
+    public let targetDurationSeconds: Int?
+    public let targetLevel: Double?
+    public let targetSpeedKmh: Double?
+    public let targetIncline: Double?
 
     public init(
         id: UUID, exerciseID: UUID?, orderIndex: Int, targetSets: Int,
@@ -322,7 +329,9 @@ public struct ExportRoutineExerciseDTO: Codable, Equatable, Sendable {
         notes: String?, generateWarmups: Bool, supersetGroupID: UUID?,
         tracksTempo: Bool, tracksPartialReps: Bool,
         warmupOverrideData: Data?,
-        setOverrides: [ExportRoutineExerciseSetOverrideDTO]
+        setOverrides: [ExportRoutineExerciseSetOverrideDTO],
+        targetDurationSeconds: Int? = nil, targetLevel: Double? = nil,
+        targetSpeedKmh: Double? = nil, targetIncline: Double? = nil
     ) {
         self.id = id; self.exerciseID = exerciseID
         self.orderIndex = orderIndex; self.targetSets = targetSets
@@ -336,6 +345,10 @@ public struct ExportRoutineExerciseDTO: Codable, Equatable, Sendable {
         self.tracksPartialReps = tracksPartialReps
         self.warmupOverrideData = warmupOverrideData
         self.setOverrides = setOverrides
+        self.targetDurationSeconds = targetDurationSeconds
+        self.targetLevel = targetLevel
+        self.targetSpeedKmh = targetSpeedKmh
+        self.targetIncline = targetIncline
     }
 }
 
@@ -452,6 +465,11 @@ public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
     /// Format 4; absent when no machine was named or in older documents.
     public let machineID: UUID?
     public let sets: [ExportSetEntryDTO]
+    // Format 5; absent in older documents (RM-062).
+    public let targetDurationSeconds: Int?
+    public let targetLevel: Double?
+    public let targetSpeedKmh: Double?
+    public let targetIncline: Double?
 
     public init(
         id: UUID, exerciseID: UUID?, exerciseName: String, orderIndex: Int,
@@ -461,7 +479,9 @@ public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
         prescribedWeight: Double?, pinnedNote: String?,
         exerciseNameSnapshot: String? = nil,
         machineID: UUID? = nil,
-        sets: [ExportSetEntryDTO]
+        sets: [ExportSetEntryDTO],
+        targetDurationSeconds: Int? = nil, targetLevel: Double? = nil,
+        targetSpeedKmh: Double? = nil, targetIncline: Double? = nil
     ) {
         self.id = id; self.exerciseID = exerciseID
         self.exerciseName = exerciseName; self.orderIndex = orderIndex
@@ -476,6 +496,10 @@ public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
         self.prescribedWeight = prescribedWeight
         self.pinnedNote = pinnedNote; self.machineID = machineID
         self.sets = sets
+        self.targetDurationSeconds = targetDurationSeconds
+        self.targetLevel = targetLevel
+        self.targetSpeedKmh = targetSpeedKmh
+        self.targetIncline = targetIncline
     }
 }
 
@@ -501,6 +525,9 @@ public struct ExportSetEntryDTO: Codable, Equatable, Sendable {
     public let durationSeconds: Int?
     public let distanceMeters: Double?
     public let level: Double?
+    // Format 5; absent in older documents (RM-062).
+    public let speedKmh: Double?
+    public let incline: Double?
 
     public init(
         id: UUID, orderIndex: Int, weight: Double, reps: Int,
@@ -510,12 +537,15 @@ public struct ExportSetEntryDTO: Codable, Equatable, Sendable {
         clusterSubRepsJoined: String?, isComplete: Bool,
         wasManualOverride: Bool,
         startedAt: Date?, durationSeconds: Int?,
-        distanceMeters: Double?, level: Double?
+        distanceMeters: Double?, level: Double?,
+        speedKmh: Double? = nil, incline: Double? = nil
     ) {
         self.startedAt = startedAt
         self.durationSeconds = durationSeconds
         self.distanceMeters = distanceMeters
         self.level = level
+        self.speedKmh = speedKmh
+        self.incline = incline
         self.id = id; self.orderIndex = orderIndex
         self.weight = weight; self.reps = reps
         self.rpe = rpe; self.rir = rir

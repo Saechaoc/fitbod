@@ -30,6 +30,10 @@ public struct SessionSummary: Sendable, Equatable {
         public var durationSeconds: Int? = nil
         public var distanceMeters: Double? = nil
         public var level: Double? = nil
+        public var speedKmh: Double? = nil
+        public var incline: Double? = nil
+        /// The exercise's, which names a stair machine's level as speed.
+        public var tracking: Tracking? = nil
     }
 
     public struct ExerciseLine: Sendable, Equatable, Identifiable {
@@ -45,6 +49,8 @@ public struct SessionSummary: Sendable, Equatable {
         public var exerciseSeconds: Int? = nil
         /// The machine it was done on (RM-066), when one was named.
         public var machineName: String? = nil
+        /// Cardio logs bouts, not sets (RM-062).
+        public var isCardio: Bool = false
     }
 
     public let durationSeconds: Int
@@ -95,11 +101,13 @@ public struct SessionSummary: Sendable, Equatable {
                 sets: working.map {
                     LoggedSet(
                         weight: $0.weight, reps: $0.reps, rpe: $0.rpe, isBest: $0.id == bestEntry?.id,
-                        durationSeconds: $0.durationSeconds, distanceMeters: $0.distanceMeters, level: $0.level
+                        durationSeconds: $0.durationSeconds, distanceMeters: $0.distanceMeters, level: $0.level,
+                        speedKmh: $0.speedKmh, incline: $0.incline, tracking: se.exercise?.tracking
                     )
                 },
                 exerciseSeconds: SessionSetActions.exerciseSeconds(working),
-                machineName: se.machine?.displayName
+                machineName: se.machine?.displayName,
+                isCardio: se.exercise?.isCardio == true
             ))
         }
 
@@ -112,7 +120,8 @@ public struct SessionSummary: Sendable, Equatable {
 
         return SessionSummary(
             durationSeconds: duration,
-            workingSetCount: lines.reduce(0) { $0 + $1.workingSets },
+            // Cardio logs bouts, which set totals leave out (RM-062).
+            workingSetCount: lines.reduce(0) { $0 + ($1.isCardio ? 0 : $1.workingSets) },
             totalVolume: lines.reduce(0) { $0 + $1.volume },
             exercises: lines
         )

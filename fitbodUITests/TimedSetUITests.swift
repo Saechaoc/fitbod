@@ -1,8 +1,8 @@
 import XCTest
 
 /// A timed exercise logs a time, not reps, and History still shows that
-/// time after the app is reopened (RM-062). Cardio logs a time with a
-/// machine level the same way.
+/// time after the app is reopened (RM-062). Cardio logs one bout of a time
+/// with the machine's number, which a stair machine names its speed.
 final class TimedSetUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -27,8 +27,8 @@ final class TimedSetUITests: XCTestCase {
         assertHistoryShows("Plank (Front)", set: "Set 1, 1:30", in: app)
     }
 
-    /// The plan's cardio check: Stair Climber at 20:00 and level 8 finishes
-    /// and is in History after a relaunch.
+    /// The plan's cardio check: Stair Climber at 20:00 and speed 8 finishes
+    /// as one bout and is in History after a relaunch.
     @MainActor
     func testStairClimberLogsTimeAndLevelAndHistoryShowsItAfterRelaunch() throws {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
@@ -37,7 +37,7 @@ final class TimedSetUITests: XCTestCase {
         let time = app.textFields["set.time.1.S1"]
         XCTAssertTrue(UITestNavigation.appears(time))
         let level = app.textFields["set.level.1.S1"]
-        XCTAssertTrue(level.exists, "A stair climber set records its level")
+        XCTAssertTrue(level.exists, "A stair climber bout records its speed")
         XCTAssertFalse(app.textFields["set.weight.1.S1"].exists, "A cardio set has no weight")
         // Typed fast, every digit counts, the one right after the field puts
         // its colons in too: rewritten from onChange, the field lost it in
@@ -49,8 +49,70 @@ final class TimedSetUITests: XCTestCase {
         type("2000", into: time, in: app)
         XCTAssertEqual(time.value as? String, "20:00")
         type("8", into: level, in: app)
-        completeFirstSetAndFinish(in: app)
-        assertHistoryShows("Stair Climber", set: "Set 1, 20:00 · level 8", in: app)
+        completeFirstSetAndFinish(in: app, label: "Bout 1 complete")
+        assertHistoryShows("Stair Climber", set: "Bout 1, 20:00 · speed 8", in: app)
+    }
+
+    /// A stair climber planned in its routine at 20:00 and speed 8 starts as
+    /// one bout that offers the plan: Done saves it untouched and starts no
+    /// rest, and History has it after a relaunch (RM-062).
+    @MainActor
+    func testPlannedStairClimberSavesItsPlanWithNoRest() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["Library"], within: 90))
+        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.hittable(app.buttons, "+ NEW", exactLabel: true).tap()
+        UITestNavigation.hittable(app.buttons, "+ New routine", exactLabel: true).tap()
+        let routineName = app.textFields["newRoutine.name"]
+        XCTAssertTrue(routineName.waitForExistence(timeout: 10))
+        UITestNavigation.type("Cardio Plan", into: routineName)
+        app.buttons.labeled("Save").tap()
+        tapButton("+ Add session", in: app)
+        tapButton("+ New session", in: app)
+        let sessionName = app.textFields.matching(NSPredicate(
+            format: "label ==[c] %@ OR placeholderValue ==[c] %@", "Session name", "Session name"
+        )).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(sessionName))
+        sessionName.tap()
+        sessionName.typeText("Cardio\n")
+        tapButton("Add exercise", in: app)
+        pick("Stair Climber", in: app)
+
+        // A cardio row plans a time and the stair speed, not sets or rest.
+        let row = app.buttons["routine.exercise.name.1"].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(row))
+        row.tap()
+        let details = app.buttons["prescription.details"].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(details))
+        details.tap()
+        typePlan("2000", into: "prescription.plan.time", in: app)
+        typePlan("8", into: "prescription.plan.level", in: app)
+        XCTAssertTrue(
+            app.staticTexts.matching(NSPredicate(format: "label ==[c] %@", "speed 8")).firstMatch.exists,
+            "The plan names the stair machine's number its speed"
+        )
+        tapButton("Save session ▸", in: app)
+        let session = app.staticTexts["Cardio"].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(session, within: 10))
+        UITestNavigation.waitUntilStill(session)
+        session.tap()
+        tapButton("Start workout ▸", in: app)
+
+        // One bout, offering the plan, with no row to add another.
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["set.time.1.S1"], within: 15))
+        XCTAssertFalse(app.textFields["set.time.1.S2"].exists, "Cardio starts as one bout")
+        XCTAssertFalse(app.buttons["card.addSet.1"].exists, "A bout has no add-set row")
+        let done = app.buttons["set.complete.1.S1"]
+        UITestNavigation.revealInLogger(done, in: app)
+        XCTAssertTrue(done.isEnabled, "The planned time is enough to finish the bout")
+        done.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.matching(NSPredicate(
+            format: "identifier == %@ AND label == %@", "set.complete.1.S1", "Bout 1 complete"
+        )).firstMatch))
+        let rest = app.descendants(matching: .any).matching(identifier: "rest.status").firstMatch
+        XCTAssertFalse(rest.waitForExistence(timeout: 3), "A bout starts no rest")
+        finish(in: app)
+        assertHistoryShows("Stair Climber", set: "Bout 1, 20:00 · speed 8", in: app)
     }
 
     // MARK: - Steps
@@ -67,16 +129,43 @@ final class TimedSetUITests: XCTestCase {
         let swap = app.buttons["Swap Exercise…"]
         XCTAssertTrue(UITestNavigation.appears(swap, within: 5))
         swap.tap()
+        pick(name, in: app)
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts[name].firstMatch))
+    }
+
+    /// Searches the open exercise picker for `name` and picks it.
+    @MainActor
+    private func pick(_ name: String, in app: XCUIApplication) {
         let search = app.textFields["library.search.picker"]
         XCTAssertTrue(UITestNavigation.appears(search))
         search.tap()
         search.typeText(name)
-        let pick = app.buttons.matching(NSPredicate(
+        let row = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", name + ","
         )).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(pick))
-        pick.tap()
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts[name].firstMatch))
+        XCTAssertTrue(UITestNavigation.appears(row))
+        row.tap()
+    }
+
+    @MainActor
+    private func tapButton(_ label: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let button = app.buttons.matching(NSPredicate(format: "label ==[c] %@", label)).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(button, within: 15), "Missing \(label)", file: file, line: line)
+        UITestNavigation.reveal(button, in: app)
+        button.tap()
+    }
+
+    /// Types into one of the routine editor's plan fields and closes the
+    /// keyboard.
+    @MainActor
+    private func typePlan(_ text: String, into identifier: String, in app: XCUIApplication) {
+        let field = app.textFields[identifier].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(field), "Missing \(identifier)")
+        UITestNavigation.reveal(field, in: app)
+        field.tap()
+        field.typeText(text)
+        UITestNavigation.keyboardDone(in: app).tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "DONE must close the keyboard")
     }
 
     @MainActor
@@ -88,15 +177,19 @@ final class TimedSetUITests: XCTestCase {
     }
 
     @MainActor
-    private func completeFirstSetAndFinish(in app: XCUIApplication) {
+    private func completeFirstSetAndFinish(in app: XCUIApplication, label: String = "Set 1 complete") {
         let done = app.buttons["set.complete.1.S1"]
         UITestNavigation.revealInLogger(done, in: app)
         XCTAssertTrue(done.isEnabled)
         done.tap()
         XCTAssertTrue(UITestNavigation.appears(app.buttons.matching(NSPredicate(
-            format: "identifier == %@ AND label == %@", "set.complete.1.S1", "Set 1 complete"
+            format: "identifier == %@ AND label == %@", "set.complete.1.S1", label
         )).firstMatch))
+        finish(in: app)
+    }
 
+    @MainActor
+    private func finish(in app: XCUIApplication) {
         app.buttons["More"].tap()
         let finish = app.buttons["Finish"]
         XCTAssertTrue(UITestNavigation.appears(finish, within: 5))

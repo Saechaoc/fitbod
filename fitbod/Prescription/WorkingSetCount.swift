@@ -18,3 +18,11 @@ extension PeriodizationEngine {
         return max(1, Int(floor(Double(targetSets) * phase.volumeMultiplier)))
     }
 }
+
+extension SessionExerciseTemplate {
+    /// The working sets this routine row yields in `phase`: none for cardio,
+    /// which the factory plans as one bout with no sets (RM-062).
+    public func workingSetCount(phase: BlockPhase?) -> Int {
+        exercise?.isCardio == true ? 0 : PeriodizationEngine.workingSetCount(targetSets: targetSets, phase: phase)
+    }
+}

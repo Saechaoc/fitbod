@@ -46,10 +46,16 @@ import SwiftUI
 
 public struct PrescriptionEditorRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.weightUnit) private var defaultUnit
+    @Environment(\.locale) private var locale
     @Bindable public var draft: RoutineExerciseDraft
     public let hasBlock: Bool
 
     @State private var showingAdvanced: Bool = false
+    /// A cardio plan's fields as typed: its time, then the level or speed,
+    /// or a treadmill's speed and incline (RM-062).
+    @State private var planTexts: [CardioPlanField: String] = [:]
+    @FocusState private var focusedPlanField: CardioPlanField?
     @State private var tempoError: String?
     @FocusState private var focusedTempoField: Int?
     /// One tempo field's drawn height, which sets how far its touch target
@@ -72,8 +78,10 @@ public struct PrescriptionEditorRow: View {
             // ── Prescription chip row ──
             chipRow
 
-            // ── SetRowsContainer ──
-            SetRowsContainer(exercise: draft)
+            // ── SetRowsContainer ── Cardio is one bout, with no set grid.
+            if !isCardio {
+                SetRowsContainer(exercise: draft)
+            }
 
             // ── Advanced / editable prescription block ──
             advancedSection
@@ -92,7 +100,11 @@ public struct PrescriptionEditorRow: View {
             (restChipLabel, Color.bruInk),
         ]
         // A timed exercise has no rep or effort target: its rest alone.
-        let chips = isTimed ? Array(allChips.suffix(1)) : allChips
+        // Cardio has no rest either: its plan, one chip per value (RM-062).
+        let plan = isCardio ? draft.planParts(tracking: draft.exercise?.tracking, unit: unit) : []
+        let chips = isCardio
+            ? (plan.isEmpty ? ["No plan yet"] : plan).map { ($0, Color.bruInk) }
+            : isTimed ? Array(allChips.suffix(1)) : allChips
         return BRUFlowLayout(spacing: 5, lineSpacing: 5) {
             ForEach(chips.indices, id: \.self) { i in
                 let (label, color) = chips[i]
@@ -105,6 +117,17 @@ public struct PrescriptionEditorRow: View {
     /// options.
     private var isTimed: Bool {
         draft.exercise?.tracking.isTimed == true
+    }
+
+    /// Cardio is one bout with a planned time and machine settings, and no
+    /// sets or rest (RM-062).
+    private var isCardio: Bool {
+        draft.exercise?.isCardio == true
+    }
+
+    /// The exercise's own unit wins over the app-wide one, as in the logger.
+    private var unit: WeightUnit {
+        .effective(for: draft.exercise, default: defaultUnit)
     }
 
     // MARK: Chip Labels
@@ -155,10 +178,13 @@ public struct PrescriptionEditorRow: View {
 
         if showingAdvanced {
             VStack(alignment: .leading, spacing: 14) {
-                setsStepper
-                if isTimed {
+                if isCardio {
+                    cardioPlanFields
+                } else if isTimed {
+                    setsStepper
                     restStepper
                 } else {
+                    setsStepper
                     repsSteppers
                     rpeRow
                     restStepper
@@ -168,6 +194,111 @@ public struct PrescriptionEditorRow: View {
                 }
             }
             .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+    }
+
+    // MARK: - Cardio plan
+
+    /// The bout's time, then the machine's level or stair speed, or a
+    /// treadmill's speed and incline, each typed as the logger takes them:
+    /// "2000" is 20:00. A value that does not read is not planned.
+    @ViewBuilder
+    private var cardioPlanFields: some View {
+        planField(.time, label: "Time", keyboard: .numberPad)
+        ForEach(planValueFields, id: \.self) { field in
+            planField(field, label: label(for: field), keyboard: .decimalPad)
+        }
+    }
+
+    /// The plan's fields beside its time, by what the machine records.
+    private var planValueFields: [CardioPlanField] {
+        (draft.exercise?.timedValues ?? []).compactMap {
+            switch $0 {
+            case .level: .level
+            case .speed: .speed
+            case .incline: .incline
+            case .weight, .distance: nil
+            }
+        }
+    }
+
+    private func label(for field: CardioPlanField) -> String {
+        switch field {
+        case .time: "Time"
+        case .level: (draft.exercise?.tracking.levelName ?? "level").capitalized
+        case .speed: "Speed (\(SetText.speedUnit(unit)))"
+        case .incline: "Incline (%)"
+        }
+    }
+
+    private func planField(
+        _ field: CardioPlanField, label: String, keyboard: UIKeyboardType
+    ) -> some View {
+        HStack {
+            Text(label)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruInk)
+            Spacer()
+            TextField(label, text: planText(field), prompt: Text("—").foregroundStyle(Color.bruMuted))
+                .font(BRUFont.bodyEmphasis)
+                .monospacedDigit()
+                .multilineTextAlignment(.trailing)
+                .keyboardType(keyboard)
+                .focused($focusedPlanField, equals: field)
+                .selectsAllOnFocus(focusedPlanField == field)
+                .frame(width: 96)
+                .frame(minHeight: 44)
+                .padding(.horizontal, 8)
+                .overlay(Rectangle().stroke(Color.bruInk, lineWidth: 1.5))
+                .contentShape(Rectangle())
+                .onTapGesture { focusedPlanField = field }
+                .revealsAboveKeyboard(focusedPlanField == field)
+                .accessibilityIdentifier("prescription.plan.\(field.rawValue)")
+        }
+        .onAppear { planTexts[field] = storedPlanText(field) }
+        // A field that finished editing shows what was planned, as stored:
+        // "2000" reads "20:00", and a value that did not read clears.
+        .onChange(of: focusedPlanField) { previous, _ in
+            if previous == field { planTexts[field] = storedPlanText(field) }
+        }
+    }
+
+    /// A field's text; typing writes the plan at once, so Save never
+    /// misses the last keystroke.
+    private func planText(_ field: CardioPlanField) -> Binding<String> {
+        Binding(
+            get: { planTexts[field] ?? "" },
+            set: { text in
+                planTexts[field] = text
+                switch field {
+                case .time:
+                    draft.targetDurationSeconds = SetText.seconds(fromTyped: text)
+                        .flatMap { $0 < WorkoutCorrectionInput.durationLimit ? $0 : nil }
+                case .level:
+                    draft.targetLevel = planNumber(text)
+                case .speed:
+                    draft.targetSpeedKmh = planNumber(text) == nil
+                        ? nil : SetText.kmh(fromTyped: text, unit: unit, locale: locale)
+                case .incline:
+                    draft.targetIncline = planNumber(text)
+                }
+            }
+        )
+    }
+
+    /// A typed level, speed or incline the plan can hold, or nil.
+    private func planNumber(_ text: String) -> Double? {
+        guard let number = SetText.number(fromTyped: text, locale: locale),
+              WorkoutCorrectionInput.isSupported(number) else { return nil }
+        return number
+    }
+
+    private func storedPlanText(_ field: CardioPlanField) -> String {
+        switch field {
+        case .time: draft.targetDurationSeconds.map(SetText.duration) ?? ""
+        case .level: draft.targetLevel.map { SetText.entry(level: $0, locale: locale) } ?? ""
+        case .speed: draft.targetSpeedKmh.map { SetText.entry(speed: $0, unit: unit, locale: locale) } ?? ""
+        case .incline: draft.targetIncline.map { SetText.entry(level: $0, locale: locale) } ?? ""
         }
     }
 
@@ -344,6 +475,11 @@ public struct PrescriptionEditorRow: View {
             .foregroundStyle(Color.bruMuted)
         }
     }
+}
+
+/// A cardio plan's fields in the prescription editor (RM-062).
+enum CardioPlanField: String, Hashable {
+    case time, level, speed, incline
 }
 
 // MARK: - Preview

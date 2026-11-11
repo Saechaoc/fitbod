@@ -134,15 +134,17 @@ extension Exercise {
         trackingRaw.flatMap(Tracking.init) ?? .implied(by: equipment)
     }
 
-    /// What a timed set of this exercise records beside its time: an
-    /// optional load for a hold or carry (a bodyweight one has none), a
-    /// distance, or a machine level. Nil for a rep-tracked exercise.
-    public var timedValue: TimedValue? {
+    /// What a timed set of this exercise records beside its time, in column
+    /// order: an optional load for a hold or carry (a bodyweight one has
+    /// none), a distance, a machine level or stair speed, or a treadmill's
+    /// speed and incline. Empty for a rep-tracked exercise.
+    public var timedValues: [TimedValue] {
         switch tracking {
-        case .duration: equipment == .bodyweight ? nil : .weight
-        case .durationDistance: .distance
-        case .durationLevel: .level
-        case .weightReps, .reps, .assistedReps: nil
+        case .duration: equipment == .bodyweight ? [] : [.weight]
+        case .durationDistance: [.distance]
+        case .durationLevel, .durationStepSpeed: [.level]
+        case .durationSpeedIncline: [.speed, .incline]
+        case .weightReps, .reps, .assistedReps: []
         }
     }
     public var unitOverride: WeightUnit? {

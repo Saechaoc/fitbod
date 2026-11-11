@@ -2,8 +2,9 @@
 //  BackupCatalogFieldsTests.swift
 //  fitbodTests
 //
-//  The RM-022 / RM-062 fields in a backup (format 3) and the RM-066
-//  machines (format 4):
+//  The RM-022 / RM-062 fields in a backup (format 3), the RM-066
+//  machines (format 4) and the RM-062 cardio plan, speed and incline
+//  (format 5):
 //    - every new field survives archive and restore, and so does the
 //      machine a workout was done on;
 //    - a format-2 backup, which has none of the keys, still restores and the
@@ -30,7 +31,8 @@ struct BackupCatalogFieldsTests {
     private static let exerciseKeys = [
         "familyName", "variantLabel", "aliasesJoined", "trackingRaw", "brand", "loadingRaw", "isHidden",
     ]
-    private static let setKeys = ["startedAt", "durationSeconds", "distanceMeters", "level"]
+    private static let setKeys = ["startedAt", "durationSeconds", "distanceMeters", "level", "speedKmh", "incline"]
+    private static let planKeys = ["targetDurationSeconds", "targetLevel", "targetSpeedKmh", "targetIncline"]
 
     @Test("every new field survives archive and restore")
     func everyNewFieldRoundTrips() async throws {
@@ -56,9 +58,16 @@ struct BackupCatalogFieldsTests {
         #expect(set.durationSeconds == 1200)
         #expect(set.distanceMeters == 1609.344)
         #expect(set.level == 8.5)
+        #expect(set.speedKmh == 5.6 && set.incline == 12)
         let machine = try #require(set.sessionExercise?.machine)
         #expect(machine.id == Self.machineID)
         #expect(machine.manufacturer == "Arsenal Strength" && machine.model == "Stair Climber")
+        let logged = try #require(set.sessionExercise)
+        #expect(logged.targetDurationSeconds == 1200 && logged.targetLevel == 8)
+        #expect(logged.targetSpeedKmh == 5.6 && logged.targetIncline == 12)
+        let row = try #require(try destination.mainContext.fetch(FetchDescriptor<SessionExerciseTemplate>()).first)
+        #expect(row.targetDurationSeconds == 1500 && row.targetLevel == 9)
+        #expect(row.targetSpeedKmh == 6.4 && row.targetIncline == 10)
 
         let before = try ExportSnapshot.document(in: source.mainContext, exportedAt: Self.date).normalizedForEquality()
         let after = try ExportSnapshot.document(in: destination.mainContext, exportedAt: Self.date).normalizedForEquality()
@@ -97,6 +106,13 @@ struct BackupCatalogFieldsTests {
         #expect(set.durationSeconds == nil)
         #expect(set.distanceMeters == nil)
         #expect(set.level == nil)
+        #expect(set.speedKmh == nil && set.incline == nil)
+        let logged = try #require(set.sessionExercise)
+        #expect(logged.targetDurationSeconds == nil && logged.targetLevel == nil)
+        #expect(logged.targetSpeedKmh == nil && logged.targetIncline == nil)
+        let row = try #require(try destination.mainContext.fetch(FetchDescriptor<SessionExerciseTemplate>()).first)
+        #expect(row.targetDurationSeconds == nil && row.targetLevel == nil)
+        #expect(row.targetSpeedKmh == nil && row.targetIncline == nil)
     }
 
     @Test("a workout naming a machine the backup lacks is refused before anything is replaced")
@@ -226,6 +242,21 @@ struct BackupCatalogFieldsTests {
         machine.model = "Stair Climber"
         machine.createdAt = Self.date
         logged.machine = machine
+        logged.targetDurationSeconds = 1200
+        logged.targetLevel = 8
+        logged.targetSpeedKmh = 5.6
+        logged.targetIncline = 12
+        let template = SessionTemplate()
+        context.insert(template)
+        template.name = "Cardio"
+        let row = SessionExerciseTemplate()
+        context.insert(row)
+        row.sessionTemplate = template
+        row.exercise = exercise
+        row.targetDurationSeconds = 1500
+        row.targetLevel = 9
+        row.targetSpeedKmh = 6.4
+        row.targetIncline = 10
         let set = SetEntry()
         context.insert(set)
         set.sessionExercise = logged
@@ -235,6 +266,8 @@ struct BackupCatalogFieldsTests {
         set.durationSeconds = 1200
         set.distanceMeters = 1609.344
         set.level = 8.5
+        set.speedKmh = 5.6
+        set.incline = 12
         try context.save()
     }
 
@@ -260,7 +293,7 @@ struct BackupCatalogFieldsTests {
     }
 
     /// The archive with another format number and, when asked, without the
-    /// keys formats 3 and 4 added, as a format-2 build wrote it, or with its
+    /// keys formats 3 to 5 added, as a format-2 build wrote it, or with its
     /// machines left out while the workouts still name them.
     private func rewritten(
         _ archive: Data, formatVersion: Int, stripNewKeys: Bool, dropMachines: Bool = false
@@ -276,10 +309,17 @@ struct BackupCatalogFieldsTests {
             store["exercises"] = (store["exercises"] as? [[String: Any]])?.map { exercise in
                 exercise.filter { !Self.exerciseKeys.contains($0.key) }
             }
+            store["routines"] = (store["routines"] as? [[String: Any]])?.map { original in
+                var routine = original
+                routine["exercises"] = (routine["exercises"] as? [[String: Any]])?.map { row in
+                    row.filter { !Self.planKeys.contains($0.key) }
+                }
+                return routine
+            }
             store["sessions"] = (store["sessions"] as? [[String: Any]])?.map { original in
                 var session = original
                 session["exercises"] = (session["exercises"] as? [[String: Any]])?.map { originalExercise in
-                    var exercise = originalExercise
+                    var exercise = originalExercise.filter { !Self.planKeys.contains($0.key) }
                     exercise.removeValue(forKey: "machineID")
                     exercise["sets"] = (exercise["sets"] as? [[String: Any]])?.map { set in
                         set.filter { !Self.setKeys.contains($0.key) }
