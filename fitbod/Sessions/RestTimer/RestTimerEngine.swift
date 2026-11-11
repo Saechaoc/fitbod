@@ -53,22 +53,30 @@ import UserNotifications
 @Observable
 @MainActor
 public final class RestTimerEngine {
+    private struct RestPeriod {
+        let startedAt: Date
+        var targetSeconds: Int
+        let exerciseName: String
+    }
+
+    private var rest: RestPeriod?
+
     // MARK: - Published state
 
     /// The moment the rest period started, or `nil` when the timer is not
     /// running. The UI computes remaining seconds from this + `targetSeconds`
     /// — NEVER from a separately ticking counter (PITFALLS-doc #4).
-    public private(set) var startedAt: Date?
+    public var startedAt: Date? { rest?.startedAt }
 
     /// The current rest target in seconds. Mutated by ±15s buttons via
     /// `adjust(deltaSeconds:)`. The persisted `startedAt` does NOT move on
     /// adjustment — the user is asking for more (or less) TOTAL rest from
     /// the original start point, not "+15 from now."
-    public private(set) var targetSeconds: Int = 0
+    public var targetSeconds: Int { rest?.targetSeconds ?? 0 }
 
     /// The exercise label shown in the lock-screen notification body and
     /// the in-app overlay header. Cleared on `stop()`.
-    public private(set) var currentExerciseName: String = ""
+    public var currentExerciseName: String { rest?.exerciseName ?? "" }
 
     /// The session whose rest period this engine mirrors into the store.
     /// `nil` until `bind(sessionID:)`; an unbound engine keeps the
@@ -234,9 +242,11 @@ public final class RestTimerEngine {
             && targetSeconds == target
             && currentExerciseName == snapshot.exerciseName
 
-        startedAt = snapshot.startedAt
-        targetSeconds = target
-        currentExerciseName = snapshot.exerciseName
+        rest = RestPeriod(
+            startedAt: snapshot.startedAt,
+            targetSeconds: target,
+            exerciseName: snapshot.exerciseName
+        )
 
         if snapshot.endsAt > now() {
             guard !alreadyInSync else { return }
@@ -285,9 +295,12 @@ public final class RestTimerEngine {
     /// test pins this.
     public func start(seconds: Int, exerciseName: String) {
         endedRest = nil
-        self.startedAt = now()
-        self.targetSeconds = max(1, seconds)
-        self.currentExerciseName = exerciseName
+        let rest = RestPeriod(
+            startedAt: now(),
+            targetSeconds: max(1, seconds),
+            exerciseName: exerciseName
+        )
+        self.rest = rest
         persist()
         scheduler.schedule(
             in: targetSeconds,
@@ -298,8 +311,8 @@ public final class RestTimerEngine {
         // notification scheduling. NoopActivityController by default makes
         // this a no-op in plan-02-01 unit tests.
         activityController.start(
-            startedAt: self.startedAt!,
-            targetSeconds: self.targetSeconds,
+            startedAt: rest.startedAt,
+            targetSeconds: rest.targetSeconds,
             exerciseName: exerciseName
         )
     }
@@ -321,9 +334,10 @@ public final class RestTimerEngine {
     /// No-op when not running (callers like `SetRow.plusButtonAction` may
     /// fire while the engine is stopped if the user double-taps).
     public func adjust(deltaSeconds: Int) {
-        guard isRunning, let startedAt else { return }
-        let newTarget = max(0, targetSeconds + deltaSeconds)
-        targetSeconds = newTarget
+        guard var rest else { return }
+        let newTarget = max(0, rest.targetSeconds + deltaSeconds)
+        rest.targetSeconds = newTarget
+        self.rest = rest
         // The stored deadline moves with the target.
         persist()
 
@@ -334,7 +348,7 @@ public final class RestTimerEngine {
         // If the adjusted deadline is already behind us (e.g. -15s with
         // under 15s left) there is nothing left to alert about: cancel
         // instead of firing a stray alert one second from now.
-        let fireDate = startedAt.addingTimeInterval(Double(newTarget))
+        let fireDate = rest.startedAt.addingTimeInterval(Double(newTarget))
         let secondsLeft = fireDate.timeIntervalSince(now())
         if secondsLeft > 0 {
             scheduler.schedule(
@@ -348,7 +362,7 @@ public final class RestTimerEngine {
         // Plan 02-02 wire: push the new ContentState through the debounce.
         // startedAt does NOT move; only targetSeconds changes.
         activityController.update(
-            startedAt: startedAt,
+            startedAt: rest.startedAt,
             targetSeconds: newTarget
         )
     }
@@ -365,9 +379,7 @@ public final class RestTimerEngine {
     public func stop() {
         if let sessionID { store.clear(sessionID: sessionID) }
         if let endsAt { endedRest = (endsAt, now()) }
-        startedAt = nil
-        targetSeconds = 0
-        currentExerciseName = ""
+        rest = nil
         scheduler.cancel(identifier: Self.notificationID)
         // Plan 02-02 wire: dismiss the Live Activity immediately.
         activityController.end()
