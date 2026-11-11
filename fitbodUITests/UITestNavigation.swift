@@ -636,13 +636,20 @@ extension UITestNavigation {
         }
         assertKeyboardFocus(field, file: file, line: line)
         // An empty field reports its placeholder as its value.
-        if replacing, let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
+        let shown = { () -> String in
+            let value = field.value as? String ?? ""
+            return value == field.placeholderValue ? "" : value
+        }
+        if replacing, case let current = shown(), !current.isEmpty {
             field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
         }
-        field.typeText(pressingReturn ? text + "\n" : text)
-        let value = field.value as? String ?? ""
-        XCTAssertEqual(value == field.placeholderValue ? "" : value, text,
-                       "The field must hold the typed text", file: file, line: line)
+        field.typeText(text)
+        // Return waits until the field shows every letter, as a person sees
+        // the word before pressing it. Typed in one go with the text, return
+        // once left "T62 Arc Traine" for "T62 Arc Trainer" on GitHub's runner.
+        waitUntil { shown() == text }
+        if pressingReturn { field.typeText("\n") }
+        XCTAssertEqual(shown(), text, "The field must hold the typed text", file: file, line: line)
     }
 }
 
