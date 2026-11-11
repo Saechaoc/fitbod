@@ -396,12 +396,15 @@ The full tier ran one commit behind `main`; after the rebase onto `e22a1edd` the
 Inspected at 390pt, light mode: timed, timed + weight and assisted logger rows, the summary, History, Edit workout (changed time, added set), exercise detail and history, the routine editor and both equipment lists.
 Fixed on the way: the "Done" column heading shrank in a card without the Effort column, and `UITestNavigation.loggerSpan` read the keyboard's frame while it slid away.
 Open for this slice: VoiceOver, larger text and dark mode are unchecked.
-Verify when the phone is reachable (it was not on 2026-11-10): install this build with `scripts/phone.sh`, then log a Plank set and confirm History shows its time.
+Verify on the phone, which has this slice since the slice 4 install: log a Plank set and confirm History shows its time.
 Slice 4 (cardio, 2026-11-10): unit target 1,356 passed (1 known issue), including the catalog and seed checks under [RM-022](#rm-022), a cardio draft saving with no muscle, a custom exercise storing a tracking choice only when it differs from its equipment's, the mechanic filter leaving cardio out, and a distance or level shown in the locale it is typed in.
 Full tier 1,457 passed with no failure, 101 of them UI tests, including `TimedSetUITests` (Stair Climber logs 20:00 at level 8 and History shows it after a relaunch) and `CustomExerciseEditorBRUUITests` (a cardio machine saves with no muscle and keeps its picked tracking after a relaunch).
 Inspected at 390pt, light mode: the Stair Climber and Treadmill Run cards (TIME with LEVEL or MILES), the summary, History and Edit workout, the cardio Library row, both exercise pages (no prescription or plateau settings; a distance unit where one applies) and the editor's Tracks list and cardio state.
 A restored older backup, or a custom exercise, with cardio machine equipment and no stored tracking now logs time and distance; the copy of the phone's store has no such exercise.
-Open for this slice: a cardio set starts a rest timer like any other set; VoiceOver, larger text, dark mode and the phone are unchecked.
+Seed 6 rehearsed on a copy of the phone's store, starting from seed 3: exercises went from 704 to 713 (the nine cardio rows), and the 43 sets, the 14 logged exercises with their names and the custom exercise were unchanged.
+Installed on the phone on 2026-11-10 (`9cc46f54`); the launch from the Mac was refused because the phone was locked.
+Open for this slice: a cardio set starts a rest timer like any other set; VoiceOver, larger text and dark mode are unchecked.
+Verify when the phone is unlocked: open Fitbod once so seed 6 runs, then confirm that History still shows past workouts and that Library finds Stair Climber.
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 
