@@ -2,23 +2,19 @@
 //  FilterStatePredicateTests.swift
 //  fitbodTests
 //
-//  Plan 01-PLAN-03-02 anchor suite — proves the `FilterState` filter
-//  pipeline (`swiftDataPredicate(with:)` at SwiftData +
-//  `applyPostFetchFilters(to:)` post-fetch) composes correctly over the
-//  full matrix of facet + search combinations.
+//  Plan 01-PLAN-03-02 anchor suite - proves the exercise list's pipeline
+//  (every row fetched, `applyPostFetchFilters(to:)`, then `ExerciseSearch`)
+//  composes correctly over the full matrix of facet + search combinations.
 //
-//  Pipeline note: search lives in `swiftDataPredicate(with:)` (pushed down to
-//  SwiftData). Facets live in `applyPostFetchFilters(to:)` because guarded
-//  multi-facet matching pushes `#Predicate` past Swift's type-checker budget
-//  and is fragile for SwiftData SQL translation. See FilterState.swift header
-//  for the full rationale.
+//  Pipeline note: nothing goes into a `#Predicate`. Guarded multi-facet
+//  matching pushes `#Predicate` past Swift's type-checker budget and is
+//  fragile for SwiftData SQL translation, and a predicate cannot rank a
+//  search (RM-022). See FilterState.swift header for the full rationale.
 //
 //  Nine Swift Testing functions cover:
 //   1. `emptyFilterAll` — empty state returns every row
-//   2. `searchBench` — case- + diacritic-insensitive substring search
-//      (pushed down via `swiftDataPredicate(with:)`)
-//   3. `swiftDataPredicateAppliesSearch` — proves search constrains the
-//      SwiftData fetch before post-fetch filtering
+//   2. `searchBench` - a word of the name finds the row
+//   3. `searchInsideAFacet` - search narrows what the facets leave
 //   4. `equipmentFilter` — equipment facet, single-value selection
 //   5. `mechanicFilter` — mechanic facet (single-select)
 //   6. `muscleFilterDenormalized` — muscle facet through the
@@ -26,8 +22,8 @@
 //   7. `multiFacetAND` — AND-across-facets (equipment + mechanic)
 //   8. `multiSelectWithinFacet` — OR-within-facet (muscle selecting two
 //      slugs returns the union)
-//   9. `facetSelectionDoesNotConstrainSwiftDataFetch` — proves facets stay
-//      out of the SwiftData predicate
+//   9. `facetsRunOverEveryRow` - the fetch takes every row, and the facets
+//      narrow it in memory
 //
 //  ## Fixture
 //
@@ -57,23 +53,21 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:)", .serialized)
+@Suite("FilterState.applyPostFetchFilters(to:) + ExerciseSearch", .serialized)
 struct FilterStatePredicateTests {
 
     // MARK: - Pipeline helper
 
-    /// Runs the full filter pipeline: `swiftDataPredicate(with:)` at the
-    /// SwiftData fetch boundary, then `applyPostFetchFilters(to:)` over the
-    /// fetched rows. Mirrors what `FilteredExerciseList` does in production.
+    /// Runs the full pipeline: every row fetched, `applyPostFetchFilters(to:)`,
+    /// then `ExerciseSearch`. Mirrors what `FilteredExerciseList` does in
+    /// production.
     private static func evaluate(
         _ state: FilterState,
         search: String,
         in ctx: ModelContext
     ) throws -> [Exercise] {
-        let fetched = try ctx.fetch(FetchDescriptor<Exercise>(
-            predicate: state.swiftDataPredicate(with: search)
-        ))
-        return state.applyPostFetchFilters(to: fetched)
+        let faceted = state.applyPostFetchFilters(to: try ctx.fetch(FetchDescriptor<Exercise>()))
+        return ExerciseSearch.results(search, in: faceted, row: ExerciseSearch.Row.init).map(\.item)
     }
 
     // MARK: - Fixture
@@ -160,14 +154,13 @@ struct FilterStatePredicateTests {
         #expect(result.first?.name == "Barbell Bench Press")
     }
 
-    @Test("SwiftData predicate applies search before post-fetch muscle filtering")
-    func swiftDataPredicateAppliesSearch() throws {
+    @Test("Search narrows what the facets leave")
+    func searchInsideAFacet() throws {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
-        let fetched = try ctx.fetch(FetchDescriptor<Exercise>(
-            predicate: state.swiftDataPredicate(with: "bench")
-        ))
-        #expect(fetched.map(\.name) == ["Barbell Bench Press"])
+        state.selectedEquipmentRaw = ["barbell"]
+        #expect(try Self.evaluate(state, search: "squat", in: ctx).map(\.name) == ["Squat"])
+        #expect(try Self.evaluate(state, search: "curl", in: ctx).isEmpty, "Dumbbell Curl is outside the facet")
     }
 
     // MARK: - Test 3: equipment facet
@@ -256,18 +249,13 @@ struct FilterStatePredicateTests {
 
     // MARK: - Test 9: facets stay post-fetch
 
-    @Test("Facet selections do not constrain the SwiftData fetch")
-    func facetSelectionDoesNotConstrainSwiftDataFetch() throws {
+    @Test("The fetch takes every row, and the facets narrow it in memory")
+    func facetsRunOverEveryRow() throws {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
         state.selectedEquipmentRaw = ["barbell"]
         state.selectedMuscleSlugs = ["chest"]
-        let fetched = try ctx.fetch(FetchDescriptor<Exercise>(
-            predicate: state.swiftDataPredicate(with: "")
-        ))
-        let filtered = state.applyPostFetchFilters(to: fetched)
-
-        #expect(fetched.count == 4, "Facets should not be pushed into the SwiftData predicate")
-        #expect(filtered.map(\.name) == ["Barbell Bench Press"])
+        #expect(try ctx.fetchCount(FetchDescriptor<Exercise>()) == 4)
+        #expect(try Self.evaluate(state, search: "", in: ctx).map(\.name) == ["Barbell Bench Press"])
     }
 }

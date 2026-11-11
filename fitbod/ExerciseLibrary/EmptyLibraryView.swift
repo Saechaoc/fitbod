@@ -16,7 +16,7 @@
 //         - Action:  "Clear filters" (ghost `BRUButton`)
 //
 //    2. Non-empty search (the user typed a query and zero rows match):
-//         - Heading: "No exercises match \"{query}\""
+//         - Heading: "No exercises match “{query}”"
 //         - Body:    "Check spelling or create a custom exercise."
 //         - Action:  "Create Custom Exercise" (signal `BRUButton`) -
 //                    opens `CustomExerciseEditor` via the
@@ -106,7 +106,7 @@ struct EmptyLibraryView: View {
     @ViewBuilder
     private var heading: some View {
         if hasQuery {
-            Text("No exercises match \"\(searchText)\"")
+            Text("No exercises match “\(searchText)”")
         } else {
             Text("No exercises match")
         }

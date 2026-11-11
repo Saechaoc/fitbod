@@ -53,7 +53,7 @@ Documentation/tooling-only work runs relevant checks. App changes run the unit t
 
 - `@Observable` + `@State`/`@Bindable`/environment only in new code; no ObservableObject/Published/StateObject/ObservedObject.
 - `@Query` directly in views, never mirrored in a view model; transient observable state may be owned by the view.
-- One NavigationStack per tab, no parent stack around TabView. Library search uses `FilterState.swiftDataPredicate(with:)`; facets run after fetching through `applyPostFetchFilters(to:)` to avoid compiler/SwiftData translation failures. Avoid multi-level optional predicate chains.
+- One NavigationStack per tab, no parent stack around TabView. Library search fetches every exercise, runs facets through `applyPostFetchFilters(to:)`, then ranks matches with `ExerciseSearch`; keep both out of `#Predicate`, which fails to type-check or translate them. Avoid multi-level optional predicate chains.
 - Insert models before assigning relationships. DTOs handle Codable; no Codable on models. Containers go through FitbodModelContainer.
 - Preserve logged snapshots; throwing saves restore context and visible saved values on failure.
 - Reuse BRU tokens/components and existing helpers. No extra dependencies or persistence framework.

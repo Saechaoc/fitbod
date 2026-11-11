@@ -50,13 +50,13 @@ final class ReseedRelaunchUITests: XCTestCase {
         app.buttons["Back"].firstMatch.tap()
         UITestNavigation.selectTab("Library", in: app)
         UITestNavigation.type(bench, into: app.textFields["library.search.browser"], replacing: false)
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("1 match")), "Exactly one exercise must match the bench press")
-        let row = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", bench)).firstMatch
-        XCTAssertTrue(row.exists, "The bench press must be listed")
-        // The search leaves one row, so the one logged count is the bench press's.
-        let logged = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Logged ")).firstMatch
-        XCTAssertTrue(logged.exists, "The bench press row must show its logged count")
-        XCTAssertTrue(logged.label.contains("Logged once"), "The bench press must count the finished workout; it reads \"\(logged.label)\"")
+        // The search finds every row with all these words, the incline bench
+        // too, so the check is that one row carries this exact name.
+        let rows = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", bench + ","))
+        let row = rows.firstMatch
+        XCTAssertTrue(UITestNavigation.appears(row), "The bench press must be listed")
+        XCTAssertEqual(rows.count, 1, "Exactly one exercise must be the bench press")
+        XCTAssertTrue(row.label.contains("Logged once"), "The bench press must count the finished workout; it reads \"\(row.label)\"")
         row.tap()
         let recent = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "100 lb × 5")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(recent), "Recent performance must show the finished workout's best set")

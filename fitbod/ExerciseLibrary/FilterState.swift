@@ -5,8 +5,8 @@
 //  Ephemeral, view-owned filter selection state for `ExerciseLibraryView`.
 //  Holds multi-select sets for the four facets (muscle / equipment /
 //  mechanic / pattern) plus the convenience methods the library view's
-//  filter chip bar consumes (`swiftDataPredicate(with:)`,
-//  `applyPostFetchFilters(to:)`, `isEmpty`, `clear()`).
+//  filter chip bar consumes (`applyPostFetchFilters(to:)`, `isEmpty`,
+//  `clear()`). Search is not a facet: `ExerciseSearch` runs after the facets.
 //
 //  ## Why `@Observable`, not `@Model` or `ObservableObject`
 //
@@ -20,7 +20,7 @@
 //
 //  ## Filter composition rules (CONTEXT.md Area 2 + RESEARCH § Pitfall 3)
 //
-//  - **AND across facets** — `&&` joins the four facet sub-predicates so
+//  - **AND across facets** - a row must match every facet with a selection, so
 //    selecting "Muscle=chest" + "Equipment=barbell" filters to rows
 //    matching BOTH.
 //  - **OR within a facet** — multi-select facets use `Set.contains(...)`
@@ -35,23 +35,14 @@
 //    `"|chest|triceps|"`; the post-fetch muscle filter matches a selected slug
 //    as the whole-token `"|slug|"`.
 //
-//  ## Captures-by-value invariant (RESEARCH § Pitfall 12)
+//  ## Everything runs in memory
 //
-//  `swiftDataPredicate(with:)` copies search input into a local `let` BEFORE
-//  building the `#Predicate` literal. SwiftData's predicate translator
-//  is sensitive to reference captures — a `self` or instance-property
-//  reference in the predicate body silently breaks the indexed path or
-//  crashes at fetch time. The non-empty search branch captures only the
-//  normalized search string.
-//
-//  ## Pipeline split (SwiftData predicate translator workaround)
-//
-//  `swiftDataPredicate(with:)` intentionally stays tiny: search only. The
-//  facet filters run in-memory via `applyPostFetchFilters(to:)` over the
-//  @Query result inside `FilteredExerciseList`. This avoids the guarded
-//  multi-facet `#Predicate` shape that pushes Swift's expression-level
-//  type-checker past its budget and is also a brittle SQL translation shape.
-//  Worst-case input size is ~702 rows — negligible cost for this library.
+//  `FilteredExerciseList` fetches every row, applies the facets with
+//  `applyPostFetchFilters(to:)`, then searches what is left with
+//  `ExerciseSearch`, which reads aliases and ranks its results (RM-022).
+//  No facet or search goes into a `#Predicate`: the guarded multi-facet
+//  shape pushes Swift's type checker past its budget and is a brittle SQL
+//  translation, and a predicate cannot rank. The catalog is about 720 rows.
 //
 
 import Foundation
@@ -60,9 +51,9 @@ import Observation
 /// View-owned filter state for `ExerciseLibraryView`.
 ///
 /// Holds the four-facet selection sets (muscle / equipment / mechanic /
-/// pattern) and composes a SwiftData-safe `Predicate<Exercise>` against a
-/// debounced search term. Lifetime is tied to the library view; selections
-/// reset per CONTEXT.md Area 2 when the view is dismissed and re-appeared.
+/// pattern) and applies them in memory to the fetched rows. Lifetime is
+/// tied to the library view; selections reset per CONTEXT.md Area 2 when
+/// the view is dismissed and re-appeared.
 @Observable
 public final class FilterState {
     /// Selected muscle slugs (e.g. `"chest"`). OR semantics within facet.
@@ -97,32 +88,6 @@ public final class FilterState {
         selectedEquipmentRaw.removeAll()
         selectedMechanicRaw = nil
         selectedPatternRaw.removeAll()
-    }
-
-    /// Composes a SwiftData-safe search predicate.
-    ///
-    /// Facets are intentionally NOT in the predicate. Even guarded
-    /// equipment/mechanic/pattern clauses can push the `#Predicate` macro past
-    /// the compiler's type-checker budget under Xcode 26. Facets are applied
-    /// in-memory via `applyPostFetchFilters(to:)` after the @Query fetch.
-    ///
-    /// Captures are copied to local `let` constants BEFORE the `#Predicate`
-    /// literal — see Pitfall #12 in the file header.
-    public func swiftDataPredicate(with debouncedSearch: String) -> Predicate<Exercise> {
-        let normalizedSearch = debouncedSearch
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-            .folding(options: .diacriticInsensitive, locale: .current)
-
-        guard !normalizedSearch.isEmpty else {
-            return #Predicate<Exercise> { _ in
-                true
-            }
-        }
-
-        return #Predicate<Exercise> { ex in
-            ex.canonicalName.contains(normalizedSearch)
-        }
     }
 
     /// In-memory muscle facet filter.
@@ -163,8 +128,7 @@ public final class FilterState {
         return matchesMuscleFacet(exercise)
     }
 
-    /// Applies the post-fetch filters that intentionally stay out of the
-    /// SwiftData predicate.
+    /// Applies the facet filters to the fetched rows.
     public func applyPostFetchFilters(to exercises: [Exercise]) -> [Exercise] {
         guard !isEmpty else {
             return exercises

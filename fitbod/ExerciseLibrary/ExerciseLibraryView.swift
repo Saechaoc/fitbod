@@ -9,12 +9,11 @@
 //  FilteredExerciseList (pinned letter sections of ExerciseRow).
 //
 //  Outer / inner split: the outer view owns filter + search state; the inner
-//  FilteredExerciseList owns the @Query and is rebuilt with a new predicate
-//  whenever that state changes (the @Query must live in the inner view so
-//  SwiftUI keeps its subscription).
+//  FilteredExerciseList owns the @Query of every exercise and applies the
+//  facets, then the search, in memory (RM-022).
 //
-//  Search is debounced 150 ms through `.task(id: searchText)` so the query
-//  does not re-run on every keystroke.
+//  Search is debounced 150 ms through `.task(id: searchText)` so the list
+//  does not re-rank on every keystroke.
 //
 //  Filters persist for the process lifetime (the tab keeps this view alive)
 //  and reset on relaunch or via "Clear filters".
@@ -117,7 +116,6 @@ public struct ExerciseLibraryView: View {
                 presentingSheet: $presentingFacet
             )
             FilteredExerciseList(
-                predicate: filterState.swiftDataPredicate(with: debouncedSearch),
                 filterState: filterState,
                 activeQuery: debouncedSearch,
                 hasActiveFilters: !filterState.isEmpty,
@@ -132,7 +130,7 @@ public struct ExerciseLibraryView: View {
             // Debounce: wait 150 ms, then propagate the searchText.
             // `.task(id:)` auto-cancels the prior task when `searchText`
             // changes, so only the last keystroke after a quiet 150 ms
-            // window reaches `debouncedSearch` and re-runs the query.
+            // window reaches `debouncedSearch` and re-runs the search.
             try? await Task.sleep(for: .milliseconds(150))
             guard !Task.isCancelled else { return }
             debouncedSearch = searchText
@@ -214,27 +212,24 @@ public struct ExerciseLibraryView: View {
 
 // MARK: - FilteredExerciseList
 
-/// Predicate-driven inner view. Its `init(predicate:)` re-creates the
-/// `@Query` whenever the outer view passes a new predicate, so the query
-/// stays subscribed while filters and search change.
+/// The list itself. It fetches every exercise, applies the facets, then the
+/// search (`ExerciseSearch`), all in memory.
 ///
-/// Sectioning happens in Swift over the already-fetched rows (sorted by
-/// `canonicalName`), grouping by first letter, with names that start with
-/// a digit or a symbol under "#" after Z. At ~700 rows this is
-/// sub-millisecond.
+/// Without a search the rows are sectioned A to Z by first letter, with
+/// names that start with a digit or a symbol under "#" after Z. A search
+/// lists its results in its own order, best first, with no sections.
 private struct FilteredExerciseList: View {
-    @Query private var exercises: [Exercise]
+    @Query(sort: \Exercise.canonicalName, order: .forward) private var exercises: [Exercise]
 
     /// Logged exercises from finished workouts, for the per-row "N×" count.
     /// Single-level optional chain only (deeper chains crash #Predicate).
     @Query(filter: #Predicate<SessionExercise> { $0.session?.completedAt != nil })
     private var loggedExercises: [SessionExercise]
 
-    /// Owning filter state. Read by the facet post-filter that the
-    /// SwiftData predicate leaves out.
+    /// Owning filter state, for the facet filters.
     let filterState: FilterState
 
-    /// The active debounced search text (empty-state copy variant).
+    /// The active debounced search text.
     let activeQuery: String
 
     /// `true` when at least one facet has a selection.
@@ -247,7 +242,6 @@ private struct FilteredExerciseList: View {
     let onSelect: ((Exercise) -> Void)?
 
     init(
-        predicate: Predicate<Exercise>,
         filterState: FilterState,
         activeQuery: String,
         hasActiveFilters: Bool,
@@ -255,11 +249,6 @@ private struct FilteredExerciseList: View {
         createCustomAction: @escaping () -> Void,
         onSelect: ((Exercise) -> Void)? = nil
     ) {
-        self._exercises = Query(
-            filter: predicate,
-            sort: \Exercise.canonicalName,
-            order: .forward
-        )
         self.filterState = filterState
         self.activeQuery = activeQuery
         self.hasActiveFilters = hasActiveFilters
@@ -268,10 +257,17 @@ private struct FilteredExerciseList: View {
         self.onSelect = onSelect
     }
 
-    /// Post-fetch filter: facets, applied in Swift over the search-pruned
-    /// @Query result.
-    private var visibleExercises: [Exercise] {
-        filterState.applyPostFetchFilters(to: exercises)
+    private var isSearching: Bool {
+        !ExerciseSearch.words(in: activeQuery).isEmpty
+    }
+
+    /// The rows to list and the alias that found each: the facets first,
+    /// then the search, which ranks what it finds.
+    private var matches: [(exercise: Exercise, alias: String?)] {
+        let faceted = filterState.applyPostFetchFilters(to: exercises)
+        guard isSearching else { return faceted.map { ($0, nil) } }
+        return ExerciseSearch.results(activeQuery, in: faceted, row: ExerciseSearch.Row.init)
+            .map { ($0.item, $0.hit.alias) }
     }
 
     /// Number of finished workouts that included each exercise.
@@ -284,7 +280,7 @@ private struct FilteredExerciseList: View {
     }
 
     var body: some View {
-        let visible = visibleExercises
+        let visible = matches
         Group {
             if visible.isEmpty {
                 EmptyLibraryView(
@@ -298,14 +294,21 @@ private struct FilteredExerciseList: View {
                 ScrollView {
                     LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                         resultCount(visible.count)
-                        ForEach(sectioned(visible), id: \.letter) { section in
-                            Section {
-                                ForEach(section.exercises) { ex in
-                                    row(ex, loggedCount: counts[ex.id] ?? 0)
-                                    BRUDivider(.hair)
+                        if isSearching {
+                            ForEach(visible, id: \.exercise.id) { match in
+                                row(match.exercise, alias: match.alias, loggedCount: counts[match.exercise.id] ?? 0)
+                                BRUDivider(.hair)
+                            }
+                        } else {
+                            ForEach(sectioned(visible.map(\.exercise)), id: \.letter) { section in
+                                Section {
+                                    ForEach(section.exercises) { ex in
+                                        row(ex, loggedCount: counts[ex.id] ?? 0)
+                                        BRUDivider(.hair)
+                                    }
+                                } header: {
+                                    sectionHeader(section.letter)
                                 }
-                            } header: {
-                                sectionHeader(section.letter)
                             }
                         }
                     }
@@ -319,19 +322,19 @@ private struct FilteredExerciseList: View {
     }
 
     @ViewBuilder
-    private func row(_ ex: Exercise, loggedCount: Int) -> some View {
+    private func row(_ ex: Exercise, alias: String? = nil, loggedCount: Int) -> some View {
         if let onSelect {
             Button {
                 onSelect(ex)
             } label: {
-                ExerciseRow(exercise: ex, accessory: .add)
+                ExerciseRow(exercise: ex, accessory: .add, matchedAlias: alias)
             }
             .buttonStyle(.bruRow)
             .accessibilityHint("Adds this exercise")
             .accessibilityIdentifier("exercise.pick.\(ex.id.uuidString)")
         } else {
             NavigationLink(value: ex) {
-                ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount))
+                ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount), matchedAlias: alias)
             }
             .buttonStyle(.bruRow)
         }

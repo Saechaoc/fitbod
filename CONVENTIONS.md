@@ -12,7 +12,7 @@
 - One `NavigationStack` per tab. Never wrap `TabView` in a parent `NavigationStack` — tab state collapses on switch.
 - Use typed navigation paths (`NavigationPath` per tab, or a custom enum-based `Path`).
 - Tap-to-pop-to-root: clear the tab's `NavigationPath` when the tab is re-tapped.
-- Exercise library search: `.searchable(text:)` with `FilterState.swiftDataPredicate(with:)` driving `@Query`. Apply facets in memory through `applyPostFetchFilters(to:)` to avoid compiler/SwiftData translation failures.
+- Exercise library search: the list's `@Query` fetches every exercise; apply facets in memory through `applyPostFetchFilters(to:)`, then search what is left with `ExerciseSearch`, which matches word prefixes across name, family, aliases, brand and equipment and ranks the results. Keep facets and search out of `#Predicate`: the guarded multi-facet shape fails to type-check or translate, and a predicate cannot rank.
 
 ## What Not to Use
 

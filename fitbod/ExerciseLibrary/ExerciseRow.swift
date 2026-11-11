@@ -5,6 +5,7 @@
 //
 // Layout:
 //   Name (Space Grotesk 18, wraps)                    [accessory]
+//   MATCHES "ALIAS" (only for a row a search found through an alias)
 //   [PRIMARY MUSCLE] [EQUIPMENT] [MECHANIC] [CUSTOM]
 // A cardio row has no mechanic chip, and no muscle chip unless one is mapped.
 //
@@ -24,10 +25,13 @@ public struct ExerciseRow: View {
 
     let exercise: Exercise
     let accessory: Accessory
+    /// The alias a search found this row through, shown under its name.
+    let matchedAlias: String?
 
-    public init(exercise: Exercise, accessory: Accessory = .loggedCount(0)) {
+    public init(exercise: Exercise, accessory: Accessory = .loggedCount(0), matchedAlias: String? = nil) {
         self.exercise = exercise
         self.accessory = accessory
+        self.matchedAlias = matchedAlias
     }
 
     public var body: some View {
@@ -38,6 +42,13 @@ public struct ExerciseRow: View {
                     .foregroundStyle(Color.bruInk)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
+                if let matchedAlias {
+                    Text("Matches “\(matchedAlias)”")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruMuted)
+                }
                 tagRow
             }
             Spacer(minLength: 8)
