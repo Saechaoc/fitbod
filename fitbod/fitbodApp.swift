@@ -21,6 +21,7 @@
 
 import SwiftUI
 import SwiftData
+import MetricKit
 
 @main
 struct fitbodApp: App {
@@ -29,6 +30,7 @@ struct fitbodApp: App {
 
     init() {
         DebugLaunchReset.runIfRequested()
+        MXMetricManager.shared.add(DiagnosticsStore.shared)
         _store = State(initialValue: Self.openStore())
     }
 

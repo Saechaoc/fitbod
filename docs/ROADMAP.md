@@ -41,6 +41,7 @@ Only the named observation/decision is unavailable; this section does not pause 
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
 | [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
 | [RM-021](#rm-021) | Provenance/legacy-data design | Stored unit changes. |
+| [RM-063](#rm-063) | The first MetricKit report on the phone, shared from Settings | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
 
@@ -846,3 +847,17 @@ T110-ext recorded an AX3 editor hang on the small iOS 26.5 phone: scroll EDIT PR
 **Verify when:** On retained-test failures, necessary helper changes or iteration-blocking slowdowns.
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
 **References:** F17/F20/F22/F35/F42/F82/F86/F135/F150/F164/F180/F202/F208/F218/F239/F241/F263/F271/F299/F349/F374–379/F381/F386/F388; [guide](test-performance-guide.md), [helpers](../fitbodUITests/UITestNavigation.swift)/[logger helpers](../fitbodUITests/WorkoutUITestNavigation.swift).
+
+### <a id="rm-063"></a>RM-063 — MetricKit reports shared from Settings
+
+**P2 · Implemented; verification pending (user decision 2026-11-10).** The app saves each MetricKit report as a JSON file and keeps the newest 30. Settings → Diagnostics → Share reports shares them as files.
+Unproven: a real report on the phone.
+**Done when:** a report MetricKit delivered on the phone is shared from Settings and opens as JSON.
+**Scope / sequence:** `DiagnosticsStore` saves metrics and diagnostics payloads to `Application Support/Diagnostics/` → one Settings row shares them, or reads "None yet" and cannot be tapped. Not included: a launch-argument seed, a UI test, payload parsing or a viewer screen.
+**Requires:** None.
+**Verify when:** The first report reaches the phone, about a day after an install. For one sooner, run the app from Xcode on the phone and choose Debug → Simulate MetricKit Payloads.
+**Evidence:** 2026-11-10: the unit target and `SettingsExportUITests` passed on iPhone 17/iOS 26.5 (1,387 run: 1,384 passed, 2 skipped, 1 expected failure, none failed). `DiagnosticsStoreTests` checks that 31 saves keep the newest 30, newest first, and that two reports saved in the same millisecond both stay.
+At 390pt (iPhone 17e, default text, light) the empty row reads "None yet", muted and without "›", and a tap does nothing. With three sample reports in the app's container it reads "3 reports ›", and one tap opens the share sheet with 3 documents and Save to Files.
+Installed on the iPhone 15 Pro Max with `scripts/phone.sh` the same evening, over the existing app and its data.
+**Limits:** MetricKit gives exit reasons and peak memory per day, plus the stacks of crashes and hangs, but no stack for a memory kill. It does show whether exits are memory kills, which [RM-024](#rm-024)'s phone run could not tell. The files stay on the phone until the lifter shares them.
+**References:** [store](../fitbod/App/DiagnosticsStore.swift), [Settings](../fitbod/Settings/SettingsView.swift), [test](../fitbodTests/DiagnosticsStoreTests.swift).

@@ -59,6 +59,8 @@ public struct SettingsView: View {
     @State private var isRestoring = false
     private let restorer = BackupRestorer()
 
+    @State private var diagnosticReports: [URL] = []
+
     // Sheet state for Picker overlays
 
     /// Set when Settings is presented as a sheet (from Today's header);
@@ -86,6 +88,7 @@ public struct SettingsView: View {
                             volumeTargetsSection(settings: settings)
                             exportSection
                             backupSection
+                            diagnosticsSection
                             #if DEBUG
                             BRUSectionHead("Developer")
                             NavigationLink {
@@ -452,6 +455,24 @@ public struct SettingsView: View {
         return "Version \(version) · Schema V\(SchemaV7.versionIdentifier.major)"
     }
 
+    // MARK: - Diagnostics section
+
+    /// The MetricKit reports `DiagnosticsStore` saved, shared as files.
+    @ViewBuilder
+    private var diagnosticsSection: some View {
+        BRUSectionHead("Diagnostics")
+        ShareLink(items: diagnosticReports) {
+            BRURowLabel(
+                label: "Share reports",
+                value: diagnosticReports.isEmpty ? "None yet" : BRUCountLabel.text(diagnosticReports.count, "report")
+            )
+        }
+        .buttonStyle(.bruRow)
+        .disabled(diagnosticReports.isEmpty)
+        .accessibilityIdentifier("settings.diagnostics")
+        .onAppear { diagnosticReports = DiagnosticsStore.reports() }
+    }
+
     // MARK: - Backup computed metadata
 
     private var lastBackupDescription: String {
@@ -554,16 +575,17 @@ public struct SettingsView: View {
 
 /// Renders the standard label + value + "›" row used inside NavigationLink labels.
 /// NavigationLink draws no chevron outside a List, so the row draws its own,
-/// and the whole row is the tap target.
+/// and the whole row is the tap target. A disabled row is muted and drops the "›".
 private struct BRURowLabel: View {
     let label: String
     let value: String?
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         HStack(spacing: 10) {
             Text(label)
                 .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruInk)
+                .foregroundStyle(isEnabled ? Color.bruInk : Color.bruMuted)
             Spacer()
             if let value {
                 Text(value)
@@ -571,10 +593,12 @@ private struct BRURowLabel: View {
                     .tracking(0.5)
                     .foregroundStyle(Color.bruMuted)
             }
-            Text("›")
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruMuted)
-                .accessibilityHidden(true)
+            if isEnabled {
+                Text("›")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+                    .accessibilityHidden(true)
+            }
         }
         .padding(.horizontal, 16)
         .frame(minHeight: 48)
