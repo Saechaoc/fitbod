@@ -44,7 +44,6 @@ Only the named observation/decision is unavailable; this section does not pause 
 | [RM-063](#rm-063) | The first MetricKit report on the phone, shared from Settings | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 | [RM-053](#rm-053) | One nightly run on `main` that starts on its own, due 2026-11-12 at 11:17 UTC | Closing RM-053. |
 | [RM-022](#rm-022), [RM-062](#rm-062) | Seed 7 and grouped-list checks on the phone (logged names in History, Low Cable Triceps Extension listed, "side lateral raise" found, Bench Press folded into one line) | Closing the families and grouped-list slices; the coverage fill and treadmill tracking can proceed. |
-| [RM-065](#rm-065) | The install of `13d04db9` on the phone, held while Fitbod was open there; then Today after seed 8: Front, Side and Rear Delts, the week's set total and light NOT TRAINED heatmap tiles | Closing RM-065. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
 
@@ -73,6 +72,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
+| [RM-065](#rm-065) | P1 · Done | Three delts with RP landmarks, audited muscle credits in `muscles.json` (seed 8), the week's total as working sets logged, and NOT TRAINED for an untrained muscle everywhere. Unit, full UI, 390pt and phone-store evidence in RM-065. | [RM-038](#rm-038) decision; [RM-022](#rm-022) adds a profile with each new family. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
 | <a id="rm-057"></a>RM-057 | P1 · Done for step 1.1 | Redesign 1.1 TodayState/plan line/day refresh/oldest-ready/advisory. Removed stat strip/block band/week cells/deload banner/plan-complete note. 23 state tests/captures `a3b3ead4`–`56dc453c`; full run had 5 failures/1 expected, with fixes/remaining risks owned separately; [plan/results](archive/features/today-state-and-plan-line.md); D-159/D-341 elements replaced. R-2/R-4/R-6/R-8/R-13: today.root/Progress history entry, calendar refresh, shared BlockPosition and long-name layout shipped. | [state](../fitbod/Views/TodayState.swift), [position](../fitbod/Periodization/BlockPosition.swift); does not complete 1.3. |
@@ -948,10 +948,8 @@ With Geist's `UIAppFonts` line and license file removed, both tests failed; rest
 
 ### <a id="rm-065"></a>RM-065 - Correct muscle credit: three delts and audited exercise tags
 
-**P1 · Implemented; verification pending (user report and decisions 2026-11-11).**
+**P1 · Done (user report and decisions 2026-11-11).**
 Landed in `13d04db9`.
-Unproven: seed 8 on the phone.
-The install waited at 08:20 because Fitbod was open there with its widget extension running; close Fitbod, install from current `main`, open it once so seed 8 runs, then check Today for the three delt bars, the week's set total and light NOT TRAINED tiles for untrained muscles.
 On a copy of the phone's store, Today showed Shoulders at 18 sets with "NEAR MRV — DELOAD" after a push day and a pull day, while lats and middle back showed 3 sets each.
 The app counted front, side and rear delts as one muscle, so presses, lateral raises, upright rows, rear delt flies and face pulls all filled one bar.
 Upstream tags added wrong credit: lat pulldowns credited shoulders, the band-assisted pull-up credited abs and not biceps, and the hack squat and hip thrust credited calves.
@@ -970,3 +968,6 @@ Both now read NOT TRAINED, through one chip rule for the bar and the detail scre
 Full tier (2026-11-11, two simulators): 1,326 of 1,326 enumerated tests ran, 1,323 passed, 0 failed, 2 skipped, 1 expected failure; lint clean; the widget build succeeded.
 A review then made the weekly recap's WORKING SETS count the same sets as Today, corrected the restore notes that said a re-seed deletes nothing, and added a test that a seed is pending until the importer runs; afterwards the unit target and WeeklyRecapUITests passed (1,226 tests: 1,223 passed, 0 failed, 2 skipped, 1 expected failure).
 Rollback point: a copy of the phone's store from 07:57, after seed 7 ran there (838 exercises, 17 muscles, 5 workouts, 67 sets), in ignored `.ci/phone-store/`.
+On the phone (2026-11-11): a build with this change reached it between 08:20 and 08:50, when `main` ended at `fe123665`, and seed 8 ran there.
+The store copy pulled at 08:50 passed its integrity check and held 19 muscles with the three delts and no shoulders, 19 targets, 838 exercises and the same 5 workouts and 67 sets.
+Its week reads 35 working sets against 12, with the same muscle numbers as the rehearsal above.
