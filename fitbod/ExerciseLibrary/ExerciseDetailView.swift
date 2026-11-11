@@ -119,8 +119,9 @@ struct ExerciseDetailView: View {
                     muscleSection
                     instructionsSection
                     prescriptionSettingsSection
-                    // Phase 5 — SET-06 per-exercise plateau threshold override.
-                    if let settings = settingsList.first {
+                    // Phase 5: SET-06 per-exercise plateau threshold override.
+                    // A plateau is a stalled load, so only where load progresses.
+                    if let settings = settingsList.first, exercise.tracking.progressesLoad {
                         plateauDetectionSection(settings: settings)
                     }
                     if !exercise.isCustom {
@@ -177,7 +178,9 @@ struct ExerciseDetailView: View {
                     BRUChip(muscle, color: .bruSignal, fill: true)
                 }
                 BRUChip(equipmentDisplay)
-                BRUChip(mechanicDisplay)
+                if !exercise.isCardio {
+                    BRUChip(mechanicDisplay)
+                }
                 if exercise.isCustom {
                     BRUChip("Custom", color: .bruSignal)
                 }
@@ -314,46 +317,77 @@ struct ExerciseDetailView: View {
     // Reskinned in plan 03.2-08 — BRUSectionHead header + BRUFont labels/footers +
     // 3-BRUChip Button row replacing the Picker for unit override.
 
-    /// Three editable sections for per-exercise prescription overrides
-    /// (UI-SPEC § Per-exercise fields in ExerciseDetailView verbatim).
-    /// @Bindable write-through to SwiftData — no separate Save button.
+    /// Per-exercise prescription overrides, written through @Bindable with
+    /// no separate Save button. The increment and the bar feed a prescribed
+    /// load, so they show only where load progresses. The unit shows where
+    /// the exercise has one: a load, or a distance, whose miles go with lb
+    /// and kilometers with kg (`SetText`). An exercise with neither, such as
+    /// a plank or a stair climber, has no section.
     @ViewBuilder
     private var prescriptionSettingsSection: some View {
         @Bindable var ex = exercise
+        let progresses = exercise.tracking.progressesLoad
+        let measure = unitMeasure
 
-        BRUSectionHead("PRESCRIPTION SETTINGS")
-        VStack(alignment: .leading, spacing: 18) {
-            settingField(
-                label: "SMALLEST INCREMENT",
-                placeholder: "e.g. 2.5",
-                value: $ex.smallestIncrement,
-                footer: "Weight advances by this amount each progression step."
-            )
-            settingField(
-                label: "BAR WEIGHT OVERRIDE",
-                placeholder: "Default",
-                value: $ex.barWeightOverride,
-                footer: "Use for specialty bars (safety squat, Swiss bar, women's bar)."
-            )
-            VStack(alignment: .leading, spacing: 8) {
-                Text("WEIGHT UNIT")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-                HStack(spacing: 6) {
-                    unitChip("System default", selected: ex.unitOverride == nil) { ex.unitOverride = nil }
-                    unitChip("kg", selected: ex.unitOverride == .kg) { ex.unitOverride = .kg }
-                    unitChip("lb", selected: ex.unitOverride == .lb) { ex.unitOverride = .lb }
+        if progresses || measure != nil {
+            BRUSectionHead(progresses ? "PRESCRIPTION SETTINGS" : "UNIT")
+            VStack(alignment: .leading, spacing: 18) {
+                if progresses {
+                    settingField(
+                        label: "SMALLEST INCREMENT",
+                        placeholder: "e.g. 2.5",
+                        value: $ex.smallestIncrement,
+                        footer: "Weight advances by this amount each progression step."
+                    )
+                    settingField(
+                        label: "BAR WEIGHT OVERRIDE",
+                        placeholder: "Default",
+                        value: $ex.barWeightOverride,
+                        footer: "Use for specialty bars (safety squat, Swiss bar, women's bar)."
+                    )
                 }
-                Text("Overrides the global unit for this exercise only. History stored in canonical unit.")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                if let measure {
+                    let isDistance = measure == "Distance"
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("\(measure) unit")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                        HStack(spacing: 6) {
+                            unitChip("System default", measure: measure, selected: ex.unitOverride == nil) {
+                                ex.unitOverride = nil
+                            }
+                            ForEach([WeightUnit.kg, .lb], id: \.self) { choice in
+                                unitChip(
+                                    isDistance ? SetText.distanceUnit(choice) : choice.rawValue,
+                                    measure: measure, selected: ex.unitOverride == choice
+                                ) { ex.unitOverride = choice }
+                            }
+                        }
+                        Text(isDistance
+                             ? "Overrides the global unit for this exercise only. Distance is stored in meters."
+                             : "Overrides the global unit for this exercise only. History stored in canonical unit.")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
             }
+            .padding(16)
+            BRUDivider(.ink)
         }
-        .padding(16)
-        BRUDivider(.ink)
+    }
+
+    /// What the exercise's unit measures, or nil when its sets record a
+    /// time alone or a machine level.
+    private var unitMeasure: String? {
+        switch exercise.tracking {
+        case .weightReps, .reps, .assistedReps: "Weight"
+        case .duration: exercise.timedValue == .weight ? "Weight" : nil
+        case .durationDistance: "Distance"
+        case .durationLevel: nil
+        }
     }
 
     private func settingField(
@@ -396,14 +430,16 @@ struct ExerciseDetailView: View {
         }
     }
 
-    private func unitChip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+    private func unitChip(
+        _ title: String, measure: String, selected: Bool, action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             BRUChip(title, fill: selected)
                 .frame(minHeight: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Weight unit: \(title)")
+        .accessibilityLabel("\(measure) unit: \(title)")
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
@@ -436,7 +472,7 @@ struct ExerciseDetailView: View {
         draft.name = source.name + " (Copy)"
         draft.equipment = Equipment(rawValue: source.equipmentRaw) ?? .other
         draft.mechanic = Mechanic(rawValue: source.mechanicRaw) ?? .compound
-        draft.trackingRaw = source.trackingRaw
+        draft.tracking = source.trackingRaw.flatMap(Tracking.init)
         for stim in (source.muscleStimuli ?? []) {
             // Defensive: skip stimulus rows whose `muscle`
             // relationship somehow didn't resolve. Same resilience

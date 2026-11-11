@@ -4,8 +4,9 @@
 //
 //  Plan 01-PLAN-02-02 — the load-bearing one-time seed pipeline for the
 //  built-in exercise library. Authored as a model-actor so the work
-//  (decoding ~1.0 MB of JSON, filtering, and inserting ~702 `Exercise`
-//  rows + 17 `MuscleGroup` rows + ~2200 `ExerciseMuscleStimulus` rows)
+//  (decoding ~1.0 MB of JSON, resolving it through `ExerciseCatalog`, and
+//  inserting ~710 `Exercise` rows + 17 `MuscleGroup` rows + ~2200
+//  `ExerciseMuscleStimulus` rows)
 //  runs off the main thread (PITFALLS.md #6 — never block the main
 //  thread on 800+ inserts).
 //
@@ -114,9 +115,9 @@ public actor ExerciseLibraryImporter {
     ///
     /// 1. Reads `defaults[seedVersionKey]` and bundled `SEED_VERSION.txt`.
     /// 2. If stored ≥ bundled, returns immediately (no work).
-    /// 3. Otherwise loads `exercises.json`, filters to strength
-    ///    categories, upserts the 17 `MuscleGroup` rows by `slug`, upserts
-    ///    the filtered exercises by `externalID` with any missing stimulus
+    /// 3. Otherwise resolves the bundled catalog (`ExerciseCatalog`),
+    ///    upserts the 17 `MuscleGroup` rows by `slug`, upserts the
+    ///    catalog's exercises by `externalID` with any missing stimulus
     ///    join rows in 100-row batches, and seeds the `UserSettings`
     ///    singleton if absent. Nothing is deleted (see "Re-seeding in
     ///    place" above).
@@ -147,28 +148,9 @@ public actor ExerciseLibraryImporter {
         Self.log.info("Seeding library from version \(stored) → \(bundled)")
         let start = Date()
 
-        // MARK: 1. Load + decode + filter
-        guard let url = bundle.url(forResource: "exercises", withExtension: "json") else {
-            throw SeedError.bundledResourceMissing(name: "exercises.json")
-        }
-        let data = try Data(contentsOf: url)
-        let allDTOs: [ExerciseDTO]
-        do {
-            allDTOs = try JSONDecoder().decode([ExerciseDTO].self, from: data)
-        } catch {
-            throw SeedError.decodeFailed(underlying: error)
-        }
-        let dtos = allDTOs.filter { EquipmentMapper.shouldImport(category: $0.category) }
-        guard let curationURL = bundle.url(forResource: "curation", withExtension: "json") else {
-            throw SeedError.bundledResourceMissing(name: "curation.json")
-        }
-        let curation: [String: ExerciseCuration]
-        do {
-            curation = try JSONDecoder().decode([String: ExerciseCuration].self, from: Data(contentsOf: curationURL))
-        } catch {
-            throw SeedError.decodeFailed(underlying: error)
-        }
-        Self.log.info("Filtered \(allDTOs.count) → \(dtos.count) strength exercises")
+        // MARK: 1. Resolve the bundled catalog
+        let entries = try ExerciseCatalog.bundled(in: bundle)
+        Self.log.info("Catalog resolved, exercise count \(entries.count)")
 
         // Wrap the remaining steps so a mid-batch failure rolls back
         // unsaved changes (review WR-01). Batches that already reached
@@ -178,7 +160,7 @@ public actor ExerciseLibraryImporter {
             // MARK: 2. Upsert canonical MuscleGroup rows by slug
             //
             // Single source of truth: `MuscleRegionMap.allSlugs` — the 17
-            // canonical slugs. Iterating `allSlugs` (not `dtos`) means every
+            // canonical slugs. Iterating `allSlugs` (not `entries`) means every
             // canonical slug gets a row even if no dataset entry references
             // it yet, which keeps the muscle-volume-target wiring in Phase 5
             // stable across future dataset refreshes. An existing row keeps
@@ -230,8 +212,9 @@ public actor ExerciseLibraryImporter {
             var batchCount = 0
             var insertedCount = 0
             var updatedCount = 0
-            for dto in dtos {
-                let canonicalName = dto.name
+            for entry in entries {
+                // The curated name, so a renamed row is found by its new name.
+                let canonicalName = entry.name
                     .lowercased()
                     .folding(options: .diacriticInsensitive, locale: .current)
 
@@ -239,49 +222,41 @@ public actor ExerciseLibraryImporter {
                 // pipe-delimited field so the muscle-filter predicate in
                 // Wave 3 can use `.contains("|chest|")` against the
                 // `#Index<Exercise>([\.primaryMuscleSlugsJoined])` index.
-                let joined = dto.primaryMuscles.isEmpty
+                let joined = entry.primaryMuscles.isEmpty
                     ? ""
-                    : "|" + dto.primaryMuscles.joined(separator: "|") + "|"
-                let equipmentRaw = curation[dto.id]?.equipment ?? EquipmentMapper.map(dto.equipment).rawValue
-                // Seeded rows take their tracking from curation alone, so a
-                // row curation stops listing goes back to the derived value.
-                let trackingRaw = curation[dto.id]?.tracking
-                let mechanicRaw = dto.mechanic ?? Mechanic.compound.rawValue
+                    : "|" + entry.primaryMuscles.joined(separator: "|") + "|"
 
                 let exercise: Exercise
                 // Muscles this exercise had a stimulus row for before this seed.
                 let stimulated: Set<String>
-                if let existing = exercisesByExternalID[dto.id] {
+                if let existing = exercisesByExternalID[entry.id] {
                     exercise = existing
                     stimulated = stimulatedSlugs[existing.persistentModelID] ?? []
-                    if refresh(
-                        existing, from: dto, canonicalName: canonicalName,
-                        equipmentRaw: equipmentRaw, trackingRaw: trackingRaw,
-                        mechanicRaw: mechanicRaw, primaryMuscleSlugsJoined: joined
-                    ) {
+                    if refresh(existing, from: entry, canonicalName: canonicalName, primaryMuscleSlugsJoined: joined) {
                         updatedCount += 1
                     }
                 } else {
                     exercise = Exercise(
-                        externalID: dto.id,
-                        name: dto.name,
+                        externalID: entry.id,
+                        name: entry.name,
                         canonicalName: canonicalName,
-                        equipmentRaw: equipmentRaw,
-                        mechanicRaw: mechanicRaw,
-                        forceRaw: dto.force,
-                        levelRaw: dto.level,
-                        category: dto.category,
-                        instructions: dto.instructions,
-                        imagePaths: dto.images,
+                        equipmentRaw: entry.equipmentRaw,
+                        mechanicRaw: entry.mechanicRaw,
+                        forceRaw: entry.forceRaw,
+                        levelRaw: entry.levelRaw,
+                        category: entry.category,
+                        instructions: entry.instructions,
+                        imagePaths: entry.imagePaths,
                         isCustom: false,
                         primaryMuscleSlugsJoined: joined
                     )
-                    exercise.trackingRaw = trackingRaw
+                    exercise.trackingRaw = entry.trackingRaw
+                    exercise.aliasesJoined = entry.aliasesJoined
                     // Pitfall #7 — insert FIRST, then the join rows reference it.
                     // SwiftData drops relationship links silently if the parent
                     // isn't yet inserted into the context.
                     modelContext.insert(exercise)
-                    exercisesByExternalID[dto.id] = exercise
+                    exercisesByExternalID[entry.id] = exercise
                     stimulated = []
                     insertedCount += 1
                 }
@@ -293,9 +268,9 @@ public actor ExerciseLibraryImporter {
                 // Unknown slugs (i.e., slugs not in `MuscleRegionMap.allSlugs`)
                 // are skipped with a debug log — a future dataset bump that
                 // adds a new slug would surface here.
-                for slug in dto.primaryMuscles where !stimulated.contains(slug) {
+                for slug in entry.primaryMuscles where !stimulated.contains(slug) {
                     guard let mg = musclesBySlug[slug] else {
-                        Self.log.debug("Unknown primary muscle slug '\(slug)' on \(dto.id) — skipping stimulus row")
+                        Self.log.debug("Unknown primary muscle slug '\(slug)' on \(entry.id): skipping stimulus row")
                         continue
                     }
                     let stim = ExerciseMuscleStimulus(
@@ -306,9 +281,9 @@ public actor ExerciseLibraryImporter {
                     )
                     modelContext.insert(stim)
                 }
-                for slug in dto.secondaryMuscles where !stimulated.contains(slug) {
+                for slug in entry.secondaryMuscles where !stimulated.contains(slug) {
                     guard let mg = musclesBySlug[slug] else {
-                        Self.log.debug("Unknown secondary muscle slug '\(slug)' on \(dto.id) — skipping stimulus row")
+                        Self.log.debug("Unknown secondary muscle slug '\(slug)' on \(entry.id): skipping stimulus row")
                         continue
                     }
                     let stim = ExerciseMuscleStimulus(
@@ -345,7 +320,7 @@ public actor ExerciseLibraryImporter {
             // MARK: 6. Stamp the version stamp
             defaults.set(bundled, forKey: Self.seedVersionKey)
             let elapsed = Date().timeIntervalSince(start)
-            Self.log.info("Seed complete in \(elapsed, format: .fixed(precision: 3))s — \(BRUCountLabel.text(dtos.count, "exercise"), privacy: .public) (\(insertedCount) new, \(updatedCount) updated), \(musclesBySlug.count) muscles")
+            Self.log.info("Seed complete in \(elapsed, format: .fixed(precision: 3))s — \(BRUCountLabel.text(entries.count, "exercise"), privacy: .public) (\(insertedCount) new, \(updatedCount) updated), \(musclesBySlug.count) muscles")
         } catch {
             // Mid-import failure (e.g. disk full mid-batch). Roll back
             // unsaved changes so the context state matches disk before
@@ -359,19 +334,18 @@ public actor ExerciseLibraryImporter {
         }
     }
 
-    /// Writes the fields the dataset supplies onto an exercise an earlier
+    /// Writes the fields the catalog supplies onto an exercise an earlier
     /// seed inserted, and reports whether any changed. Only what differs is
     /// written, because an equal assignment still marks the row changed and
     /// re-renders every view that reads it. The exercise's identity and the
     /// lifter's settings (unit override, increment, bar weight, plateau
-    /// overrides) are not dataset fields, so they stay as they are.
+    /// overrides) are not catalog fields, so they stay as they are. Tracking
+    /// and aliases come from curation alone, so a row curation stops listing
+    /// goes back to the derived tracking and has no aliases.
     private func refresh(
         _ exercise: Exercise,
-        from dto: ExerciseDTO,
+        from entry: CatalogEntry,
         canonicalName: String,
-        equipmentRaw: String,
-        trackingRaw: String?,
-        mechanicRaw: String,
         primaryMuscleSlugsJoined joined: String
     ) -> Bool {
         var changed = false
@@ -380,16 +354,17 @@ public actor ExerciseLibraryImporter {
             exercise[keyPath: keyPath] = value
             changed = true
         }
-        write(\.name, dto.name)
+        write(\.name, entry.name)
         write(\.canonicalName, canonicalName)
-        write(\.equipmentRaw, equipmentRaw)
-        write(\.trackingRaw, trackingRaw)
-        write(\.mechanicRaw, mechanicRaw)
-        write(\.forceRaw, dto.force)
-        write(\.levelRaw, dto.level)
-        write(\.category, dto.category)
-        write(\.instructions, dto.instructions)
-        write(\.imagePaths, dto.images)
+        write(\.equipmentRaw, entry.equipmentRaw)
+        write(\.trackingRaw, entry.trackingRaw)
+        write(\.aliasesJoined, entry.aliasesJoined)
+        write(\.mechanicRaw, entry.mechanicRaw)
+        write(\.forceRaw, entry.forceRaw)
+        write(\.levelRaw, entry.levelRaw)
+        write(\.category, entry.category)
+        write(\.instructions, entry.instructions)
+        write(\.imagePaths, entry.imagePaths)
         write(\.primaryMuscleSlugsJoined, joined)
         return changed
     }

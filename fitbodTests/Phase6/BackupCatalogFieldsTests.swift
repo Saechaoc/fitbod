@@ -76,7 +76,8 @@ struct BackupCatalogFieldsTests {
         #expect(exercise.variantLabel == nil)
         #expect(exercise.aliasesJoined == "")
         #expect(exercise.trackingRaw == nil)
-        #expect(exercise.tracking == .weightReps)
+        // With none stored it follows the equipment, a cardio machine here.
+        #expect(exercise.tracking == .durationDistance)
         #expect(exercise.brand == nil)
         #expect(exercise.loadingRaw == nil)
         #expect(exercise.isHidden == false)

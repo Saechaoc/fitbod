@@ -64,7 +64,7 @@ struct DTODecodingTests {
 
     // MARK: - SEED_VERSION.txt
 
-    @Test("SEED_VERSION.txt is bundled and equals 5")
+    @Test("SEED_VERSION.txt is bundled and equals 6")
     func seedVersionBundled() throws {
         let url = try #require(
             Bundle.main.url(forResource: "SEED_VERSION", withExtension: "txt"),
@@ -72,7 +72,7 @@ struct DTODecodingTests {
         )
         let raw = try String(contentsOf: url, encoding: .utf8)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        #expect(Int(trimmed) == 5, "Tracking curation and the finer equipment tags came at SEED_VERSION=5, got: \(trimmed)")
+        #expect(Int(trimmed) == 6, "Cardio rows came at SEED_VERSION=6, got: \(trimmed)")
     }
 
     // MARK: - Equipment mapping (LIB-06)

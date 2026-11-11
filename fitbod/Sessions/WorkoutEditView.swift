@@ -410,7 +410,7 @@ private struct WorkoutEditSetRow: View {
         _weightText = State(initialValue: Self.weightText(row.values, locale: locale))
         _repsText = State(initialValue: Self.repsText(row.values))
         _timeText = State(initialValue: Self.timeText(row.values))
-        _secondText = State(initialValue: Self.secondText(row.values, timedValue, unit: unit))
+        _secondText = State(initialValue: Self.secondText(row.values, timedValue, unit: unit, locale: locale))
     }
 
     var body: some View {
@@ -536,7 +536,7 @@ private struct WorkoutEditSetRow: View {
             case .distance, .level:
                 let number = SetText.number(fromTyped: secondText, locale: locale)
                 isValid = (secondText.isEmpty || number != nil) && isValid
-                if secondText != Self.secondText(opened, timedValue, unit: unit) {
+                if secondText != Self.secondText(opened, timedValue, unit: unit, locale: locale) {
                     if timedValue == .level {
                         values.level = number
                     } else {
@@ -579,10 +579,12 @@ private struct WorkoutEditSetRow: View {
         values.durationSeconds.map(SetText.duration) ?? ""
     }
 
-    private static func secondText(_ values: WorkoutEdit.Values, _ timedValue: TimedValue?, unit: WeightUnit) -> String {
+    private static func secondText(
+        _ values: WorkoutEdit.Values, _ timedValue: TimedValue?, unit: WeightUnit, locale: Locale
+    ) -> String {
         switch timedValue {
-        case .distance: values.distanceMeters.map { SetText.distance($0, unit: unit) } ?? ""
-        case .level: values.level.map(NumberText.weight) ?? ""
+        case .distance: values.distanceMeters.map { SetText.entry(distance: $0, unit: unit, locale: locale) } ?? ""
+        case .level: values.level.map { SetText.entry(level: $0, locale: locale) } ?? ""
         case .weight, nil: ""
         }
     }

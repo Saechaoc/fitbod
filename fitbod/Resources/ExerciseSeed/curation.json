@@ -12,6 +12,17 @@
     "equipment": "bodyweight",
     "tracking": "assisted_reps"
   },
+  "Bicycling_Stationary": {
+    "import": true,
+    "name": "Stationary Bike",
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance",
+    "aliases": [
+      "exercise bike",
+      "upright bike",
+      "bike"
+    ]
+  },
   "Bodyweight_Flyes": {
     "equipment": "bodyweight"
   },
@@ -38,6 +49,16 @@
   },
   "Downward_Facing_Balance": {
     "equipment": "bodyweight"
+  },
+  "Elliptical_Trainer": {
+    "import": true,
+    "name": "Elliptical",
+    "equipment": "cardio_machine",
+    "tracking": "duration_level",
+    "aliases": [
+      "elliptical trainer",
+      "cross trainer"
+    ]
   },
   "Exercise_Ball_Crunch": {
     "equipment": "bodyweight"
@@ -108,6 +129,11 @@
   "Push-Ups_With_Feet_On_An_Exercise_Ball": {
     "equipment": "bodyweight"
   },
+  "Recumbent_Bike": {
+    "import": true,
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance"
+  },
   "Rickshaw_Carry": {
     "tracking": "duration"
   },
@@ -119,6 +145,38 @@
   },
   "Rope_Climb": {
     "equipment": "bodyweight"
+  },
+  "Rope_Jumping": {
+    "import": true,
+    "name": "Jump Rope",
+    "equipment": "bodyweight",
+    "tracking": "duration",
+    "aliases": [
+      "rope jumping",
+      "skipping"
+    ]
+  },
+  "Rowing_Stationary": {
+    "import": true,
+    "name": "Rowing Machine",
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance",
+    "aliases": [
+      "rower",
+      "erg",
+      "rowing"
+    ]
+  },
+  "Running_Treadmill": {
+    "import": true,
+    "name": "Treadmill Run",
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance",
+    "aliases": [
+      "running",
+      "jogging",
+      "treadmill"
+    ]
   },
   "Scapular_Pull-Up": {
     "equipment": "bodyweight"
@@ -189,6 +247,27 @@
   "Smith_Single-Leg_Split_Squat": {
     "equipment": "smith_machine"
   },
+  "Stairmaster": {
+    "import": true,
+    "name": "Stair Climber",
+    "equipment": "cardio_machine",
+    "tracking": "duration_level",
+    "aliases": [
+      "stairmaster",
+      "stair stepper",
+      "stair machine"
+    ]
+  },
+  "Step_Mill": {
+    "import": true,
+    "name": "Stepmill",
+    "equipment": "cardio_machine",
+    "tracking": "duration_level",
+    "aliases": [
+      "step mill",
+      "revolving stairs"
+    ]
+  },
   "Suspended_Fallout": {
     "equipment": "bodyweight"
   },
@@ -203,6 +282,16 @@
   },
   "Suspended_Split_Squat": {
     "equipment": "bodyweight"
+  },
+  "Walking_Treadmill": {
+    "import": true,
+    "name": "Treadmill Walk",
+    "equipment": "cardio_machine",
+    "tracking": "duration_distance",
+    "aliases": [
+      "walking",
+      "incline walk"
+    ]
   },
   "Weighted_Ball_Hyperextension": {
     "equipment": "weighted_bodyweight"

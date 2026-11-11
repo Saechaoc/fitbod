@@ -20,8 +20,10 @@
 //      and keeps everything the lifter made or logged (T128, F296).
 //   9. `partialSeedResumes` — a seed that stopped partway resumes without
 //      duplicating what reached disk (review WR-01).
-//  10. `curationRetagsBodyweightMoves` — `curation.json` names real rows and
-//      equipment, and the seed applies it (RM-022).
+//  10. `curationRetagsBodyweightMoves` - the seed applies `curation.json`
+//      (RM-022). `ExerciseCatalogTests` checks the file itself.
+//  11. `cardioAddsNoMuscleVolume` - a cardio row imports under its curated
+//      name with no muscle, so its sets add no muscle volume (RM-062).
 //
 //  ## Test isolation
 //
@@ -66,12 +68,10 @@ final class SeedTests {
         defaults.removePersistentDomain(forName: defaultsSuiteName)
     }
 
-    /// The externalIDs a complete seed holds: every strength-category entry
-    /// in the bundled dataset.
-    private static func bundledStrengthIDs() throws -> Set<String> {
-        let url = try #require(Bundle.main.url(forResource: "exercises", withExtension: "json"))
-        let dtos = try JSONDecoder().decode([ExerciseDTO].self, from: Data(contentsOf: url))
-        return Set(dtos.filter { EquipmentMapper.shouldImport(category: $0.category) }.map(\.id))
+    /// The externalIDs a complete seed holds: every entry of the bundled
+    /// catalog.
+    private static func bundledIDs() throws -> Set<String> {
+        Set(try ExerciseCatalog.bundled().map(\.id))
     }
 
     // MARK: - Test 1: strength-only count
@@ -90,21 +90,8 @@ final class SeedTests {
         )
     }
 
-    @Test("curation.json names real rows, equipment and tracking, and the seed applies it")
+    @Test("the seed applies curation.json's equipment and tracking")
     func curationRetagsBodyweightMoves() async throws {
-        let ids = try Self.bundledStrengthIDs()
-        let url = try #require(Bundle.main.url(forResource: "curation", withExtension: "json"))
-        let curation = try JSONDecoder().decode([String: ExerciseCuration].self, from: Data(contentsOf: url))
-        for (id, entry) in curation {
-            #expect(ids.contains(id), "curation.json names \(id), which the seed does not import")
-            if let raw = entry.equipment {
-                #expect(Equipment(rawValue: raw) != nil, "\(id) has unknown equipment \(raw)")
-            }
-            if let raw = entry.tracking {
-                #expect(Tracking(rawValue: raw) != nil, "\(id) has unknown tracking \(raw)")
-            }
-        }
-
         let container = try InMemoryContainer.makeEmpty()
         try await ExerciseLibraryImporter(modelContainer: container).seedIfNeeded(defaults: defaults)
         let context = ModelContext(container)
@@ -132,6 +119,54 @@ final class SeedTests {
         let bench = try seeded("Barbell_Bench_Press_-_Medium_Grip")
         #expect(bench.trackingRaw == nil)
         #expect(bench.tracking == .weightReps)
+    }
+
+    @Test("a cardio row imports under its curated name with no muscle, and its sets add no muscle volume")
+    @MainActor // LoggerFixtures, which builds the workouts, is main-actor isolated.
+    func cardioAddsNoMuscleVolume() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+        try await ExerciseLibraryImporter(modelContainer: container).seedIfNeeded(defaults: defaults)
+        let ctx = ModelContext(container)
+        func seeded(_ externalID: String) throws -> Exercise {
+            try #require(try ctx.fetch(FetchDescriptor<Exercise>(
+                predicate: #Predicate { $0.externalID == externalID }
+            )).first)
+        }
+        let climber = try seeded("Stairmaster")
+        #expect(climber.name == "Stair Climber" && climber.canonicalName == "stair climber")
+        #expect(climber.equipment == .cardioMachine && climber.isCardio)
+        #expect(climber.tracking == .durationLevel && climber.timedValue == .level)
+        #expect(climber.aliasesJoined.split(separator: "|").contains("stairmaster"))
+        // Upstream lists quadriceps for it, which would count as leg volume.
+        #expect(climber.primaryMuscleSlugsJoined.isEmpty)
+        #expect((climber.muscleStimuli ?? []).isEmpty)
+        #expect(try seeded("Running_Treadmill").timedValue == .distance)
+        #expect(try seeded("Rope_Jumping").timedValue == nil, "Jump Rope logs a time alone")
+        // Cardio that curation does not import stays out, as stretching does.
+        #expect(try ctx.fetchCount(FetchDescriptor<Exercise>(predicate: #Predicate { $0.externalID == "Skating" })) == 0)
+
+        let start = Date(timeIntervalSince1970: 1_790_000_000)
+        let cardio = try LoggerFixtures.session(
+            exercise: climber, startedAt: start, completedAt: start.addingTimeInterval(1_500),
+            sets: [(0, 0, true)], in: ctx
+        )
+        let set = try #require(cardio.exercises?.first?.sets?.first)
+        set.durationSeconds = 1_200
+        set.level = 8
+        try ctx.save()
+        #expect(set.countsAsWork && set.hasResult, "the cardio set is a logged working set")
+        let weekStart = start.addingTimeInterval(-24 * 3_600)
+        #expect(
+            FatigueModel.weeklyVolumes(weekStart: weekStart, in: ctx).values
+                .allSatisfy { $0.directSets == 0 && $0.indirectSets == 0 },
+            "cardio must add no muscle volume"
+        )
+        // The same week counts a bench press set, so the window is the right one.
+        try LoggerFixtures.session(
+            exercise: try seeded("Barbell_Bench_Press_-_Medium_Grip"), startedAt: start,
+            completedAt: start.addingTimeInterval(1_500), sets: [(100, 5, true)], in: ctx
+        )
+        #expect(FatigueModel.weeklyVolume(muscleSlug: "chest", weekStart: weekStart, in: ctx).directSets == 1)
     }
 
     // MARK: - Test 2: MuscleGroup count
@@ -483,7 +518,7 @@ final class SeedTests {
         benchChest.muscle = chest
         try ctx.save()
         let benchID = bench.id, chestID = chest.id, benchChestID = benchChest.id
-        let datasetIDs = try Self.bundledStrengthIDs()
+        let datasetIDs = try Self.bundledIDs()
 
         try await ExerciseLibraryImporter(modelContainer: container).seedIfNeeded(defaults: defaults)
 

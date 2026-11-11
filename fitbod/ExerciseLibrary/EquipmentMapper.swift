@@ -46,9 +46,9 @@ public enum EquipmentMapper {
         }
     }
 
-    /// Categories accepted into the v1 seed. Per CONTEXT.md Area 1 + plan 02-01,
-    /// only resistance-training categories are imported; cardio / stretching /
-    /// plyometrics rows are skipped.
+    /// Categories every row of which is in the catalog: resistance training.
+    /// A cardio, stretching or plyometrics row comes in only when
+    /// `curation.json` imports it (`ExerciseCatalog`).
     public static let acceptedCategories: Set<String> = [
         "strength",
         "powerlifting",

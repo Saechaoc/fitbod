@@ -49,6 +49,10 @@ public final class Exercise {
     public var levelRaw: String? = nil
     public var patternRaw: String? = nil
     public var category: String = "strength"
+
+    /// A cardio exercise: it maps no muscle unless the lifter adds one, and
+    /// has no compound or isolation mechanic to show.
+    public var isCardio: Bool { category == "cardio" }
     public var instructions: [String] = []
     public var imagePaths: [String] = []
     @Attribute(.externalStorage) public var imageData: Data? = nil
@@ -127,8 +131,7 @@ extension Exercise {
     /// reps, so custom exercises and rows curation does not list need no
     /// stored value.
     public var tracking: Tracking {
-        if let stored = trackingRaw.flatMap(Tracking.init) { return stored }
-        return equipment == .bodyweight || equipment == .weightedBodyweight ? .reps : .weightReps
+        trackingRaw.flatMap(Tracking.init) ?? .implied(by: equipment)
     }
 
     /// What a timed set of this exercise records beside its time: an

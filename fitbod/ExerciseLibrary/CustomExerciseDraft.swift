@@ -32,7 +32,8 @@
 //  `isValid == true` iff:
 //    1. `name` (trimmed of whitespace) is non-empty, AND
 //    2. at least one `MuscleAssignment` has `role == .primary` AND
-//       `weight >= 0.5`.
+//       `weight >= 0.5`, unless the exercise is cardio (`isCardio`):
+//       cardio adds no muscle volume, so it needs no muscle.
 //
 //  Equipment + mechanic always have non-nil defaults (`.barbell` /
 //  `.compound`) so they never gate save. Image is genuinely optional.
@@ -110,10 +111,27 @@ public final class CustomExerciseDraft {
     /// SQLite store).
     public var imageData: Data? = nil
 
-    /// What a set records, when that is not what the equipment implies
-    /// (`Exercise.tracking`). A copy of a timed exercise takes it from its
-    /// source, so the copy stays timed.
-    public var trackingRaw: String? = nil
+    /// What a set records, as picked in the editor or copied from the
+    /// source exercise, so a copy of a timed exercise stays timed. Nil
+    /// follows the equipment, as `Exercise.tracking` does.
+    public var tracking: Tracking? = nil
+
+    /// What a set of this exercise records.
+    public var effectiveTracking: Tracking { tracking ?? .implied(by: equipment) }
+
+    /// Time with a distance or a machine level is cardio. It adds no muscle
+    /// volume, so it can be saved without a muscle.
+    public var isCardio: Bool {
+        effectiveTracking == .durationDistance || effectiveTracking == .durationLevel
+    }
+
+    /// The tracking to store: nil when it is what the equipment implies, so
+    /// the exercise keeps following its equipment.
+    private var storedTrackingRaw: String? {
+        effectiveTracking == .implied(by: equipment) ? nil : effectiveTracking.rawValue
+    }
+
+    private var category: String { isCardio ? "cardio" : "strength" }
 
     /// Set by the editor when an existing custom `Exercise` is being
     /// edited (rather than created). When non-nil:
@@ -163,7 +181,7 @@ public final class CustomExerciseDraft {
     /// `true` iff the draft satisfies every save precondition:
     /// 1. `name` (trimmed of whitespace) is non-empty.
     /// 2. At least one `MuscleAssignment` has `role == .primary` AND
-    ///    `weight >= 0.5`.
+    ///    `weight >= 0.5`, or the exercise is cardio.
     ///
     /// Pure value-type computation — does not touch SwiftData, so
     /// `CustomExerciseDraftTests` exercises every branch without a
@@ -171,7 +189,7 @@ public final class CustomExerciseDraft {
     public var isValid: Bool {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return false }
-        return muscles.contains { $0.role == .primary && $0.weight >= 0.5 }
+        return isCardio || muscles.contains { $0.role == .primary && $0.weight >= 0.5 }
     }
 
     // MARK: - Snapshot / dirty detection
@@ -185,6 +203,7 @@ public final class CustomExerciseDraft {
             name: name,
             equipment: equipment,
             mechanic: mechanic,
+            tracking: tracking,
             muscles: muscles,
             imageDataHash: imageData?.hashValue
         )
@@ -194,6 +213,7 @@ public final class CustomExerciseDraft {
         public let name: String
         public let equipment: Equipment
         public let mechanic: Mechanic
+        public let tracking: Tracking?
         public let muscles: [MuscleAssignment]
         /// Reduced to `Int?` because raw `Data` equality on
         /// UIImage-shaped blobs is needlessly expensive — the hash is
@@ -248,12 +268,12 @@ public final class CustomExerciseDraft {
             canonicalName: canonical,
             equipmentRaw: equipment.rawValue,
             mechanicRaw: mechanic.rawValue,
-            category: "strength",
+            category: category,
             isCustom: true,
             primaryMuscleSlugsJoined: joined
         )
         ex.imageData = photo
-        ex.trackingRaw = trackingRaw
+        ex.trackingRaw = storedTrackingRaw
         ctx.insert(ex)
 
         // Use the failable `uniquingKeysWith:` initializer rather than
@@ -324,6 +344,8 @@ public final class CustomExerciseDraft {
             .folding(options: .diacriticInsensitive, locale: .current)
         target.equipmentRaw = equipment.rawValue
         target.mechanicRaw = mechanic.rawValue
+        target.trackingRaw = storedTrackingRaw
+        target.category = category
         target.imageData = photo
 
         // Replace stimulus rows wholesale.

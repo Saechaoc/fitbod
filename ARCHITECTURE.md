@@ -59,6 +59,12 @@ Restore clears the exercise seed stamp, so the next launch re-seeds the restored
 The importer writes a seeded row's tracking from `curation.json` alone, so a row curation stops listing returns to the derived value.
 `Exercise.timedValue` names what a timed set records beside its time: an optional load for a hold or carry that is not bodyweight, a distance, or a machine level.
 A custom copy of an exercise carries its stored tracking, so a copy of a timed exercise stays timed.
+`ExerciseCatalog` resolves the three seed files into the rows the importer writes: `exercises.json` (the upstream snapshot, byte for byte), `additions.json` (local rows) and `curation.json` (the overlay: name, equipment, tracking, aliases, import).
+Seed checks read the same entries with no store, so they cannot drift from the importer.
+A row outside the strength categories is in the catalog only when curation imports it.
+A cardio row gets no stimulus rows and an empty `primaryMuscleSlugsJoined`, so cardio adds no muscle volume.
+Unset, a cardio machine tracks time and distance (`Tracking.implied(by:)`).
+A custom exercise stores a tracking choice only when it differs from what its equipment implies; one that tracks a time with a distance or a level is cardio and needs no primary muscle.
 
 ## Program graph
 

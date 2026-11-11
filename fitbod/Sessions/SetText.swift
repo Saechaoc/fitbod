@@ -74,7 +74,21 @@ enum SetText {
 
     /// Meters as miles or kilometers, with at most two decimals: "2.5".
     static func distance(_ meters: Double, unit: WeightUnit) -> String {
-        NumberText.weight((meters / metersPerUnit(unit) * 100).rounded() / 100)
+        NumberText.weight(distanceValue(meters, unit: unit))
+    }
+
+    private static func distanceValue(_ meters: Double, unit: WeightUnit) -> Double {
+        (meters / metersPerUnit(unit) * 100).rounded() / 100
+    }
+
+    /// A distance or a level as its field shows it: in the locale it is
+    /// typed in, as loads are (`WorkoutLoadInput`), so "2,5" stays "2,5".
+    static func entry(distance meters: Double, unit: WeightUnit, locale: Locale) -> String {
+        WorkoutLoadInput.text(distanceValue(meters, unit: unit), locale: locale)
+    }
+
+    static func entry(level: Double, locale: Locale) -> String {
+        WorkoutLoadInput.text(level, locale: locale)
     }
 
     /// The meters a typed distance in miles or kilometers stands for.

@@ -1,7 +1,8 @@
 import XCTest
 
 /// Ticket T32, review item 20: a new custom exercise saves each muscle's
-/// role and weight, and EDIT reopens them after a relaunch.
+/// role and weight, and EDIT reopens them after a relaunch. RM-062: a cardio
+/// exercise saves without a muscle and keeps what its sets record.
 final class CustomExerciseEditorBRUUITests: XCTestCase {
 
     @MainActor
@@ -33,6 +34,44 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
 
         // A relaunch reads the exercise back from the store.
         UITestNavigation.relaunch(app)
+        reopenEditor(for: exerciseName, in: app)
+        XCTAssertEqual(app.textFields["customExercise.name"].value as? String, exerciseName)
+
+        assertMuscle("chest", role: "Primary", percent: 100, in: app)
+        assertMuscle("triceps", role: "Secondary", percent: 25, in: app)
+        XCTAssertTrue(app.staticTexts.labeled("Edit exercise").exists, "EDIT must title the editor Edit exercise")
+    }
+
+    /// A cardio machine needs no muscle. It saves, and after a relaunch EDIT
+    /// shows the tracking that was picked.
+    @MainActor
+    func testCardioSavesWithoutAMuscleAndKeepsItsTracking() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        let exerciseName = "T62 Arc Trainer"
+        openNewExercise(in: app)
+        UITestNavigation.type(exerciseName, into: app.textFields["customExercise.name"])
+        pick("cardio_machine", from: "customExercise.equipment", in: app)
+        // Tracking follows the equipment until it is picked.
+        XCTAssertEqual(app.buttons["customExercise.tracking"].value as? String, "Time and distance")
+        XCTAssertEqual(status(in: app), "Valid, no muscle mapped. Ready to save.")
+        pick("duration_level", from: "customExercise.tracking", in: app)
+        XCTAssertEqual(app.buttons["customExercise.tracking"].value as? String, "Time and level")
+
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
+
+        UITestNavigation.relaunch(app)
+        reopenEditor(for: exerciseName, in: app)
+        XCTAssertEqual(app.buttons["customExercise.equipment"].value as? String, "Cardio Machine")
+        XCTAssertEqual(app.buttons["customExercise.tracking"].value as? String, "Time and level")
+        XCTAssertEqual(status(in: app), "Valid, no muscle mapped. Ready to save.")
+    }
+
+    // MARK: - Helpers
+
+    /// Library → the exercise, found by search → EDIT.
+    @MainActor
+    private func reopenEditor(for exerciseName: String, in app: XCUIApplication) {
         UITestNavigation.selectTab("Library", in: app)
         let search = app.textFields["library.search.browser"]
         UITestNavigation.type(exerciseName, into: search, replacing: false, pressingReturn: false)
@@ -41,14 +80,20 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         row.tap()
         UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
         XCTAssertTrue(UITestNavigation.appears(app.textFields["customExercise.name"]), "EDIT must open the editor")
-        XCTAssertEqual(app.textFields["customExercise.name"].value as? String, exerciseName)
-
-        assertMuscle("chest", role: "Primary", percent: 100, in: app)
-        assertMuscle("triceps", role: "Secondary", percent: 25, in: app)
-        XCTAssertTrue(app.staticTexts.labeled("Edit exercise").exists, "EDIT must title the editor Edit exercise")
     }
 
-    // MARK: - Helpers
+    /// Opens a classification cell's list and picks the row for `raw`.
+    @MainActor
+    private func pick(_ raw: String, from cell: String, in app: XCUIApplication) {
+        let button = app.buttons[cell]
+        UITestNavigation.reveal(button, in: app)
+        button.tap()
+        let row = app.buttons["\(cell).\(raw)"]
+        XCTAssertTrue(UITestNavigation.appears(row), "\(cell) must open its list")
+        UITestNavigation.reveal(row, in: app)
+        row.tap()
+        XCTAssertTrue(UITestNavigation.disappears(row, within: 5), "Picking a row must close the list")
+    }
 
     /// Library "+ New" → an empty editor.
     @MainActor

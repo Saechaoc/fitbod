@@ -6,21 +6,33 @@
 - **Upstream commit message:** "keep exercise photos top aligned on desktop (#18)"
 - **Vendored on:** 2026-05-10
 - **License:** The Unlicense (public domain) — no attribution required.
-- **File:** `dist/exercises.json` → bundled at `fitbod/Resources/ExerciseSeed/exercises.json`
-- **Total exercises (raw):** 901 (873 upstream + 27 local Panatta machine additions + 1 local kneeling leg-curl variant)
-- **After strength filter (`category ∈ {strength, powerlifting, olympic weightlifting, strongman}`):** 703
-- **Local additions:** 27 Panatta machine exercises added 2026-05-11. These use the upstream
-  JSON schema, `equipment: "machine"`, empty `images` arrays, and the existing 17-muscle taxonomy.
-  `Single-Leg_Kneeling_Leg_Curl` (hamstrings, machine) added 2026-11-08 for playtest finding FT-05;
-  the seed went to version 3 so an installed library picks it up in place.
-- **Curation overlay:** `curation.json` maps an upstream `id` to local corrections: `equipment`
-  (a canonical `Equipment` raw value) and `tracking` (a `Tracking` raw value). Seed version 4
+- **File:** `dist/exercises.json` → bundled at `fitbod/Resources/ExerciseSeed/exercises.json`, byte
+  for byte. It holds no local row, so a refresh overwrites it safely.
+- **Total exercises (raw):** 873 upstream, plus 28 local rows in `additions.json`.
+- **Catalog:** 712 rows. 703 are in the strength categories
+  (`category ∈ {strength, powerlifting, olympic weightlifting, strongman}`: 675 upstream and the 28
+  local rows) and 9 are cardio rows that `curation.json` imports.
+  `ExerciseCatalog` resolves the three files into the rows the importer writes.
+- **Local additions (`additions.json`):** 27 Panatta machine exercises added 2026-05-11. These use
+  the upstream JSON schema, `equipment: "machine"`, empty `images` arrays, and the existing
+  17-muscle taxonomy. `Single-Leg_Kneeling_Leg_Curl` (hamstrings, machine) added 2026-11-08 for
+  playtest finding FT-05; the seed went to version 3 so an installed library picks it up in place.
+  Seed version 6 (2026-11-10) moved these rows out of `exercises.json` with their IDs unchanged.
+- **Curation overlay:** `curation.json` maps a row's `id` to local corrections: `equipment`
+  (a canonical `Equipment` raw value), `tracking` (a `Tracking` raw value), `name` (shown in place
+  of the upstream name), `aliases` (other names people use) and `import` (brings in a row outside
+  the strength categories). Seed version 4
   (2026-11-10) retagged 45 bodyweight moves that upstream left without equipment. Seed version 5
   (2026-11-10) tags 9 holds and carries as `duration` and the band-assisted pull-up as
   `assisted_reps`, retags the 20 Smith machine rows as `smith_machine` and Bodyweight Flyes as
   `bodyweight`, and maps upstream `e-z curl bar` and `medicine ball` to their own equipment cases.
-  A refresh keeps the overlay; `SeedTests` fails if an overlay ID, equipment or tracking value no
-  longer exists.
+  Seed version 6 (2026-11-10) imports cardio rows under the names people use, with no
+  muscles, so cardio adds no muscle volume: Stair Climber, Stepmill and Elliptical log a time and a
+  level; Treadmill Run, Treadmill Walk, Stationary Bike, Recumbent Bike and Rowing Machine log a
+  time and a distance; Jump Rope logs a time. Stretching, plyometrics and the other cardio rows
+  stay out.
+  A refresh keeps the overlay; `ExerciseCatalogTests` fails if an overlay ID, equipment or tracking
+  value no longer exists.
 - **SEED_VERSION.txt:** Local stamp; bump to trigger re-seed via
   `UserDefaults["exercise_seed_version"]` (plan `02-02`).
 
@@ -53,4 +65,4 @@
 - 12 distinct raw `equipment` values (post-filter to strength only): `bands, barbell, body only,`
   `cable, dumbbell, e-z curl bar, exercise ball, kettlebells, machine, medicine ball, other`,
   plus `null` (no equipment field). `EquipmentMapper.swift` is the single canonical translation table.
-- 7 categories total; v1 retains only the 4 listed above (cardio/stretching/plyometrics dropped).
+- 7 categories total; the catalog keeps the 4 listed above, plus any row `curation.json` imports.

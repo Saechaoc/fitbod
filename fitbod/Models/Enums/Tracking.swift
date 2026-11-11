@@ -32,6 +32,29 @@ public enum Tracking: String, CaseIterable, Sendable {
     public var progressesLoad: Bool {
         self == .weightReps || self == .reps
     }
+
+    /// What an exercise tracks when it stores no choice: a bodyweight move
+    /// tracks reps with optional load, a cardio machine time and distance,
+    /// and everything else weight and reps.
+    public static func implied(by equipment: Equipment) -> Tracking {
+        switch equipment {
+        case .bodyweight, .weightedBodyweight: .reps
+        case .cardioMachine: .durationDistance
+        default: .weightReps
+        }
+    }
+
+    /// The name a picker shows.
+    public var displayName: String {
+        switch self {
+        case .weightReps: "Weight and reps"
+        case .reps: "Reps"
+        case .assistedReps: "Assisted reps"
+        case .duration: "Time"
+        case .durationDistance: "Time and distance"
+        case .durationLevel: "Time and level"
+        }
+    }
 }
 
 /// What a timed set records beside its time.

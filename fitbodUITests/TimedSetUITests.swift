@@ -1,7 +1,8 @@
 import XCTest
 
 /// A timed exercise logs a time, not reps, and History still shows that
-/// time after the app is reopened (RM-062).
+/// time after the app is reopened (RM-062). Cardio logs a time with a
+/// machine level the same way.
 final class TimedSetUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -10,27 +11,7 @@ final class TimedSetUITests: XCTestCase {
     @MainActor
     func testPlankLogsATimeAndHistoryShowsItAfterRelaunch() throws {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
-        let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(UITestNavigation.appears(resume, within: 90))
-        resume.tap()
-
-        // Swap the first exercise for Plank, which the catalog tracks by time.
-        let bench = app.staticTexts["Barbell Bench Press - Medium Grip"].firstMatch
-        XCTAssertTrue(UITestNavigation.appears(bench))
-        bench.press(forDuration: 1)
-        let swap = app.buttons["Swap Exercise…"]
-        XCTAssertTrue(UITestNavigation.appears(swap, within: 5))
-        swap.tap()
-        let search = app.textFields["library.search.picker"]
-        XCTAssertTrue(UITestNavigation.appears(search))
-        search.tap()
-        search.typeText("Plank")
-        let plank = app.buttons.matching(NSPredicate(
-            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", "Plank,"
-        )).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(plank))
-        plank.tap()
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Plank"].firstMatch))
+        swapFirstExercise(to: "Plank", in: app)
 
         // A timed row has a time field, no reps field, and needs a time.
         let time = app.textFields["set.time.1.S1"]
@@ -40,11 +21,68 @@ final class TimedSetUITests: XCTestCase {
         UITestNavigation.revealInLogger(done, in: app)
         XCTAssertFalse(done.isEnabled, "A timed set needs a time before it can be done")
 
-        UITestNavigation.revealInLogger(time, in: app)
-        UITestNavigation.enter("130", into: time)
+        type("130", into: time, in: app)
+        XCTAssertEqual(time.value as? String, "1:30", "Digits typed read as minutes and seconds")
+        completeFirstSetAndFinish(in: app)
+        assertHistoryShows("Plank", set: "Set 1, 1:30", in: app)
+    }
+
+    /// The plan's cardio check: Stair Climber at 20:00 and level 8 finishes
+    /// and is in History after a relaunch.
+    @MainActor
+    func testStairClimberLogsTimeAndLevelAndHistoryShowsItAfterRelaunch() throws {
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
+        swapFirstExercise(to: "Stair Climber", in: app)
+
+        let time = app.textFields["set.time.1.S1"]
+        XCTAssertTrue(UITestNavigation.appears(time))
+        let level = app.textFields["set.level.1.S1"]
+        XCTAssertTrue(level.exists, "A stair climber set records its level")
+        XCTAssertFalse(app.textFields["set.weight.1.S1"].exists, "A cardio set has no weight")
+        type("2000", into: time, in: app)
+        XCTAssertEqual(time.value as? String, "20:00")
+        type("8", into: level, in: app)
+        completeFirstSetAndFinish(in: app)
+        assertHistoryShows("Stair Climber", set: "Set 1, 20:00 · level 8", in: app)
+    }
+
+    // MARK: - Steps
+
+    /// Opens the seeded workout and swaps its first exercise for `name`.
+    @MainActor
+    private func swapFirstExercise(to name: String, in app: XCUIApplication) {
+        let resume = app.buttons["resumeSlab.resume"]
+        XCTAssertTrue(UITestNavigation.appears(resume, within: 90))
+        resume.tap()
+        let bench = app.staticTexts["Barbell Bench Press - Medium Grip"].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(bench))
+        bench.press(forDuration: 1)
+        let swap = app.buttons["Swap Exercise…"]
+        XCTAssertTrue(UITestNavigation.appears(swap, within: 5))
+        swap.tap()
+        let search = app.textFields["library.search.picker"]
+        XCTAssertTrue(UITestNavigation.appears(search))
+        search.tap()
+        search.typeText(name)
+        let pick = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", name + ","
+        )).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(pick))
+        pick.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts[name].firstMatch))
+    }
+
+    @MainActor
+    private func type(_ digits: String, into field: XCUIElement, in app: XCUIApplication) {
+        UITestNavigation.revealInLogger(field, in: app)
+        UITestNavigation.enter(digits, into: field)
         UITestNavigation.keyboardDone(in: app).tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "DONE must close the keyboard")
-        XCTAssertEqual(time.value as? String, "1:30", "Digits typed read as minutes and seconds")
+    }
+
+    @MainActor
+    private func completeFirstSetAndFinish(in app: XCUIApplication) {
+        let done = app.buttons["set.complete.1.S1"]
         UITestNavigation.revealInLogger(done, in: app)
         XCTAssertTrue(done.isEnabled)
         done.tap()
@@ -62,8 +100,12 @@ final class TimedSetUITests: XCTestCase {
         let summaryDone = app.buttons["summary.done"]
         XCTAssertTrue(UITestNavigation.appears(summaryDone), "Finish should open the summary")
         summaryDone.tap()
+    }
 
-        // Reopened, History reads the set from the store.
+    /// Reopened, History reads the set from the store. `set` is the start
+    /// of the row's label, which goes on to say it is the best set.
+    @MainActor
+    private func assertHistoryShows(_ name: String, set: String, in app: XCUIApplication) {
         UITestNavigation.relaunch(app)
         UITestNavigation.selectTab("Progress", in: app)
         app.buttons["progress.history"].tap()
@@ -71,12 +113,11 @@ final class TimedSetUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(workout))
         workout.tap()
         let exercise = app.buttons.matching(NSPredicate(
-            format: "identifier == %@ AND label CONTAINS %@", "summary.exercise", "Plank"
+            format: "identifier == %@ AND label CONTAINS %@", "summary.exercise", name
         )).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(exercise), "The workout's summary should list Plank")
+        XCTAssertTrue(UITestNavigation.appears(exercise), "The workout's summary should list \(name)")
         exercise.tap()
-        // The row's label goes on to say it is the best set.
-        let logged = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Set 1, 1:30")).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(logged, within: 5), "History should show the plank's time")
+        let logged = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", set)).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(logged, within: 5), "History should show \(set)")
     }
 }

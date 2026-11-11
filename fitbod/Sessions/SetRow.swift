@@ -330,7 +330,8 @@ public struct SetRow: View {
             stackedLabel("Distance (\(name))")
             valueField(
                 "Distance in \(name)", text: $secondText,
-                offer: offered.distanceMeters.map { SetText.distance($0, unit: unit) }, field: .second
+                offer: offered.distanceMeters.map { SetText.entry(distance: $0, unit: unit, locale: locale) },
+                field: .second
             )
             .keyboardType(.decimalPad)
             .onChange(of: secondText) { _, text in
@@ -341,7 +342,10 @@ public struct SetRow: View {
             .accessibilityIdentifier("set.distance.\(identifierSuffix)")
         case .level:
             stackedLabel("Level")
-            valueField("Level", text: $secondText, offer: offered.level.map(NumberText.weight), field: .second)
+            valueField(
+                "Level", text: $secondText,
+                offer: offered.level.map { SetText.entry(level: $0, locale: locale) }, field: .second
+            )
                 .keyboardType(.decimalPad)
                 .onChange(of: secondText) { _, text in
                     if timedFocus == .second {
@@ -385,8 +389,8 @@ public struct SetRow: View {
 
     private var storedSecondText: String {
         switch sessionExercise.exercise?.timedValue {
-        case .distance: entry.distanceMeters.map { SetText.distance($0, unit: unit) } ?? ""
-        case .level: entry.level.map(NumberText.weight) ?? ""
+        case .distance: entry.distanceMeters.map { SetText.entry(distance: $0, unit: unit, locale: locale) } ?? ""
+        case .level: entry.level.map { SetText.entry(level: $0, locale: locale) } ?? ""
         case .weight, nil: ""
         }
     }

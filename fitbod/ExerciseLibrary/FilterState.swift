@@ -147,8 +147,9 @@ public final class FilterState {
             return false
         }
 
+        // Cardio has no mechanic; the default it stores must not match one.
         if let mechanic = selectedMechanicRaw,
-           exercise.mechanicRaw != mechanic {
+           exercise.isCardio || exercise.mechanicRaw != mechanic {
             return false
         }
 

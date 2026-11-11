@@ -8,7 +8,8 @@
 //
 //    `isValid == true` iff:
 //      1. trim(name) is non-empty, AND
-//      2. ≥1 MuscleAssignment with role == .primary AND weight >= 0.5.
+//      2. ≥1 MuscleAssignment with role == .primary AND weight >= 0.5,
+//         unless the draft is cardio (`cardioDraft`).
 //
 //  Plus `materialize(into:)` end-to-end (proves the insert-then-relate
 //  ordering and the `primaryMuscleSlugsJoined` denormalization), three
@@ -72,6 +73,42 @@ struct CustomExerciseDraftTests {
         d.name = "Pec Deck"
         d.muscles = [.init(slug: "chest", role: .primary, weight: 0.4)]
         #expect(!d.isValid)
+    }
+
+    @Test("Cardio needs no muscle, saves as cardio, and stores a tracking choice only when it differs from the equipment's")
+    @MainActor
+    func cardioDraft() throws {
+        let d = CustomExerciseDraft()
+        d.name = "Air Bike"
+        d.equipment = .cardioMachine
+        let untouched = d.snapshot()
+        // A cardio machine tracks time and distance until another choice is made.
+        #expect(d.effectiveTracking == .durationDistance)
+        #expect(d.isValid, "cardio saves with no muscle")
+        d.tracking = .duration
+        #expect(!d.isValid, "a timed hold still needs its muscle")
+        d.tracking = .durationLevel
+        #expect(d.isValid)
+        #expect(d.snapshot() != untouched, "picking what a set tracks makes the draft dirty")
+
+        let ctx = try LoggerFixtures.makeContext()
+        let saved = try d.materialize(into: ctx, allMuscles: [])
+        #expect(saved.isCardio && saved.tracking == .durationLevel)
+        #expect(saved.trackingRaw == Tracking.durationLevel.rawValue)
+        #expect(saved.primaryMuscleSlugsJoined.isEmpty && (saved.muscleStimuli ?? []).isEmpty)
+
+        // Back to what the equipment implies: no choice is stored.
+        d.editingExisting = saved
+        d.tracking = .durationDistance
+        try d.updateExisting(in: ctx, allMuscles: [])
+        #expect(saved.trackingRaw == nil && saved.tracking == .durationDistance && saved.isCardio)
+
+        // Weight and reps on the same machine is strength again.
+        d.tracking = .weightReps
+        #expect(!d.isValid, "a strength exercise needs its muscle")
+        d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
+        try d.updateExisting(in: ctx, allMuscles: [])
+        #expect(!saved.isCardio && saved.trackingRaw == Tracking.weightReps.rawValue)
     }
 
     @Test("Name + primary muscle (weight=0.5) → valid (threshold)")

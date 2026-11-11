@@ -71,14 +71,25 @@ public struct ExerciseDTO: Codable, Equatable, Sendable {
     }
 }
 
-/// A local correction to one upstream row in `curation.json`, keyed by the
-/// row's `id`. Upstream left many bodyweight moves without equipment, so
-/// they could not log with zero added weight, and it has no notion of what
-/// a set records, so holds and carries logged reps.
+/// A local correction to one row in `curation.json`, keyed by the row's
+/// `id`. Upstream left many bodyweight moves without equipment, so they
+/// could not log with zero added weight; it has no notion of what a set
+/// records, so holds and carries logged reps; and its cardio rows come in
+/// only when curation asks for them, under the names people use.
 public struct ExerciseCuration: Codable, Equatable, Sendable {
+    /// Brings in a row outside the strength categories, such as cardio.
+    public let imports: Bool?
+    /// The name shown in place of the upstream one.
+    public let name: String?
     /// A canonical `Equipment` raw value that replaces the mapped one.
     public let equipment: String?
     /// A `Tracking` raw value. Without one the row tracks what its
     /// equipment implies (`Exercise.tracking`).
     public let tracking: String?
+    /// Other names people use for the exercise.
+    public let aliases: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case imports = "import", name, equipment, tracking, aliases
+    }
 }

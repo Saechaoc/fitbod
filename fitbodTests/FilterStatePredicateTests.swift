@@ -194,6 +194,18 @@ struct FilterStatePredicateTests {
         #expect(result.first?.name == "Dumbbell Curl")
     }
 
+    @Test("A mechanic selection leaves cardio out, whatever mechanic it stored")
+    func mechanicFilterSkipsCardio() {
+        let cardio = Exercise(
+            name: "Stair Climber", canonicalName: "stair climber",
+            equipmentRaw: Equipment.cardioMachine.rawValue, mechanicRaw: "compound", category: "cardio"
+        )
+        let state = FilterState()
+        #expect(state.matchesPostFetchFacets(cardio))
+        state.selectedMechanicRaw = "compound"
+        #expect(!state.matchesPostFetchFacets(cardio))
+    }
+
     // MARK: - Test 5: muscle facet (denormalized — PITFALLS #3)
 
     @Test("Muscle=chest returns Bench Press only (denormalized slug match)")

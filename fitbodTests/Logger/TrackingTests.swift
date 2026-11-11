@@ -314,6 +314,11 @@ struct TrackingTests {
         #expect(SetText.number(fromTyped: "1.2.3", locale: us) == nil)
         #expect(SetText.distance(5_000, unit: .kg) == "5")
         #expect(SetText.distance(5_000, unit: .lb) == "3.11")
+        // A field shows a distance or a level as it is typed in that locale.
+        #expect(SetText.entry(distance: 2_500, unit: .kg, locale: de) == "2,5")
+        #expect(SetText.entry(distance: 2_500, unit: .kg, locale: us) == "2.5")
+        #expect(SetText.entry(level: 7.5, locale: de) == "7,5")
+        #expect(SetText.meters(fromTyped: SetText.entry(distance: 2_500, unit: .kg, locale: de), unit: .kg, locale: de) == 2_500)
     }
 
     @Test("a logged set reads from its own values")
@@ -539,7 +544,7 @@ struct TrackingTests {
         let copy = CustomExerciseDraft()
         copy.name = "Plank (Copy)"
         copy.equipment = .bodyweight
-        copy.trackingRaw = Tracking.duration.rawValue
+        copy.tracking = .duration
         #expect(try copy.materialize(into: ctx, allMuscles: []).tracking == .duration)
 
         let fresh = CustomExerciseDraft()

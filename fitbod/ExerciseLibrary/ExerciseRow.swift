@@ -6,6 +6,7 @@
 // Layout:
 //   Name (Space Grotesk 18, wraps)                    [accessory]
 //   [PRIMARY MUSCLE] [EQUIPMENT] [MECHANIC] [CUSTOM]
+// A cardio row has no mechanic chip, and no muscle chip unless one is mapped.
 //
 // The accessory is the logged count ("12× / LOGGED") in browse mode and a
 // signal "+ ADD" in picker mode, so the row tells you what a tap does.
@@ -59,7 +60,9 @@ public struct ExerciseRow: View {
                 BRUChip(muscle)
             }
             BRUChip(exercise.equipment.displayName)
-            BRUChip(exercise.mechanicRaw.capitalized)
+            if !exercise.isCardio {
+                BRUChip(exercise.mechanicRaw.capitalized)
+            }
             if exercise.isCustom {
                 BRUChip("Custom", color: .bruSignal)
                     .accessibilityLabel("Custom exercise")

@@ -15,12 +15,14 @@
 //
 //  - `BRUHeaderBar`: CANCEL, "New exercise" or "Edit exercise", SAVE.
 //  - NAME, in the condensed display font.
-//  - CLASSIFICATION: Equipment opens a BRU list of every
-//    `Equipment.allCases`; Mechanic is a `BRUSegmentedControl`. The
-//    design's PATTERN, TEMPO, BAR WT and INCREMENT cells are left out,
-//    because an exercise has no such fields.
-//  - "Primary muscle stimulus" (REQUIRED), then "Secondary stimulus" and
-//    "+ ADD MUSCLE". Each muscle is a `MuscleWeightRow`.
+//  - CLASSIFICATION: Equipment and Tracks each open a BRU list, of every
+//    `Equipment.allCases` and every `Tracking.allCases`; Mechanic is a
+//    `BRUSegmentedControl`, left out for cardio. The design's PATTERN,
+//    TEMPO, BAR WT and INCREMENT cells are left out, because an exercise
+//    has no such fields.
+//  - "Primary muscle stimulus" (REQUIRED, or OPTIONAL for cardio), then
+//    "Secondary stimulus" and "+ ADD MUSCLE". Each muscle is a
+//    `MuscleWeightRow`.
 //  - The optional image, then "Delete exercise" when editing.
 //  - A status footer, pinned below the scroll view: "VALID · 2 PRIMARY
 //    MAPPED" and READY TO SAVE, or what is still missing and CAN'T SAVE
@@ -92,6 +94,7 @@ struct CustomExerciseEditor: View {
     @State private var initialSnapshot: CustomExerciseDraft.Snapshot? = nil
     @State private var presentingMusclePicker = false
     @State private var presentingEquipmentPicker = false
+    @State private var presentingTrackingPicker = false
     @State private var presentingCancelConfirmation = false
     @State private var presentingDeleteConfirmation = false
     @State private var persistenceError: String?
@@ -197,39 +200,72 @@ struct CustomExerciseEditor: View {
     private var classificationSection: some View {
         VStack(spacing: 0) {
             BRUSectionHead("Classification")
-            Button {
+            listCell(
+                "Equipment", value: draft.equipment.displayName,
+                hint: "Opens the equipment list", identifier: "customExercise.equipment"
+            ) {
                 presentingEquipmentPicker = true
-            } label: {
-                HStack(spacing: BRUMetrics.Spacing.group) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        fieldLabel("Equipment")
-                        Text(draft.equipment.displayName)
-                            .font(BRUFont.bodyEmphasis)
-                            .foregroundStyle(Color.bruInk)
-                    }
-                    Spacer(minLength: BRUMetrics.Spacing.related)
-                    Text("›")
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruMuted)
-                }
-                .padding(.horizontal, BRUMetrics.Spacing.gutter)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.bruRow)
-            .accessibilityLabel("Equipment")
-            .accessibilityValue(draft.equipment.displayName)
-            .accessibilityHint("Opens the equipment list")
-            .accessibilityIdentifier("customExercise.equipment")
             .sheet(isPresented: $presentingEquipmentPicker) {
-                EquipmentPickerSheet(selection: $draft.equipment)
+                ChoicePickerSheet(
+                    title: "Equipment", options: Equipment.allCases, selection: $draft.equipment,
+                    name: \.displayName, identifier: { "customExercise.equipment.\($0.rawValue)" }
+                )
             }
 
             BRUDivider(.hair)
 
-            mechanicCell
+            // What a set records. It follows the equipment until it is picked.
+            listCell(
+                "Tracks", value: draft.effectiveTracking.displayName,
+                hint: "Opens the list of what a set records", identifier: "customExercise.tracking"
+            ) {
+                presentingTrackingPicker = true
+            }
+            .sheet(isPresented: $presentingTrackingPicker) {
+                ChoicePickerSheet(
+                    title: "Tracks", options: Tracking.allCases,
+                    selection: Binding(get: { draft.effectiveTracking }, set: { draft.tracking = $0 }),
+                    name: \.displayName, identifier: { "customExercise.tracking.\($0.rawValue)" }
+                )
+            }
+
+            // Cardio is neither compound nor isolation.
+            if !draft.isCardio {
+                BRUDivider(.hair)
+                mechanicCell
+            }
         }
+    }
+
+    /// A classification cell that opens a list: its label, the current
+    /// choice and a chevron.
+    private func listCell(
+        _ label: String, value: String, hint: String, identifier: String, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: BRUMetrics.Spacing.group) {
+                VStack(alignment: .leading, spacing: 2) {
+                    fieldLabel(label)
+                    Text(value)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                }
+                Spacer(minLength: BRUMetrics.Spacing.related)
+                Text("›")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .padding(.horizontal, BRUMetrics.Spacing.gutter)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.bruRow)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
+        .accessibilityHint(hint)
+        .accessibilityIdentifier(identifier)
     }
 
     /// MECHANIC beside its control when the row fits, else above it. At the
@@ -266,11 +302,13 @@ struct CustomExerciseEditor: View {
 
     private var primarySection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            BRUSectionHead("Primary muscle stimulus", right: "Required")
+            BRUSectionHead("Primary muscle stimulus", right: draft.isCardio ? "Optional" : "Required")
             VStack(alignment: .leading, spacing: 0) {
                 let primaries = assignments(for: .primary)
                 if primaries.isEmpty {
-                    Text("No primary muscle yet. The next muscle you add is primary.")
+                    Text(draft.isCardio
+                         ? "Cardio needs no muscle. Without one it adds no muscle volume."
+                         : "No primary muscle yet. The next muscle you add is primary.")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
                         .padding(.vertical, BRUMetrics.Spacing.group)
@@ -405,7 +443,7 @@ struct CustomExerciseEditor: View {
 
     /// The inline muscle error a failed SAVE shows, or nil.
     private var primaryProblem: String? {
-        if hasQualifyingPrimary { return nil }
+        if hasQualifyingPrimary || draft.isCardio { return nil }
         return hasPrimary
             ? "A primary muscle needs a weight of 0.5 or more to save."
             : "At least one primary muscle is required to save."
@@ -416,11 +454,11 @@ struct CustomExerciseEditor: View {
     private var status: (summary: String, readiness: String) {
         guard !draft.isValid else {
             let primaries = draft.muscles.filter { $0.role == .primary }.count
-            return ("Valid · \(primaries) primary mapped", "Ready to save")
+            return (primaries == 0 ? "Valid · no muscle mapped" : "Valid · \(primaries) primary mapped", "Ready to save")
         }
         var missing: [String] = []
         if isNameMissing { missing.append("a name") }
-        if !hasQualifyingPrimary {
+        if !hasQualifyingPrimary && !draft.isCardio {
             missing.append(hasPrimary ? "a primary at 0.5 or more" : "a primary muscle")
         }
         return ("Needs " + missing.joined(separator: " and "), "Can't save yet")
@@ -521,13 +559,18 @@ struct CustomExerciseEditor: View {
     }
 }
 
-// MARK: - Equipment list
+// MARK: - Choice list
 
-/// The Equipment cell's BRU list: one row per kind, the current one
+/// A classification cell's BRU list: one row per choice, the current one
 /// marked. A tap picks it and closes the sheet; CANCEL keeps the current
 /// one.
-private struct EquipmentPickerSheet: View {
-    @Binding var selection: Equipment
+private struct ChoicePickerSheet<Value: Hashable>: View {
+    let title: String
+    let options: [Value]
+    @Binding var selection: Value
+    let name: (Value) -> String
+    /// A row's accessibility identifier.
+    let identifier: (Value) -> String
 
     @Environment(\.dismiss) private var dismiss
 
@@ -535,12 +578,12 @@ private struct EquipmentPickerSheet: View {
         VStack(spacing: 0) {
             BRUHeaderBar(
                 left: HeaderAction("Cancel") { dismiss() },
-                center: "Equipment"
+                center: title
             )
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(Equipment.allCases, id: \.self) { equipment in
-                        row(equipment)
+                    ForEach(options, id: \.self) { option in
+                        row(option)
                     }
                 }
             }
@@ -548,21 +591,21 @@ private struct EquipmentPickerSheet: View {
         .background(Color.bruPaper.ignoresSafeArea())
     }
 
-    private func row(_ equipment: Equipment) -> some View {
-        let isSelected = equipment == selection
+    private func row(_ option: Value) -> some View {
+        let isSelected = option == selection
         return Button {
-            selection = equipment
+            selection = option
             dismiss()
         } label: {
             HStack(spacing: BRUMetrics.Spacing.group) {
-                // BRU radio: a filled signal square marks the current kind.
+                // BRU radio: a filled signal square marks the current choice.
                 Rectangle()
                     .fill(isSelected ? Color.bruSignal : Color.clear)
                     .frame(width: 20, height: 20)
                     .overlay(
                         Rectangle().strokeBorder(isSelected ? Color.bruSignal : Color.bruInk, lineWidth: 2)
                     )
-                Text(equipment.displayName)
+                Text(name(option))
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                 Spacer(minLength: 0)
@@ -574,9 +617,9 @@ private struct EquipmentPickerSheet: View {
         }
         .buttonStyle(.plain)
         .overlay(alignment: .bottom) { BRUDivider(.hair) }
-        .accessibilityLabel(equipment.displayName)
+        .accessibilityLabel(name(option))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityIdentifier("customExercise.equipment.\(equipment.rawValue)")
+        .accessibilityIdentifier(identifier(option))
     }
 }
 
