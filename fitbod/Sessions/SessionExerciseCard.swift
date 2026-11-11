@@ -618,7 +618,7 @@ public struct SessionExerciseCard: View {
     /// workout of its own, a note says LAST TIME is from another one.
     private func machineRow(otherMachine: PreviousMatchingIntentHit?) -> some View {
         let name = sessionExercise.machine?.displayName
-        let note = otherMachine.map { Self.otherMachineNote($0, onMachine: name != nil) }
+        let note = otherMachine.map(Self.otherMachineNote)
         return Button {
             presentingMachinePicker = true
         } label: {
@@ -657,11 +657,11 @@ public struct SessionExerciseCard: View {
     }
 
     /// Why LAST TIME is from another machine, or from none, and nothing is
-    /// suggested from it.
-    static func otherMachineNote(_ reference: PreviousMatchingIntentHit, onMachine: Bool) -> String {
-        let start = onMachine ? "First time on this machine" : "No sets without a machine yet"
-        let source = reference.machineName ?? "sets with no machine"
-        return "\(start). LAST TIME shows \(source), and its loads don't carry over."
+    /// suggested from it. It never calls this machine new: one used earlier
+    /// in this workout, or only at another intent, has no workout LAST TIME
+    /// can read either.
+    static func otherMachineNote(_ reference: PreviousMatchingIntentHit) -> String {
+        "LAST TIME shows \(reference.machineName ?? "sets with no machine"), and its loads don't carry over."
     }
 
     private func columnHeading(_ text: String, width: CGFloat) -> some View {

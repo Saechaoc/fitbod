@@ -44,7 +44,7 @@ Only the named observation/decision is unavailable; this section does not pause 
 | [RM-063](#rm-063) | The first MetricKit report on the phone, shared from Settings | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 | [RM-053](#rm-053) | One nightly run on `main` that starts on its own, due 2026-11-12 at 11:17 UTC | Closing RM-053. |
 | [RM-022](#rm-022), [RM-062](#rm-062) | Seed 7 and grouped-list checks on the phone (logged names in History, Low Cable Triceps Extension listed, "side lateral raise" found, Bench Press folded into one line) | Closing the families and grouped-list slices; the coverage fill and treadmill tracking can proceed. |
-| [RM-066](#rm-066) | Approval to land the schema change and install it, then on the phone: the store opens in place with every workout, and a machine picked for Hack Squat (Machine) is still there after a relaunch | Closing RM-066; nothing else waits on it. |
+| [RM-066](#rm-066) | On the phone, with this build installed: the store opens in place with every workout, and a machine picked for Hack Squat (Machine) is still there after a relaunch | Closing RM-066; nothing else waits on it. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
 
@@ -1009,9 +1009,13 @@ A Compare row whose last-week value comes from another day than the header's sho
 `MachinePickerUITests` swaps in Hack Squat (Machine), picks the known Panatta, logs a set, switches to a new "Gym 2 hack" while keeping that set on the Panatta, and finds the machine in the summary after a relaunch.
 Inspected at 390pt (fitbod-17e, light mode, default text): a barbell card with no machine line, the line on a machine card and on a cable card, the picker with known models and with none, the new-machine form, the maker list, the switch question, two cards after a switch, the note when a machine has no workout of its own, the summary, History's machine strip and filter, and Compare with two machines.
 After the review fixes, at 390pt: a swap starts on the last machine used, an exercise added again starts on the workout's newer machine with its note, and a Compare row from another day shows that day.
+The full tier before the review fixes ran 1,331 tests with 0 failures (2 skips, 1 expected failure), with lint clean and the widget build passing.
 Checks after the review fixes: the unit target ran 1,226 tests with 0 failures (2 skips, 1 expected failure), and the five affected UI suites passed their 16 tests.
+After the rebase onto the rest-timer refactor ([PR #4](https://github.com/Saechaoc/fitbod/pull/4)), the unit target passed 1,229 tests, and 70 UI tests had passed with no failure when a second full run was stopped as redundant.
+The 390pt tour after the review fixes also showed the machine note calling Gym 2 hack new on its second card in the same workout; it would do the same for a machine used before only at another intent, since LAST TIME reads only finished workouts at the workout's intent.
+The note now reads only "LAST TIME shows <machine>, and its loads don't carry over.", and the tour passed at 390pt with it.
 Rehearsed on a copy of the phone's store pulled 2026-11-11 (5 workouts, 22 logged exercises, 67 sets): it opened in place with every row and survived a backup round trip; no logged exercise uses a Panatta row that seed 9 hides.
-**Open:** on the phone, after approval to land the schema change: the store opens in place with every workout, and a machine picked for Hack Squat (Machine) is still there after a relaunch.
+**Open:** on the phone, with this build installed: the store opens in place with every workout, and a machine picked for Hack Squat (Machine) is still there after a relaunch.
 VoiceOver, larger text, dark mode and the 430pt phone are unchecked.
 Not built: a plate step, bar or sled weight per machine (a machine uses its exercise's settings); changing a past workout's machine in Edit workout; renaming, merging or deleting a machine (a machine no log uses stays in the store and in backups, unlisted); a machine stored on a routine.
 The PR list ranks an exercise's best sets across machines without naming each set's machine.
