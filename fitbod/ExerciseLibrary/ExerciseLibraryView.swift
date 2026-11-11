@@ -6,7 +6,8 @@
 //  builder, logger add/swap).
 //
 //  Composition: BRUHeaderBar · search field · ExerciseFilterBar chip row ·
-//  FilteredExerciseList (pinned letter sections of ExerciseRow).
+//  FilteredExerciseList (pinned letter sections of family lines and
+//  ExerciseRow).
 //
 //  Outer / inner split: the outer view owns filter + search state; the inner
 //  FilteredExerciseList owns the @Query of every exercise and applies the
@@ -215,11 +216,15 @@ public struct ExerciseLibraryView: View {
 /// The list itself. It fetches every exercise, applies the facets, then the
 /// search (`ExerciseSearch`), all in memory.
 ///
-/// Without a search the rows are sectioned A to Z by first letter, with
-/// names that start with a digit or a symbol under "#" after Z. A search
-/// lists its results in its own order, best first, with no sections.
+/// Without a search the list shows `LibraryLines`: two or more rows of one
+/// family fold into a family line that opens in place to its variants, in
+/// sections A to Z by title, then "#". A search lists its results in its
+/// own order, best first, with no sections or families.
 private struct FilteredExerciseList: View {
     @Query(sort: \Exercise.canonicalName, order: .forward) private var exercises: [Exercise]
+
+    /// The families opened in place.
+    @State private var openFamilies: Set<String> = []
 
     /// Logged exercises from finished workouts, for the per-row "N×" count.
     /// Single-level optional chain only (deeper chains crash #Predicate).
@@ -300,10 +305,15 @@ private struct FilteredExerciseList: View {
                                 BRUDivider(.hair)
                             }
                         } else {
-                            ForEach(sectioned(visible.map(\.exercise)), id: \.letter) { section in
+                            ForEach(LibraryLines.sections(visible.map(\.exercise)), id: \.letter) { section in
                                 Section {
-                                    ForEach(section.exercises) { ex in
-                                        row(ex, loggedCount: counts[ex.id] ?? 0)
+                                    ForEach(section.lines) { line in
+                                        switch line {
+                                        case .exercise(let ex):
+                                            row(ex, loggedCount: counts[ex.id] ?? 0)
+                                        case .family(let name, let variants):
+                                            family(name, variants: variants, counts: counts)
+                                        }
                                         BRUDivider(.hair)
                                     }
                                 } header: {
@@ -321,22 +331,70 @@ private struct FilteredExerciseList: View {
         }
     }
 
+    /// `inset` indents a variant under its family line.
     @ViewBuilder
-    private func row(_ ex: Exercise, alias: String? = nil, loggedCount: Int) -> some View {
+    private func row(
+        _ ex: Exercise, title: String? = nil, inset: CGFloat = 0, alias: String? = nil, loggedCount: Int
+    ) -> some View {
         if let onSelect {
             Button {
                 onSelect(ex)
             } label: {
-                ExerciseRow(exercise: ex, accessory: .add, matchedAlias: alias)
+                ExerciseRow(exercise: ex, accessory: .add, matchedAlias: alias, title: title)
+                    .padding(.leading, inset)
             }
             .buttonStyle(.bruRow)
             .accessibilityHint("Adds this exercise")
             .accessibilityIdentifier("exercise.pick.\(ex.id.uuidString)")
         } else {
             NavigationLink(value: ex) {
-                ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount), matchedAlias: alias)
+                ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount), matchedAlias: alias, title: title)
+                    .padding(.leading, inset)
             }
             .buttonStyle(.bruRow)
+        }
+    }
+
+    /// A family line, and under it, while it is open, each variant by its
+    /// short title.
+    @ViewBuilder
+    private func family(_ name: String, variants: [Exercise], counts: [UUID: Int]) -> some View {
+        let isOpen = openFamilies.contains(name)
+        Button {
+            if isOpen { openFamilies.remove(name) } else { openFamilies.insert(name) }
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(name)
+                        .font(BRUFont.displayMedium)
+                        .foregroundStyle(Color.bruInk)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(BRUCountLabel.text(variants.count, "variant"))
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruMuted)
+                }
+                Spacer(minLength: 8)
+                Text(isOpen ? "▴" : "▾")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+        }
+        .buttonStyle(.bruRow)
+        .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
+        .accessibilityHint(isOpen ? "Hides its variants" : "Shows its variants")
+        .accessibilityIdentifier("library.family.\(name)")
+        if isOpen {
+            ForEach(variants) { ex in
+                BRUDivider(.hair)
+                row(ex, title: LibraryLines.variantTitle(ex), inset: 16, loggedCount: counts[ex.id] ?? 0)
+            }
         }
     }
 
@@ -364,32 +422,6 @@ private struct FilteredExerciseList: View {
             .background(Color.bruBg2)
             .overlay(alignment: .top) { BRUDivider(.ink) }
             .accessibilityAddTraits(.isHeader)
-    }
-
-    /// Groups rows by the first letter of their name, A to Z, then one "#"
-    /// section, after Z, for names that start with a digit or a symbol,
-    /// such as "3/4 Sit-Up". Rows inside each section keep the @Query sort
-    /// order.
-    private func sectioned(_ rows: [Exercise]) -> [(letter: String, exercises: [Exercise])] {
-        let groups = Dictionary(grouping: rows) { ex in
-            Self.sectionLetter(for: ex.name)
-        }
-        let letters = groups.keys.sorted { a, b in
-            if a == Self.otherSection { return false }
-            if b == Self.otherSection { return true }
-            return a < b
-        }
-        return letters.map { letter in
-            (letter, groups[letter] ?? [])
-        }
-    }
-
-    /// The section for names that do not start with a letter.
-    private static let otherSection = "#"
-
-    private static func sectionLetter(for name: String) -> String {
-        guard let first = name.first, first.isLetter else { return otherSection }
-        return String(first).uppercased()
     }
 }
 

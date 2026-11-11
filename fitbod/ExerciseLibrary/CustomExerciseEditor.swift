@@ -15,8 +15,10 @@
 //
 //  - `BRUHeaderBar`: CANCEL, "New exercise" or "Edit exercise", SAVE.
 //  - NAME, in the condensed display font.
-//  - CLASSIFICATION: Equipment and Tracks each open a BRU list, of every
-//    `Equipment.allCases` and every `Tracking.allCases`; Mechanic is a
+//  - CLASSIFICATION: Family, Equipment, Brand and Tracks each open a BRU
+//    list: the store's families, every `Equipment.allCases`, the
+//    `MachineBrand` cases with None and Other (shown only for equipment that
+//    takes a brand), and every `Tracking.allCases`; Mechanic is a
 //    `BRUSegmentedControl`, left out for cardio. The design's PATTERN,
 //    TEMPO, BAR WT and INCREMENT cells are left out, because an exercise
 //    has no such fields.
@@ -95,6 +97,8 @@ struct CustomExerciseEditor: View {
     @State private var presentingMusclePicker = false
     @State private var presentingEquipmentPicker = false
     @State private var presentingTrackingPicker = false
+    @State private var presentingFamilyPicker = false
+    @State private var presentingBrandPicker = false
     @State private var presentingCancelConfirmation = false
     @State private var presentingDeleteConfirmation = false
     @State private var persistenceError: String?
@@ -200,6 +204,19 @@ struct CustomExerciseEditor: View {
     private var classificationSection: some View {
         VStack(spacing: 0) {
             BRUSectionHead("Classification")
+            // The Library lists the exercise under its family.
+            listCell(
+                "Family", value: draft.familyName ?? "None",
+                hint: "Opens the list of families", identifier: "customExercise.family"
+            ) {
+                presentingFamilyPicker = true
+            }
+            .sheet(isPresented: $presentingFamilyPicker) {
+                FamilyPickerSheet(selection: $draft.familyName)
+            }
+
+            BRUDivider(.hair)
+
             listCell(
                 "Equipment", value: draft.equipment.displayName,
                 hint: "Opens the equipment list", identifier: "customExercise.equipment"
@@ -211,6 +228,22 @@ struct CustomExerciseEditor: View {
                     title: "Equipment", options: Equipment.allCases, selection: $draft.equipment,
                     name: \.displayName, identifier: { "customExercise.equipment.\($0.rawValue)" }
                 )
+            }
+
+            if draft.takesBrand {
+                BRUDivider(.hair)
+                listCell(
+                    "Brand", value: draft.brand ?? "None",
+                    hint: "Opens the list of brands", identifier: "customExercise.brand"
+                ) {
+                    presentingBrandPicker = true
+                }
+                .sheet(isPresented: $presentingBrandPicker) {
+                    ChoicePickerSheet(
+                        title: "Brand", options: Self.brandOptions, selection: $draft.brand,
+                        name: { $0 ?? "None" }, identifier: { "customExercise.brand.\($0 ?? "none")" }
+                    )
+                }
             }
 
             BRUDivider(.hair)
@@ -237,6 +270,9 @@ struct CustomExerciseEditor: View {
             }
         }
     }
+
+    /// None, each `MachineBrand`, then Other for a maker the list lacks.
+    private static let brandOptions: [String?] = [nil] + MachineBrand.allCases.map { Optional($0.rawValue) } + ["Other"]
 
     /// A classification cell that opens a list: its label, the current
     /// choice and a chevron.
@@ -620,6 +656,22 @@ private struct ChoicePickerSheet<Value: Hashable>: View {
         .accessibilityLabel(name(option))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(identifier(option))
+    }
+}
+
+/// The family list: None, then every family in the store, A to Z. It reads
+/// the store only while it is open.
+private struct FamilyPickerSheet: View {
+    @Binding var selection: String?
+    @Query private var exercises: [Exercise]
+
+    var body: some View {
+        let families = Set(exercises.compactMap(\.familyName))
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        ChoicePickerSheet(
+            title: "Family", options: [nil] + families.map { Optional($0) }, selection: $selection,
+            name: { $0 ?? "None" }, identifier: { "customExercise.family.\($0 ?? "none")" }
+        )
     }
 }
 

@@ -14,9 +14,10 @@
 //  Plus `materialize(into:)` end-to-end (proves the insert-then-relate
 //  ordering and the `primaryMuscleSlugsJoined` denormalization), three
 //  saved-name tests (prove `materialize` and `updateExisting(in:)` store
-//  `name` and `canonicalName` without outer whitespace, ticket T54) and
-//  a `snapshot()` equality test (proves the dirty-detection contract the
-//  editor's `Discard Changes?` confirmation relies on).
+//  `name` and `canonicalName` without outer whitespace, ticket T54), a
+//  `snapshot()` equality test (proves the dirty-detection contract the
+//  editor's `Discard Changes?` confirmation relies on) and a family and
+//  brand test (RM-022).
 //
 //  These tests are deliberately decoupled from the SwiftUI editor view
 //  — they exercise the pure value-type validation logic in isolation.
@@ -109,6 +110,36 @@ struct CustomExerciseDraftTests {
         d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
         try d.updateExisting(in: ctx, allMuscles: [])
         #expect(!saved.isCardio && saved.trackingRaw == Tracking.weightReps.rawValue)
+    }
+
+    @Test("Family and brand save on create and update, a brand only on equipment that takes one, and both make the draft dirty")
+    @MainActor
+    func familyAndBrand() throws {
+        let d = CustomExerciseDraft()
+        d.name = "Iso-Lateral Chest Press"
+        d.equipment = .machine
+        d.muscles = [.init(slug: "chest", role: .primary, weight: 1.0)]
+        let untouched = d.snapshot()
+        d.familyName = "Chest Press"
+        #expect(d.snapshot() != untouched, "picking a family makes the draft dirty")
+        let familyPicked = d.snapshot()
+        d.brand = MachineBrand.hammerStrength.rawValue
+        #expect(d.snapshot() != familyPicked, "picking a brand makes the draft dirty")
+
+        let ctx = try LoggerFixtures.makeContext()
+        let saved = try d.materialize(into: ctx, allMuscles: [])
+        #expect(saved.familyName == "Chest Press" && saved.brand == "Hammer Strength")
+
+        // A barbell takes no brand: the edit drops it and keeps the family.
+        d.editingExisting = saved
+        d.equipment = .barbell
+        #expect(!d.takesBrand)
+        try d.updateExisting(in: ctx, allMuscles: [])
+        #expect(saved.familyName == "Chest Press" && saved.brand == nil)
+
+        d.familyName = nil
+        try d.updateExisting(in: ctx, allMuscles: [])
+        #expect(saved.familyName == nil)
     }
 
     @Test("Name + primary muscle (weight=0.5) → valid (threshold)")

@@ -2,7 +2,8 @@ import XCTest
 
 /// Ticket T32, review item 20: a new custom exercise saves each muscle's
 /// role and weight, and EDIT reopens them after a relaunch. RM-062: a cardio
-/// exercise saves without a muscle and keeps what its sets record.
+/// exercise saves without a muscle and keeps what its sets record. RM-022: a
+/// machine keeps its brand and joins its family in the Library.
 final class CustomExerciseEditorBRUUITests: XCTestCase {
 
     @MainActor
@@ -65,6 +66,38 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         XCTAssertEqual(app.buttons["customExercise.equipment"].value as? String, "Cardio Machine")
         XCTAssertEqual(app.buttons["customExercise.tracking"].value as? String, "Time and level")
         XCTAssertEqual(status(in: app), "Valid, no muscle mapped. Ready to save.")
+    }
+
+    /// RM-022: a machine picks its brand and its family. It saves, the
+    /// family's line in the Library opens to it, and after a relaunch EDIT
+    /// shows both.
+    @MainActor
+    func testMachineJoinsItsFamilyWithItsBrand() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        let exerciseName = "T22 Iso-Lateral Chest Press"
+        openNewExercise(in: app)
+        UITestNavigation.type(exerciseName, into: app.textFields["customExercise.name"])
+        XCTAssertFalse(app.buttons["customExercise.brand"].exists, "A barbell takes no brand")
+        pick("machine", from: "customExercise.equipment", in: app)
+        pick("Hammer Strength", from: "customExercise.brand", in: app)
+        pick("Chest Press", from: "customExercise.family", in: app)
+        addMuscle("chest", in: app)
+
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
+
+        let family = app.buttons["library.family.Chest Press"]
+        UITestNavigation.reveal(family, in: app)
+        XCTAssertEqual(family.value as? String, "Collapsed")
+        family.tap()
+        XCTAssertEqual(family.value as? String, "Expanded")
+        let variant = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", exerciseName + ",")).firstMatch
+        UITestNavigation.reveal(variant, in: app)
+
+        UITestNavigation.relaunch(app)
+        reopenEditor(for: exerciseName, in: app)
+        XCTAssertEqual(app.buttons["customExercise.family"].value as? String, "Chest Press")
+        XCTAssertEqual(app.buttons["customExercise.brand"].value as? String, "Hammer Strength")
     }
 
     // MARK: - Helpers

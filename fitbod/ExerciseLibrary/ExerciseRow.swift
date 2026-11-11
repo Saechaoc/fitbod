@@ -8,6 +8,8 @@
 //   MATCHES "ALIAS" (only for a row a search found through an alias)
 //   [PRIMARY MUSCLE] [EQUIPMENT] [MECHANIC] [CUSTOM]
 // A cardio row has no mechanic chip, and no muscle chip unless one is mapped.
+// Under its family a variant shows a shorter title, such as "Barbell" for
+// "Bench Press (Barbell)"; VoiceOver still reads the full name.
 //
 // The accessory is the logged count ("12× / LOGGED") in browse mode and a
 // signal "+ ADD" in picker mode, so the row tells you what a tap does.
@@ -27,21 +29,27 @@ public struct ExerciseRow: View {
     let accessory: Accessory
     /// The alias a search found this row through, shown under its name.
     let matchedAlias: String?
+    /// What the row shows in place of the name.
+    let title: String?
 
-    public init(exercise: Exercise, accessory: Accessory = .loggedCount(0), matchedAlias: String? = nil) {
+    public init(
+        exercise: Exercise, accessory: Accessory = .loggedCount(0), matchedAlias: String? = nil, title: String? = nil
+    ) {
         self.exercise = exercise
         self.accessory = accessory
         self.matchedAlias = matchedAlias
+        self.title = title
     }
 
     public var body: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(exercise.name)
+                Text(title ?? exercise.name)
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel(exercise.name)
                 if let matchedAlias {
                     Text("Matches “\(matchedAlias)”")
                         .font(BRUFont.labelSmall)
