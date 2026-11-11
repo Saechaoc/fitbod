@@ -46,7 +46,7 @@
 //      - name: source.name + " (Copy)"
 //      - equipment: Equipment(rawValue: source.equipmentRaw) ?? .other
 //      - mechanic: Mechanic(rawValue: source.mechanicRaw) ?? .compound
-//      - tracking, family and brand: copied as they are
+//      - tracking and family: copied as they are
 //      - muscles: one MuscleAssignment per source stimulus row,
 //        preserving role + weight. Slug is taken from the stimulus's
 //        muscle relationship (skipped if the relationship is missing
@@ -477,7 +477,6 @@ struct ExerciseDetailView: View {
         // A copy joins its source's family under its own name, so it never
         // shows the source's variant label.
         draft.familyName = source.familyName
-        draft.brand = source.brand
         for stim in (source.muscleStimuli ?? []) {
             // Defensive: skip stimulus rows whose `muscle`
             // relationship somehow didn't resolve. Same resilience

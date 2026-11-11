@@ -157,9 +157,11 @@ data. Coordinate device use between runs; the scripts do not lock devices.
 
 ## First launch and offline use
 
-The bundled seed v3 has **901 source records**, of which **703** are eligible for import:
-strength, powerlifting, Olympic weightlifting and strongman. The seed includes
-27 local Panatta machine additions and Single-Leg Kneeling Leg Curl.
+The bundled seed (version 9) has **1,014 source records**: 873 upstream rows and
+141 local additions. The catalog keeps **836** of them and lists **543**; curation
+hides the rest, including the 27 Panatta machines, whose makers and models are now
+named in the workout ([RM-066](ROADMAP.md#rm-066)). Counts and provenance are in
+`fitbod/Resources/ExerciseSeed/SOURCE.md`.
 These are bundled-data counts, not a guarantee of the size of an installed
 library with custom/archived exercises. Importing happens off the main thread on
 first launch; wait for the preparation screen to disappear.

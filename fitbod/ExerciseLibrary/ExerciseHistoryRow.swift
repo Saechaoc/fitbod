@@ -7,6 +7,7 @@
 // Visual contract per UI-SPEC:
 //  Top line: date displayMedium 18pt + intent BRUChip + optional '★ PR' BRUChip(.signal, fill:true)
 //            right-aligned: 'e1RM {value}' displayMedium 18pt
+//  Machine:  the machine the sets were done on, labelSmall bruMuted, when one was named (RM-066)
 //  Sub-line: 'TOP {weight × reps @ RPE}' BRUMono 11pt bruMuted + '· {N} sets'
 //  Bottom: wrap-flow row of mono set chips — 1pt bruHair outlined Rectangles
 //          (NOT capsules) holding BRUMono 11pt numerics
@@ -52,6 +53,15 @@ public struct ExerciseHistoryRow: View {
                         .monospacedDigit()
                         .foregroundStyle(Color.bruInk)
                 }
+            }
+
+            if let machine = entry.machineLabel {
+                Text(machine)
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             // Sub-line: TOP set + set count
@@ -151,6 +161,9 @@ public struct HistoryEntry: Identifiable {
     public let topSetLabel: String     // e.g. "205×8 @9"
     public let setCount: Int
     public let setChips: [String]      // e.g. ["95×8 @4", "135×6 @5", ...]
+    /// The machines the sets were done on, in log order, or nil when none
+    /// was named (RM-066).
+    public let machineLabel: String?
 
     public init(
         id: UUID = UUID(),
@@ -160,7 +173,8 @@ public struct HistoryEntry: Identifiable {
         e1RMLabel: String?,
         topSetLabel: String,
         setCount: Int,
-        setChips: [String]
+        setChips: [String],
+        machineLabel: String? = nil
     ) {
         self.id = id
         self.dateLabel = dateLabel
@@ -170,6 +184,7 @@ public struct HistoryEntry: Identifiable {
         self.topSetLabel = topSetLabel
         self.setCount = setCount
         self.setChips = setChips
+        self.machineLabel = machineLabel
     }
 }
 

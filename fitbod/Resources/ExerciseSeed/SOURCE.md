@@ -11,9 +11,9 @@
 - **Total exercises (raw):** 873 upstream, plus 141 local rows in `additions.json`.
 - **Catalog:** 836 rows.
   809 are in the strength categories (`category ∈ {strength, powerlifting, olympic weightlifting, strongman}`: 675 upstream and 134 local), 7 are local cardio rows, and `curation.json` imports 11 upstream cardio rows and 9 plyometric moves.
-  570 are listed; curation hides the other 266, and a hidden row stays listed while a routine or a logged workout uses it.
+  543 are listed; curation hides the other 293, and a hidden row stays listed while a routine or a logged workout uses it.
   `ExerciseCatalog` resolves the three files into the rows the importer writes.
-- **Local additions (`additions.json`):** 27 Panatta machine exercises added 2026-05-11.
+- **Local additions (`additions.json`):** 27 Panatta machine exercises added 2026-05-11, hidden since seed version 9.
   These use the upstream JSON schema, `equipment: "machine"`, empty `images` arrays, and upstream's 17-muscle taxonomy.
   `Single-Leg_Kneeling_Leg_Curl` (hamstrings, machine) added 2026-11-08 for playtest finding FT-05; the seed went to version 3 so an installed library picks it up in place.
   Seed version 6 (2026-11-10) moved these rows out of `exercises.json` with their IDs unchanged.
@@ -26,6 +26,9 @@
   It hides 266 duplicates and oddities.
   The name of a hidden duplicate and the earlier name of a renamed row are aliases of the row that stays, unless that name now belongs to another row or family.
   It gives 67 machines their loading (plate-loaded or stack) and the 27 Panatta rows their brand, tags 7 plate moves with the `plate` equipment, and imports 9 plyometric moves and 2 more cardio rows.
+  Seed version 9 (2026-11-11, RM-066) hides the 27 Panatta rows.
+  A machine's maker and model are named in the workout now, never as an exercise of their own, and each Panatta row's family has a generic machine row.
+  The rows keep their brand and muscle credits for a workout that still uses one.
   Stretching stays out, and so do the cardio and plyometric rows the overlay does not import.
   A refresh keeps the overlay.
   `ExerciseCatalogTests` fails if an overlay ID or an equipment, tracking, brand or loading value does not exist, if two listed rows share a name, if a listed row has no family, if a listed row tracks a load on `other` equipment, or if an alias is in two families or names another family.
@@ -39,6 +42,15 @@
   A row the file does not cover, such as a hidden row a workout still uses, keeps the upstream tags at 1.0 and 0.5, with "shoulders" read as the front delts for a push, the rear delts for a pull and the side delts otherwise.
   Cardio rows get no muscles.
   `ExerciseCatalogTests` fails if a listed row other than cardio has no profile, if the file names a family, row or muscle that does not exist, or if a weight is outside its range.
+- **Machine models (`fitbod/Resources/Machines/machine-models.json`):** added 2026-11-11 for RM-066 and edited by hand.
+  It lists 80 plate-loaded and selectorized machines, each with its maker, its model and the families it serves.
+  27 are the Panatta machines that seed version 9 hides as exercises.
+  53 are Arsenal Strength machines from the dealer listings searched for RM-022 (Performaxx in Australia and Staffs Fitness in the UK), kept with their sources in ignored `.ci/catalog-table/arsenal-machines.json`.
+  Their names drop the series word "Selectorized" and use the app's spellings, such as "Triceps".
+  The search found 58; the functional trainer, the two multi-station trainers, the Multi Flex and the Smith machine stay out, because none is one family's machine.
+  The machine picker suggests these models for an exercise with `machine` equipment in a listed family.
+  They are never exercises, and the file is read at run time, so a change needs no seed bump.
+  `MachineProfileTests.machineCatalog` fails if the count changes, if a maker is not a `MachineBrand` value, if a model is listed twice, or if a model names no family or a family that no listed row is in.
 - **SEED_VERSION.txt:** Local stamp; bump to trigger re-seed via
   `UserDefaults["exercise_seed_version"]` (plan `02-02`).
 

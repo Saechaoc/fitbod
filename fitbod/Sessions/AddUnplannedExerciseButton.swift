@@ -76,6 +76,9 @@ public struct AddUnplannedExerciseButton: View {
         se.targetRepsHigh = timed ? 0 : 12
         se.prescribedRestSeconds = exercise.mechanic == .compound ? 180 : 90
         context.insert(se)
+        // The machine the exercise was last done on, in this workout or the
+        // last finished one (RM-066).
+        se.machine = SessionMachine.lastUsed(for: exercise, during: session, in: context)
 
         // SessionFactory's prescription step, with this workout's intent,
         // strategy, block and start date.
@@ -87,7 +90,8 @@ public struct AddUnplannedExerciseButton: View {
             in: session,
             strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
             userSettings: (try? context.fetch(FetchDescriptor<UserSettings>()))?.first,
-            context: context
+            context: context,
+            machine: se.machine
         )
         se.prescribedWeight = prescription.weight
 

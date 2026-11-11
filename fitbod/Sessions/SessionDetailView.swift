@@ -216,6 +216,14 @@ public struct SessionDetailView: View {
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
                             .fixedSize(horizontal: false, vertical: true)
+                        if let machine = line.machineName {
+                            Text(machine)
+                                .font(BRUFont.labelSmall)
+                                .tracking(1.2)
+                                .textCase(.uppercase)
+                                .foregroundStyle(Color.bruMuted)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                         Text(setsLine(line, unit: unit))
                             .font(BRUFont.labelSmall)
                             .tracking(1.2)

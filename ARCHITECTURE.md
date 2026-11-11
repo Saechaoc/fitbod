@@ -17,7 +17,7 @@ Use UI terms in product copy. Templates may occur in multiple routines, twice in
 
 ## Persistence baseline and entities
 
-`SchemaV7` is the sole VersionedSchema, explicitly listing 18 production models.
+`SchemaV7` is the sole VersionedSchema, explicitly listing 19 production models.
 `FitbodModelContainer` builds it without a custom migration plan.
 SwiftData may apply compatible additive changes automatically in place; the historical V1–V6/custom V6→V7 chain was removed.
 Incompatible stores move recoverably, with -wal/-shm/support directory, into IncompatibleStores/&lt;timestamp&gt;; the seed stamps are cleared so the fresh store is seeded.
@@ -38,7 +38,8 @@ A move-aside that fails partway puts the moved files back and throws.
 | `Block` | Start/end/active state, split, mode, stored days, phases/archive |
 | `BlockPhase` | Ordered kind/weeks/volume/intensity owned by block |
 | `Session` | Workout timestamps, template/name snapshot, block/optional slot, exercises |
-| `SessionExercise` | Frozen evaluated prescription/name and actual sets |
+| `SessionExercise` | Frozen evaluated prescription/name, actual sets and the optional machine it was done on |
+| `MachineProfile` | A machine the lifter named: optional maker and model; nullified on its logs when deleted |
 | `SetEntry` | Weight/reps/RPE/completion/type/notes/tempo/partial/cluster actuals; optional start, duration, distance and level |
 | `MuscleVolumeTarget` | Per-muscle MV/MEV/MAV/MRV |
 | `PlateInventory` | Equipment bar/plates/counts/increments |
@@ -133,7 +134,7 @@ Two deliberate freeze points:
    Decode failure is explicit; no live-template fallback.
    Configuration freezes; review statistics still read correctable workouts.
 
-Pending working sets show weight and rep offers from their frozen prescription and completed performance. Programmed block targets take priority. Otherwise an earlier working set on the same lift in this workout takes priority over the corresponding set from the last finished matching-intent workout.
+Pending working sets show weight and rep offers from their frozen prescription and completed performance. Programmed block targets take priority. Otherwise an earlier working set on the same lift and machine in this workout takes priority over the corresponding set from the last finished matching-intent workout.
 RPE/hybrid offers use the upper rep target until current-workout performance takes priority; editing only the load does not change that target. Current-workout actual reps carry unchanged outside a block, including reps outside the programmed range.
 Entered values, including numbers stored by older versions, take priority per field. The checkmark saves the chosen weight, reps, and completion together. Unaccepted offers stay outside the store, and each set records its own effort.
 Swapping after logging keeps completed sets attached to the original lift and applies a fresh prescription to the replacement's pending sets.
@@ -161,10 +162,19 @@ Records, next prescription, calibration, volume, plateau/deload advice, comparis
 Successful correction bumps environment HistoryEdits and invalidates finished/empty-workout caches in Today/Progress/History/summaries.
 Correcting history can change an ended review without changing archived configuration or frozen prescription.
 
-Comparable performances share exercise/session intent and finished workouts.
+Comparable performances share exercise/session intent/machine and finished workouts.
 Progression also requires completed non-warmup positive reps/weight; records add rep bucket/kind; Compare adds template identity and a 14-day window.
 Progression kind is not a comparability key.
 Do not widen one reader alone.
+
+A logged exercise may name the machine it was done on (`SessionExercise.machine`, [RM-066](docs/ROADMAP.md#rm-066)); a maker or model is never an exercise of its own, and a pick changes only that workout's log.
+Last time, the prescription, in-workout offers, records, the stall check and Compare read only sets on the same machine, and sets with no machine form their own group.
+With none on that machine, the card names the latest matching workout on another machine (or with none) and Last time shows its sets for reference; no load, progression or offer carries over.
+A new log starts on the machine of the exercise's latest log with a finished working set, in the workout in progress or a finished one, only for equipment that takes a machine (machine, Smith machine, cable, cardio machine).
+Machines are one machine when they show the same name, whatever the case, spacing or split between maker and model.
+Changing the machine mid-workout relabels the log with its finished sets, or keeps those sets on a copy of the log under the old machine; the log is then represcribed.
+Progress charts, volume, tonnage, workout counts, the weekly recap and the PR list stay exercise-level aggregates across machines; exercise history can filter by machine.
+Backup format 4 carries the machines and each log's machine, and formats 1 to 3 still restore; CSV adds a machine column.
 Order workouts by start even when finish order differs; the former handoff's proposed universal equal-order invariant is not required by the current resolver.
 
 ## Units and aggregates

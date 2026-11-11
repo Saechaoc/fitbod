@@ -43,6 +43,8 @@ public struct SessionSummary: Sendable, Equatable {
         public let sets: [LoggedSet]
         /// From the first set's start to the last Done (RM-062), when known.
         public var exerciseSeconds: Int? = nil
+        /// The machine it was done on (RM-066), when one was named.
+        public var machineName: String? = nil
     }
 
     public let durationSeconds: Int
@@ -96,7 +98,8 @@ public struct SessionSummary: Sendable, Equatable {
                         durationSeconds: $0.durationSeconds, distanceMeters: $0.distanceMeters, level: $0.level
                     )
                 },
-                exerciseSeconds: SessionSetActions.exerciseSeconds(working)
+                exerciseSeconds: SessionSetActions.exerciseSeconds(working),
+                machineName: se.machine?.displayName
             ))
         }
 

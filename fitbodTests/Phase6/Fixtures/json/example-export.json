@@ -62,7 +62,15 @@
     }
   ],
   "exportedAt" : "2023-11-14T22:13:20Z",
-  "formatVersion" : 3,
+  "formatVersion" : 4,
+  "machines" : [
+    {
+      "createdAt" : "2023-11-14T22:13:20Z",
+      "id" : "00000000-0000-0000-0000-000000000014",
+      "manufacturer" : "Hammer Strength",
+      "model" : "Iso-Lateral Bench Press"
+    }
+  ],
   "muscleGroups" : [
     {
       "displayName" : "Chest",
@@ -148,6 +156,7 @@
           "exerciseName" : "Bench Press",
           "exerciseNameSnapshot" : "Bench Press",
           "id" : "00000000-0000-0000-0000-00000000000A",
+          "machineID" : "00000000-0000-0000-0000-000000000014",
           "orderIndex" : 0,
           "prescribedRestSeconds" : 180,
           "prescribedWeight" : 100,

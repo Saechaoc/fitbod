@@ -263,6 +263,7 @@ public final class BackupRestorer {
         try ctx.save()
         try ctx.delete(model: SetEntry.self)
         try ctx.delete(model: SessionExercise.self)
+        try ctx.delete(model: MachineProfile.self)
         try ctx.delete(model: Session.self)
         try ctx.delete(model: RoutineExerciseSetOverride.self)
         try ctx.delete(model: SessionExerciseTemplate.self)
@@ -334,9 +335,20 @@ public final class BackupRestorer {
                 throw RestoreError.decodeFailed(underlying: "Block refers to a missing routine.")
             }
         }
+        // A workout's machine must come along, or restoring would drop it.
+        let machines = doc.machines ?? []
+        let machineIDs = Set(machines.map(\.id))
+        guard machineIDs.count == machines.count else {
+            throw RestoreError.decodeFailed(underlying: "Duplicate machine id.")
+        }
         for session in doc.sessions {
             if let id = session.slotID, !slotIDs.contains(id) {
                 throw RestoreError.decodeFailed(underlying: "Workout refers to a missing routine slot.")
+            }
+            for exercise in session.exercises {
+                if let id = exercise.machineID, !machineIDs.contains(id) {
+                    throw RestoreError.decodeFailed(underlying: "Workout refers to a missing machine.")
+                }
             }
         }
     }
@@ -557,6 +569,17 @@ public final class BackupRestorer {
             }
         }
 
+        var machinesByID: [UUID: MachineProfile] = [:]
+        for dto in doc.machines ?? [] {
+            let machine = MachineProfile()
+            machine.id = dto.id
+            machine.manufacturer = dto.manufacturer
+            machine.model = dto.model
+            machine.createdAt = dto.createdAt
+            ctx.insert(machine)
+            machinesByID[dto.id] = machine
+        }
+
         // Sessions + SessionExercises + SetEntries.
         for dto in doc.sessions {
             let s = Session()
@@ -602,6 +625,7 @@ public final class BackupRestorer {
                     se.exercise = ex
                 }
                 ctx.insert(se)
+                se.machine = seDTO.machineID.flatMap { machinesByID[$0] }
 
                 for setDTO in seDTO.sets {
                     let e = SetEntry()

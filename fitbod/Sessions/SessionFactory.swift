@@ -223,6 +223,9 @@ public enum SessionFactory {
             se.pinnedNote = nil
 
             context.insert(se)
+            // The machine from the exercise's last finished workout (RM-066);
+            // the lifter can change or clear it in the logger.
+            se.machine = SessionMachine.lastUsed(for: re.exercise, during: session, in: context)
 
             // ─── Phase 3 (plan 03-08) RESEARCH §SessionFactory Hook Point ───
             //
@@ -245,7 +248,8 @@ public enum SessionFactory {
                 in: session,
                 strategy: sessionStrategy,
                 userSettings: userSettings,
-                context: context
+                context: context,
+                machine: se.machine
             )
             se.prescribedWeight = prescription.weight
 
@@ -337,6 +341,10 @@ public enum SessionFactory {
         /// the inventory rounds.
         let increment: Double?
         let previousWorkingSets: [SetEntry]
+        /// The last top set on another machine, or on none, when this
+        /// machine has no matching workout of its own (RM-066). Shown for
+        /// reference; nothing is progressed or offered from it.
+        var otherMachineReference: PreviousMatchingIntentHit? = nil
     }
 
     /// The prescription step (Phase 3 plan 03-08): the weight `strategy`
@@ -345,6 +353,10 @@ public enum SessionFactory {
     /// runs it for every exercise; a mid-workout swap runs it for the new
     /// exercise and `AddUnplannedExerciseButton.append` for an added one,
     /// so either gets what a fresh start gives it.
+    ///
+    /// `machine` is the machine the exercise is done on (RM-066). Only that
+    /// machine's workouts, or for none only workouts without one, feed the
+    /// load; see `PreviousMatchingIntent.lastWorkingSets(in:intentRaw:excludingSessionID:machineID:counting:)`.
     static func prescription(
         for exercise: Exercise?,
         targetRepsLow: Int,
@@ -353,7 +365,8 @@ public enum SessionFactory {
         in session: Session,
         strategy: any ProgressionStrategy,
         userSettings: UserSettings?,
-        context: ModelContext
+        context: ModelContext,
+        machine: MachineProfile? = nil
     ) -> ExercisePrescription {
         // Use one matching finished workout for load progression and the
         // set-by-set offers. The active workout is separate evidence.
@@ -363,12 +376,21 @@ public enum SessionFactory {
         // A set is evidence for the next workout only in the shape the
         // exercise tracks now: a time for a timed exercise, reps otherwise.
         let timed = exercise?.tracking.isTimed == true
-        let previousWorkout = PreviousMatchingIntent.lastWorkingSets(
+        let found = PreviousMatchingIntent.lastWorkingSets(
             in: logs,
             intentRaw: session.intentRaw,
             excludingSessionID: session.id,
+            machineID: machine?.id,
             counting: { timed ? $0.isTimed : $0.reps > 0 }
         )
+        // A workout on another machine is a reference only: loads on
+        // different machines don't compare (RM-066).
+        let previousWorkout = found.flatMap { $0.onOtherMachine ? nil : (session: $0.session, sets: $0.sets) }
+        let otherMachineReference = found.flatMap {
+            $0.onOtherMachine
+                ? PreviousMatchingIntent.topWorkingSet(in: ($0.session, $0.sets), onOtherMachine: true)
+                : nil
+        }
         let previousSet = previousWorkout.flatMap { PreviousMatchingIntent.topWorkingSet(in: $0) }
         let previousWorkingSets = previousWorkout?.sets ?? []
 
@@ -383,7 +405,8 @@ public enum SessionFactory {
                 barWeight: 0,
                 plates: [],
                 increment: nil,
-                previousWorkingSets: previousWorkingSets
+                previousWorkingSets: previousWorkingSets,
+                otherMachineReference: otherMachineReference
             )
         }
 
@@ -402,7 +425,9 @@ public enum SessionFactory {
         // Fetch history for the strategy (RESEARCH §Pitfall 7 filter applied
         // inside historyPoints — nil-RPE sets are excluded).
         // PIVOT-02: intentRaw sourced from session-level snapshot.
-        let historyPoints = Self.historyPoints(in: logs, intentRaw: session.intentRaw)
+        let historyPoints = Self.historyPoints(
+            in: logs.filter { $0.machine?.id == machine?.id }, intentRaw: session.intentRaw
+        )
 
         let lastRepsArray = previousWorkingSets.map(\.reps)
 
@@ -437,7 +462,8 @@ public enum SessionFactory {
             barWeight: barWeight,
             plates: plates,
             increment: roundingIncrement,
-            previousWorkingSets: previousWorkingSets
+            previousWorkingSets: previousWorkingSets,
+            otherMachineReference: otherMachineReference
         )
     }
 

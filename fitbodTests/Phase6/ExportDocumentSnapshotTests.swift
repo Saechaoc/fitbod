@@ -72,6 +72,7 @@ struct ExportDocumentSnapshotTests {
         let userSettingsID = uuid("11")
         let splitID = uuid("12")
         let slotID = uuid("13")
+        let machineID = uuid("14")
 
         let exercise = ExportExerciseDTO(
             id: exerciseID, externalID: "bench-press-1",
@@ -172,6 +173,7 @@ struct ExportDocumentSnapshotTests {
             tracksTempo: false, tracksPartialReps: false,
             prescribedWeight: 100.0, pinnedNote: nil,
             exerciseNameSnapshot: "Bench Press",
+            machineID: machineID,
             sets: [warmupSet, workingSet]
         )
 
@@ -249,7 +251,13 @@ struct ExportDocumentSnapshotTests {
             exerciseMuscleStimuli: [stimulus],
             muscleVolumeTargets: [volumeTarget],
             plateInventories: [plateInventory],
-            userSettings: userSettings
+            userSettings: userSettings,
+            machines: [
+                ExportMachineDTO(
+                    id: machineID, manufacturer: "Hammer Strength", model: "Iso-Lateral Bench Press",
+                    createdAt: fixedDate
+                ),
+            ]
         )
     }
 
@@ -260,7 +268,7 @@ struct ExportDocumentSnapshotTests {
         let doc = Self.makeFixture()
         let data = try JSONEncoder.exportConfigured().encode(doc)
         let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(json["formatVersion"] as? Int == 3)
+        #expect(json["formatVersion"] as? Int == 4)
         #expect(json["schemaVersion"] as? String == "v7")
         let splits = try #require(json["splits"] as? [[String: Any]])
         #expect(splits.count == 1)

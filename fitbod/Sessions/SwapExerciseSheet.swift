@@ -106,6 +106,9 @@ struct VariationUndoSnapshot {
         let tracksPartialReps: Bool
         let prescribedWeight: Double?
         let pinnedNote: String?
+        /// The machine (RM-066): a copy of finished sets keeps the machine
+        /// they were done on, and undo brings it back.
+        let machine: MachineProfile?
 
         init(_ exercise: SessionExercise) {
             targetSets = exercise.targetSets
@@ -119,6 +122,7 @@ struct VariationUndoSnapshot {
             tracksPartialReps = exercise.tracksPartialReps
             prescribedWeight = exercise.prescribedWeight
             pinnedNote = exercise.pinnedNote
+            machine = exercise.machine
         }
 
         func apply(to exercise: SessionExercise) {
@@ -133,6 +137,7 @@ struct VariationUndoSnapshot {
             exercise.tracksPartialReps = tracksPartialReps
             exercise.prescribedWeight = prescribedWeight
             exercise.pinnedNote = pinnedNote
+            exercise.machine = machine
         }
     }
 
@@ -265,18 +270,30 @@ public struct SwapExerciseSheet: View {
         preserveCompletedSets(of: sessionExercise, in: session, context: context)
         sessionExercise.exercise = exercise
         sessionExercise.exerciseNameSnapshot = exercise.name
+        // The replacement starts on its own last machine (RM-066).
+        sessionExercise.machine = SessionMachine.lastUsed(for: exercise, during: session, in: context)
+        return represcribe(sessionExercise, in: session, context: context)
+    }
 
+    /// Gives `sessionExercise` what a fresh start would give its exercise
+    /// on its machine now: the prescribed weight, the warm-up ramp rebuilt,
+    /// and pending rows cleared so their offers come from the new history.
+    /// Completed sets stay. A swap and a machine change (RM-066) both end
+    /// here. Saves, or rolls back and returns false.
+    @MainActor
+    static func represcribe(_ sessionExercise: SessionExercise, in session: Session, context: ModelContext) -> Bool {
         // SessionFactory's prescription step, with this workout's intent,
         // strategy, block and start date.
         let prescription = SessionFactory.prescription(
-            for: exercise,
+            for: sessionExercise.exercise,
             targetRepsLow: sessionExercise.targetRepsLow,
             targetRepsHigh: sessionExercise.targetRepsHigh,
             targetRPE: sessionExercise.targetRPE,
             in: session,
             strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
             userSettings: (try? context.fetch(FetchDescriptor<UserSettings>()))?.first,
-            context: context
+            context: context,
+            machine: sessionExercise.machine
         )
         sessionExercise.prescribedWeight = prescription.weight
         rebuildPendingWarmups(of: sessionExercise, in: session, prescription: prescription, context: context)
@@ -305,8 +322,10 @@ public struct SwapExerciseSheet: View {
         }
     }
 
+    /// Moves the finished working sets to a copy of the log that keeps its
+    /// exercise, prescription and machine, placed just before it.
     @MainActor
-    private static func preserveCompletedSets(
+    static func preserveCompletedSets(
         of exercise: SessionExercise,
         in session: Session,
         context: ModelContext

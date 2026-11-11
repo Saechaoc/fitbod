@@ -2,10 +2,14 @@
 //  BackupCatalogFieldsTests.swift
 //  fitbodTests
 //
-//  The RM-022 / RM-062 fields in a backup (format 3):
-//    - every new field survives archive and restore;
+//  The RM-022 / RM-062 fields in a backup (format 3) and the RM-066
+//  machines (format 4):
+//    - every new field survives archive and restore, and so does the
+//      machine a workout was done on;
 //    - a format-2 backup, which has none of the keys, still restores and the
 //      fields take the model defaults;
+//    - a workout naming a machine the backup lacks is refused before
+//      anything is replaced;
 //    - a backup in a format newer than this build writes is refused before
 //      anything is replaced;
 //    - restore clears the seed stamp, so the next seed applies the bundled
@@ -52,6 +56,9 @@ struct BackupCatalogFieldsTests {
         #expect(set.durationSeconds == 1200)
         #expect(set.distanceMeters == 1609.344)
         #expect(set.level == 8.5)
+        let machine = try #require(set.sessionExercise?.machine)
+        #expect(machine.id == Self.machineID)
+        #expect(machine.manufacturer == "Arsenal Strength" && machine.model == "Stair Climber")
 
         let before = try ExportSnapshot.document(in: source.mainContext, exportedAt: Self.date).normalizedForEquality()
         let after = try ExportSnapshot.document(in: destination.mainContext, exportedAt: Self.date).normalizedForEquality()
@@ -84,10 +91,32 @@ struct BackupCatalogFieldsTests {
 
         let set = try #require(try destination.mainContext.fetch(FetchDescriptor<SetEntry>()).first)
         #expect(set.isComplete)
+        #expect(set.sessionExercise?.machine == nil)
+        #expect(try destination.mainContext.fetchCount(FetchDescriptor<MachineProfile>()) == 0)
         #expect(set.startedAt == nil)
         #expect(set.durationSeconds == nil)
         #expect(set.distanceMeters == nil)
         #expect(set.level == nil)
+    }
+
+    @Test("a workout naming a machine the backup lacks is refused before anything is replaced")
+    func missingMachineIsRefused() async throws {
+        let source = try makeContainer()
+        try seed(in: source.mainContext)
+        let bytes = try await BackupArchiver(modelContainer: source).archiveData(now: Self.date)
+        let url = archiveURL()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try rewritten(bytes, formatVersion: ExportDocument.currentFormatVersion, stripNewKeys: false, dropMachines: true)
+            .write(to: url, options: .atomic)
+
+        let destination = try makeContainer()
+        let kept = Exercise(name: "Kept", canonicalName: "kept", equipmentRaw: "barbell", mechanicRaw: "compound")
+        destination.mainContext.insert(kept)
+        try destination.mainContext.save()
+        await #expect(throws: BackupRestorer.RestoreError.self) {
+            try await restore(url, into: destination)
+        }
+        #expect(try destination.mainContext.fetch(FetchDescriptor<Exercise>()).map(\.name) == ["Kept"])
     }
 
     @Test("a backup in a newer format is refused before anything is replaced")
@@ -162,7 +191,10 @@ struct BackupCatalogFieldsTests {
         try FitbodModelContainer.make(inMemory: true)
     }
 
-    /// One exercise and one completed set, with every new field set.
+    private static let machineID = UUID(uuidString: "00000000-0000-0000-0000-000000000066")!
+
+    /// One exercise and one completed set on a machine, with every new
+    /// field set.
     private func seed(in context: ModelContext) throws {
         let exercise = Exercise(
             name: "Stair Climber (Arsenal Strength)", canonicalName: "stair climber (arsenal strength)",
@@ -187,6 +219,13 @@ struct BackupCatalogFieldsTests {
         logged.session = session
         logged.exercise = exercise
         logged.exerciseNameSnapshot = exercise.name
+        let machine = MachineProfile()
+        context.insert(machine)
+        machine.id = Self.machineID
+        machine.manufacturer = "Arsenal Strength"
+        machine.model = "Stair Climber"
+        machine.createdAt = Self.date
+        logged.machine = machine
         let set = SetEntry()
         context.insert(set)
         set.sessionExercise = logged
@@ -221,12 +260,18 @@ struct BackupCatalogFieldsTests {
     }
 
     /// The archive with another format number and, when asked, without the
-    /// keys format 3 added, as a format-2 build wrote it.
-    private func rewritten(_ archive: Data, formatVersion: Int, stripNewKeys: Bool) throws -> Data {
+    /// keys formats 3 and 4 added, as a format-2 build wrote it, or with its
+    /// machines left out while the workouts still name them.
+    private func rewritten(
+        _ archive: Data, formatVersion: Int, stripNewKeys: Bool, dropMachines: Bool = false
+    ) throws -> Data {
         let entries = try ZIPReader.read(data: archive)
         let storeEntry = try #require(entries.first(where: { $0.path == "store.json" }))
         var store = try #require(JSONSerialization.jsonObject(with: storeEntry.data) as? [String: Any])
         store["formatVersion"] = formatVersion
+        if stripNewKeys || dropMachines {
+            store.removeValue(forKey: "machines")
+        }
         if stripNewKeys {
             store["exercises"] = (store["exercises"] as? [[String: Any]])?.map { exercise in
                 exercise.filter { !Self.exerciseKeys.contains($0.key) }
@@ -235,6 +280,7 @@ struct BackupCatalogFieldsTests {
                 var session = original
                 session["exercises"] = (session["exercises"] as? [[String: Any]])?.map { originalExercise in
                     var exercise = originalExercise
+                    exercise.removeValue(forKey: "machineID")
                     exercise["sets"] = (exercise["sets"] as? [[String: Any]])?.map { set in
                         set.filter { !Self.setKeys.contains($0.key) }
                     }

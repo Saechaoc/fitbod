@@ -123,19 +123,6 @@ public final class CustomExerciseDraft {
     /// editor or copied from the source exercise. Nil stands alone.
     public var familyName: String? = nil
 
-    /// Who made the machine: a `MachineBrand` raw value, or "Other". Nil
-    /// for none.
-    public var brand: String? = nil
-
-    /// The equipment a maker's name belongs on.
-    public var takesBrand: Bool {
-        [.machine, .smithMachine, .cable, .cardioMachine].contains(equipment)
-    }
-
-    /// The brand to store: none when the equipment takes none, so a machine
-    /// changed to a barbell drops its maker.
-    private var storedBrand: String? { takesBrand ? brand : nil }
-
     /// Time with a distance or a machine level is cardio. It adds no muscle
     /// volume, so it can be saved without a muscle.
     public var isCardio: Bool {
@@ -222,7 +209,6 @@ public final class CustomExerciseDraft {
             mechanic: mechanic,
             tracking: tracking,
             familyName: familyName,
-            brand: brand,
             muscles: muscles,
             imageDataHash: imageData?.hashValue
         )
@@ -234,7 +220,6 @@ public final class CustomExerciseDraft {
         public let mechanic: Mechanic
         public let tracking: Tracking?
         public let familyName: String?
-        public let brand: String?
         public let muscles: [MuscleAssignment]
         /// Reduced to `Int?` because raw `Data` equality on
         /// UIImage-shaped blobs is needlessly expensive — the hash is
@@ -296,7 +281,6 @@ public final class CustomExerciseDraft {
         ex.imageData = photo
         ex.trackingRaw = storedTrackingRaw
         ex.familyName = familyName
-        ex.brand = storedBrand
         ctx.insert(ex)
 
         // Use the failable `uniquingKeysWith:` initializer rather than
@@ -369,7 +353,6 @@ public final class CustomExerciseDraft {
         target.mechanicRaw = mechanic.rawValue
         target.trackingRaw = storedTrackingRaw
         target.familyName = familyName
-        target.brand = storedBrand
         target.category = category
         target.imageData = photo
 

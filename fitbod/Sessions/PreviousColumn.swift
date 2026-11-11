@@ -37,13 +37,26 @@ public struct PreviousColumn: View {
     public let currentSessionID: UUID?
     /// Labels a timed set's distance; weights show without a unit.
     public let unit: WeightUnit
+    /// The machine this log is on (RM-066), nil for none: the column shows
+    /// that machine's last set, or another machine's for reference.
+    public let machineID: UUID?
     @State private var hint: PreviousMatchingIntentHit?
 
-    public init(exerciseID: UUID?, intentRaw: String, currentSessionID: UUID? = nil, unit: WeightUnit = .default) {
+    public init(
+        exerciseID: UUID?, intentRaw: String, currentSessionID: UUID? = nil,
+        unit: WeightUnit = .default, machineID: UUID? = nil
+    ) {
         self.exerciseID = exerciseID
         self.intentRaw = intentRaw
         self.currentSessionID = currentSessionID
         self.unit = unit
+        self.machineID = machineID
+    }
+
+    /// What the column asks about: a swap or a machine change asks again.
+    private struct Query: Equatable {
+        let exerciseID: UUID?
+        let machineID: UUID?
     }
 
     public var body: some View {
@@ -60,7 +73,11 @@ public struct PreviousColumn: View {
                     hintText(compactHint(hit, includeRPE: false))
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Last time, same intent: \(formatHint(hit))")
+                .accessibilityLabel(
+                    hit.onOtherMachine
+                        ? "Last time, on another machine: \(formatHint(hit))"
+                        : "Last time, same intent: \(formatHint(hit))"
+                )
             } else {
                 // Words, not a dash: a dash read as missing data (FT-07).
                 Text("none yet")
@@ -70,13 +87,13 @@ public struct PreviousColumn: View {
                     .accessibilityLabel("No earlier set at this intent")
             }
         }
-        // Keyed on exerciseID so a mid-session swap re-queries.
-        .task(id: exerciseID) {
+        .task(id: Query(exerciseID: exerciseID, machineID: machineID)) {
             hint = PreviousMatchingIntent.fetchTopWorkingSet(
                 exerciseID: exerciseID,
                 intentRaw: intentRaw,
                 context: ctx,
-                excludingSessionID: currentSessionID
+                excludingSessionID: currentSessionID,
+                machineID: machineID
             )
         }
     }

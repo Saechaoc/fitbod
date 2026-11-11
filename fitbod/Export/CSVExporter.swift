@@ -10,8 +10,8 @@
 //  - UTF-8 with BOM (`EF BB BF`) — Excel opens UTF-8 CSVs correctly
 //    only when the BOM is present (Microsoft docs + Apple Numbers
 //    parity).
-//  - 27 columns: CONTEXT D-25 order, then the set fields (see headerColumns
-//    below).
+//  - 28 columns: CONTEXT D-25 order, then the set fields and the machine
+//    (see headerColumns below).
 //  - RFC 4180 quoting: fields containing `,` `"` `\r` `\n` are wrapped
 //    in double quotes; embedded `"` is escaped as `""`. Line terminator
 //    is `\r\n` per RFC 4180.
@@ -45,6 +45,7 @@
 //  | e1rm               | OneRepMaxEstimator.estimate(weight:reps:) ("" if nil per PROG-02) |
 //  | set_note           | setEntry.notes ("" if nil) |
 //  | unit               | UserSettings.unitsRaw ("kg" / "lb") |
+//  | machine            | sessionExercise.machine?.displayName ("" if none, RM-066) |
 //
 //  [CITED: CONTEXT D-25/D-26 + RESEARCH §Don't Hand-Roll RFC 4180 +
 //   Pitfall 8 ISO-8601 timezone defaults]
@@ -57,8 +58,9 @@ public enum CSVExporter {
 
     // MARK: - Constants
 
-    /// Column order per CONTEXT D-25, then the RM-062 set fields. New
-    /// columns go at the end so older readers keep their positions.
+    /// Column order per CONTEXT D-25, then the RM-062 set fields and the
+    /// RM-066 machine. New columns go at the end so older readers keep their
+    /// positions.
     public static let headerColumns: [String] = [
         "session_id", "session_started_at", "session_completed_at",
         "session_intent", "routine_id", "routine_name",
@@ -68,6 +70,7 @@ public enum CSVExporter {
         "was_manual_override", "partial_reps", "tempo",
         "rest_taken_sec", "e1rm", "set_note", "unit",
         "set_started_at", "duration_sec", "distance_m", "level",
+        "machine",
     ]
 
     /// UTF-8 BOM bytes — emitted at the very start of every CSV.
@@ -151,6 +154,7 @@ public enum CSVExporter {
             entry.durationSeconds.map(String.init) ?? "",
             entry.distanceMeters.map(formatDouble) ?? "",
             entry.level.map(formatDouble) ?? "",
+            se?.machine?.displayName ?? "",
         ]
         return columns.map(rfc4180Quote).joined(separator: ",")
     }

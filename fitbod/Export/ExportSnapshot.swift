@@ -36,7 +36,10 @@ enum ExportSnapshot {
             exerciseMuscleStimuli: try context.fetch(FetchDescriptor<ExerciseMuscleStimulus>(sortBy: [SortDescriptor(\.id)])).map(mapMuscleStimulus),
             muscleVolumeTargets: try context.fetch(FetchDescriptor<MuscleVolumeTarget>(sortBy: [SortDescriptor(\.id)])).map(mapMuscleVolumeTarget),
             plateInventories: try context.fetch(FetchDescriptor<PlateInventory>(sortBy: [SortDescriptor(\.id)])).map(mapPlateInventory),
-            userSettings: userSettings
+            userSettings: userSettings,
+            machines: try context.fetch(FetchDescriptor<MachineProfile>(sortBy: [SortDescriptor(\.id)])).map {
+                ExportMachineDTO(id: $0.id, manufacturer: $0.manufacturer, model: $0.model, createdAt: $0.createdAt)
+            }
         )
     }
 
@@ -209,6 +212,7 @@ enum ExportSnapshot {
             prescribedWeight: se.prescribedWeight,
             pinnedNote: se.pinnedNote,
             exerciseNameSnapshot: se.exerciseNameSnapshot,
+            machineID: se.machine?.id,
             sets: sets
         )
     }

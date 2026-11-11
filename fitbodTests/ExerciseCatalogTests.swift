@@ -213,7 +213,8 @@ struct ExerciseCatalogTests {
     func muscleCreditsCoverTheCatalog() throws {
         let url = try #require(Bundle.main.url(forResource: "muscles", withExtension: "json"))
         let credits = try JSONDecoder().decode(MuscleCredits.self, from: Data(contentsOf: url))
-        let listed = try ExerciseCatalog.bundled().filter { !$0.isHidden && $0.category.lowercased() != "cardio" }
+        let catalog = try ExerciseCatalog.bundled()
+        let listed = catalog.filter { !$0.isHidden && $0.category.lowercased() != "cardio" }
         let muscles = Set(MuscleRegionMap.allSlugs)
 
         for entry in listed {
@@ -226,9 +227,11 @@ struct ExerciseCatalogTests {
         for family in credits.families.keys {
             #expect(families.contains(family), "muscles.json credits \(family), which no listed row is in")
         }
-        let ids = Set(listed.map(\.id))
+        // A hidden row a workout still uses keeps its own credits, as the
+        // Panatta rows hidden in seed version 9 do (RM-066).
+        let ids = Set(catalog.map(\.id))
         for id in credits.exercises.keys {
-            #expect(ids.contains(id), "muscles.json credits \(id), which is not a listed row")
+            #expect(ids.contains(id), "muscles.json credits \(id), which no catalog row has")
         }
         for (name, profile) in credits.families.merging(credits.exercises, uniquingKeysWith: { $1 }) {
             #expect(!profile.primary.isEmpty, "\(name) has no primary muscle")

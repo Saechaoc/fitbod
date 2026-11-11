@@ -52,14 +52,14 @@ public struct IntentFilterChipRow: View {
     private var chips: some View {
         HStack(spacing: 0) {
             // "ALL" chip
-            chipButton(label: "ALL", count: totalCount, isSelected: filter == nil) {
+            HistoryFilterChip(label: "ALL", count: totalCount, isSelected: filter == nil) {
                 filter = nil
             }
             Rectangle().fill(Color.bruInk).frame(width: 1)
 
             // Per-intent chips
             ForEach(IntentFilter.allCases, id: \.rawValue) { item in
-                chipButton(
+                HistoryFilterChip(
                     label: item.shortLabel,
                     count: counts[item.intent] ?? 0,
                     isSelected: filter == item.intent
@@ -79,13 +79,19 @@ public struct IntentFilterChipRow: View {
     private var totalCount: Int {
         counts.values.reduce(0, +)
     }
+}
 
-    private func chipButton(
-        label: String,
-        count: Int,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
+// MARK: - HistoryFilterChip
+
+/// One chip of a history filter strip, "LABEL · N". The intent and machine
+/// strips both use it.
+struct HistoryFilterChip: View {
+    let label: String
+    let count: Int
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
         Button(action: action) {
             Text("\(label) · \(count)")
                 .font(BRUFont.labelSmall)
@@ -102,6 +108,44 @@ public struct IntentFilterChipRow: View {
                 .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - MachineFilterChipRow
+
+/// The machine strip under the intent strip (RM-066), for an exercise done
+/// on more than one machine, or on one and on none: ALL MACHINES, then each
+/// machine, the most recent first, then NO MACHINE. The intent strip above
+/// draws the rule between them.
+struct MachineFilterChipRow: View {
+    @Binding var filter: ExerciseHistoryView.MachineFilter
+    /// The choices after ALL MACHINES, with their set counts.
+    let options: [(filter: ExerciseHistoryView.MachineFilter, label: String, count: Int)]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ViewThatFits(in: .horizontal) {
+                chips.frame(maxWidth: .infinity)
+                ScrollView(.horizontal, showsIndicators: false) { chips }
+            }
+            BRUDivider(.ink)
+        }
+    }
+
+    private var chips: some View {
+        HStack(spacing: 0) {
+            HistoryFilterChip(label: "All machines", count: options.reduce(0) { $0 + $1.count }, isSelected: filter == .all) {
+                filter = .all
+            }
+            ForEach(options.indices, id: \.self) { index in
+                let option = options[index]
+                Rectangle().fill(Color.bruInk).frame(width: 1)
+                HistoryFilterChip(label: option.label, count: option.count, isSelected: filter == option.filter) {
+                    filter = option.filter
+                }
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 

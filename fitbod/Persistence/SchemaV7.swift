@@ -17,7 +17,7 @@
 //  `IncompatibleStores/<timestamp>/` and a fresh store is created. A store
 //  that does not open for any other reason stays where it is.
 //
-//  `models` is an explicit list of all 18 production types.
+//  `models` is an explicit list of all 19 production types.
 //
 
 import Foundation
@@ -50,8 +50,9 @@ public enum SchemaV7: VersionedSchema {
     public typealias SupersetGroup = fitbod.SupersetGroup
     public typealias RoutineExerciseSetOverride = fitbod.RoutineExerciseSetOverride
     public typealias PlateInventory = fitbod.PlateInventory
+    public typealias MachineProfile = fitbod.MachineProfile
 
-    // MARK: - Explicit models array (18 production types)
+    // MARK: - Explicit models array (19 production types)
 
     public static var models: [any PersistentModel.Type] {
         [
@@ -73,6 +74,7 @@ public enum SchemaV7: VersionedSchema {
             Self.SupersetGroup.self,
             Self.RoutineExerciseSetOverride.self,
             Self.PlateInventory.self,
+            Self.MachineProfile.self,
         ]
     }
 }

@@ -3,7 +3,8 @@ import XCTest
 /// Ticket T32, review item 20: a new custom exercise saves each muscle's
 /// role and weight, and EDIT reopens them after a relaunch. RM-062: a cardio
 /// exercise saves without a muscle and keeps what its sets record. RM-022: a
-/// machine keeps its brand and joins its family in the Library.
+/// machine joins its family in the Library; RM-066 names machines in the
+/// workout, so the editor has no brand.
 final class CustomExerciseEditorBRUUITests: XCTestCase {
 
     @MainActor
@@ -68,18 +69,16 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         XCTAssertEqual(status(in: app), "Valid, no muscle mapped. Ready to save.")
     }
 
-    /// RM-022: a machine picks its brand and its family. It saves, the
-    /// family's line in the Library opens to it, and after a relaunch EDIT
-    /// shows both.
+    /// RM-022: a machine picks its family. It saves, the family's line in
+    /// the Library opens to it, and after a relaunch EDIT shows it.
     @MainActor
-    func testMachineJoinsItsFamilyWithItsBrand() throws {
+    func testMachineJoinsItsFamily() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
         let exerciseName = "T22 Iso-Lateral Chest Press"
         openNewExercise(in: app)
         UITestNavigation.type(exerciseName, into: app.textFields["customExercise.name"])
-        XCTAssertFalse(app.buttons["customExercise.brand"].exists, "A barbell takes no brand")
         pick("machine", from: "customExercise.equipment", in: app)
-        pick("Hammer Strength", from: "customExercise.brand", in: app)
+        XCTAssertFalse(app.buttons["customExercise.brand"].exists, "A machine is named in the workout, not here")
         pick("Chest Press", from: "customExercise.family", in: app)
         addMuscle("chest", in: app)
 
@@ -97,7 +96,6 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         UITestNavigation.relaunch(app)
         reopenEditor(for: exerciseName, in: app)
         XCTAssertEqual(app.buttons["customExercise.family"].value as? String, "Chest Press")
-        XCTAssertEqual(app.buttons["customExercise.brand"].value as? String, "Hammer Strength")
     }
 
     // MARK: - Helpers

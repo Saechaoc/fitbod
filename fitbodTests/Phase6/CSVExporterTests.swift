@@ -2,13 +2,13 @@
 //  CSVExporterTests.swift
 //  fitbodTests
 //
-//  Wave-4 plan 06-09b — RFC 4180 + UTF-8 BOM + 27-column shape +
+//  Wave-4 plan 06-09b — RFC 4180 + UTF-8 BOM + 28-column shape +
 //  byte-stable golden-fixture coverage for the EXP-01 CSV export.
 //
 //  Six @Test functions:
 //
 //    1. bomPresent — first 3 bytes are 0xEF 0xBB 0xBF
-//    2. headerRowColumns — UTF-8-decoded header row has 27 columns
+//    2. headerRowColumns — UTF-8-decoded header row has 28 columns
 //       in CONTEXT D-25 order
 //    3. rfc4180QuotingForEmbeddedCommaAndQuote — set_note with comma
 //       or embedded quote is properly escaped
@@ -74,6 +74,11 @@ struct CSVExporterTests {
         se.targetRepsHigh = 6
         se.targetRPE = 8.0
         ctx.insert(se)
+        let machine = MachineProfile()
+        ctx.insert(machine)
+        machine.manufacturer = "Hammer Strength"
+        machine.model = "Iso-Lateral Bench Press"
+        se.machine = machine
         let entry = SetEntry()
         entry.id = Self.setEntryID
         entry.sessionExercise = se
@@ -107,7 +112,7 @@ struct CSVExporterTests {
 
     // MARK: - 2. header row columns
 
-    @Test("headerRowColumns — header row has 27 columns: CONTEXT D-25 order, then the set fields")
+    @Test("headerRowColumns — header row has 28 columns: CONTEXT D-25 order, then the set fields and the machine")
     func headerRowColumns() throws {
         let ctx = try makeContext()
         let (entry, settings) = try makeFixtureEntry(ctx: ctx)
@@ -118,7 +123,7 @@ struct CSVExporterTests {
         let s = try #require(String(data: stripped, encoding: .utf8))
         let firstLine = s.components(separatedBy: "\r\n").first ?? ""
         let cols = firstLine.components(separatedBy: ",")
-        #expect(cols.count == 27, "expected 27 columns, got \(cols.count)")
+        #expect(cols.count == 28, "expected 28 columns, got \(cols.count)")
         #expect(cols == CSVExporter.headerColumns)
     }
 
@@ -167,22 +172,23 @@ struct CSVExporterTests {
         #expect(cols[16] == "true")
     }
 
-    @Test("the set fields fill the last four columns, and stay empty when unset")
+    @Test("the set fields fill the four columns before the machine, and stay empty when unset")
     func setFieldColumns() throws {
         let ctx = try makeContext()
         let (entry, settings) = try makeFixtureEntry(ctx: ctx)
-        func lastFour() throws -> [String] {
+        func lastFive() throws -> [String] {
             let data = CSVExporter.render(setEntries: [entry], userSettings: settings)
             let text = try #require(String(data: data.dropFirst(CSVExporter.utf8BOM.count), encoding: .utf8))
-            return Array(text.components(separatedBy: "\r\n")[1].components(separatedBy: ",").suffix(4))
+            return Array(text.components(separatedBy: "\r\n")[1].components(separatedBy: ",").suffix(5))
         }
-        #expect(try lastFour() == ["", "", "", ""])
+        #expect(try lastFive() == ["", "", "", "", "Hammer Strength Iso-Lateral Bench Press"])
 
         entry.startedAt = Self.fixedDate.addingTimeInterval(-90)
         entry.durationSeconds = 90
         entry.distanceMeters = 402.3
         entry.level = 8
-        #expect(try lastFour() == ["2023-11-14T22:11:50Z", "90", "402.3", "8"])
+        entry.sessionExercise?.machine = nil
+        #expect(try lastFive() == ["2023-11-14T22:11:50Z", "90", "402.3", "8", ""])
     }
 
     // MARK: - 6. empty for nil

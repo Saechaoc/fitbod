@@ -48,10 +48,16 @@ public struct PreviousMatchingIntentHit: Sendable {
     public let durationSeconds: Int?
     public let distanceMeters: Double?
     public let level: Double?
+    /// True when the set was done on another machine than the one asked
+    /// about, or without one (RM-066): a reference, never a base for a load.
+    public let onOtherMachine: Bool
+    /// The machine the set was done on, by name; nil when none was named.
+    public let machineName: String?
 
     public init(
         weight: Double, reps: Int, rpe: Double?, sessionStartedAt: Date,
-        durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil
+        durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil,
+        onOtherMachine: Bool = false, machineName: String? = nil
     ) {
         self.weight = weight
         self.reps = reps
@@ -60,6 +66,8 @@ public struct PreviousMatchingIntentHit: Sendable {
         self.durationSeconds = durationSeconds
         self.distanceMeters = distanceMeters
         self.level = level
+        self.onOtherMachine = onOtherMachine
+        self.machineName = machineName
     }
 }
 
@@ -94,23 +102,32 @@ public enum PreviousMatchingIntent {
     /// can never show up as its own "previous" value. Pass
     /// `excludingSessionID` (the current session) as a second guard for
     /// callers that run while a session is open.
+    ///
+    /// `machineID` is the machine of the log asking (RM-066), nil for none:
+    /// the hit comes from that machine's workouts, or, when it has none,
+    /// from any machine with `onOtherMachine` set.
     public static func fetchTopWorkingSet(
         exerciseID: UUID?,
         intentRaw: String,
         context: ModelContext,
-        excludingSessionID: UUID? = nil
+        excludingSessionID: UUID? = nil,
+        machineID: UUID? = nil
     ) -> PreviousMatchingIntentHit? {
-        guard let last = lastWorkingSets(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: context,
-            excludingSessionID: excludingSessionID
-        ) else { return nil }
+        guard let exerciseID,
+              let last = lastWorkingSets(
+                  in: logs(of: exerciseID, context: context),
+                  intentRaw: intentRaw,
+                  excludingSessionID: excludingSessionID,
+                  machineID: machineID
+              )
+        else { return nil }
 
-        return topWorkingSet(in: last)
+        return topWorkingSet(in: (last.session, last.sets), onOtherMachine: last.onOtherMachine)
     }
 
-    static func topWorkingSet(in last: (session: Session, sets: [SetEntry])) -> PreviousMatchingIntentHit? {
+    static func topWorkingSet(
+        in last: (session: Session, sets: [SetEntry]), onOtherMachine: Bool = false
+    ) -> PreviousMatchingIntentHit? {
         // The sets come in workout order, then set order, and `max(by:)`
         // keeps the first of equal elements, so the earlier set wins a tie
         // in weight, inside one log as across logs.
@@ -124,7 +141,9 @@ public enum PreviousMatchingIntent {
             sessionStartedAt: last.session.startedAt,
             durationSeconds: topSet.durationSeconds,
             distanceMeters: topSet.distanceMeters,
-            level: topSet.level
+            level: topSet.level,
+            onOtherMachine: onOtherMachine,
+            machineName: topSet.sessionExercise?.machine?.displayName
         )
     }
 
@@ -186,6 +205,30 @@ public enum PreviousMatchingIntent {
         // instead of one fault per row.
         descriptor.relationshipKeyPathsForPrefetching = [\.session, \.sets]
         return (try? context.fetch(descriptor)) ?? []
+    }
+
+    /// The last matching workout for a log on `machineID` (RM-066). Loads
+    /// compare only within one machine, and logs without a machine are one
+    /// group of their own, so the walk reads that machine's logs first.
+    /// When they hold no matching workout, it reads every log and sets
+    /// `onOtherMachine`: those sets are shown for reference, and nothing
+    /// is progressed or offered from them.
+    static func lastWorkingSets(
+        in all: [SessionExercise],
+        intentRaw: String,
+        excludingSessionID: UUID? = nil,
+        machineID: UUID?,
+        counting: (SetEntry) -> Bool = { $0.hasResult }
+    ) -> (session: Session, sets: [SetEntry], onOtherMachine: Bool)? {
+        let sameMachine = all.filter { $0.machine?.id == machineID }
+        if let last = lastWorkingSets(
+            in: sameMachine, intentRaw: intentRaw, excludingSessionID: excludingSessionID, counting: counting
+        ) {
+            return (last.session, last.sets, false)
+        }
+        return lastWorkingSets(
+            in: all, intentRaw: intentRaw, excludingSessionID: excludingSessionID, counting: counting
+        ).map { ($0.session, $0.sets, true) }
     }
 
     /// `lastWorkingSets` over logs the caller already fetched with `logs(of:)`.

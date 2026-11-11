@@ -81,13 +81,18 @@ public enum PlateauDetector {
     /// workout in progress never feeds its own stall signal. A session that
     /// logs the exercise several times counts once, with its top set across
     /// all of those logs.
+    ///
+    /// `machineID` is the machine of the log asking (RM-066), nil for none:
+    /// only workouts on that machine count, since loads on different
+    /// machines don't compare.
     @MainActor
     public static func evaluate(
         exerciseID: UUID,
         intent: Intent,
         in context: ModelContext,
         settings: UserSettings,
-        now: Date = .now
+        now: Date = .now,
+        machineID: UUID? = nil
     ) -> PlateauSignal {
         // 1. Resolve the Exercise + per-exercise overrides.
         let targetExerciseID = exerciseID
@@ -102,7 +107,7 @@ public enum PlateauDetector {
 
         // 2. Fetch the finished intent-matched sessions, newest first: one
         //    entry per session, however many times it logs the exercise.
-        let sessions = finishedSessionLogs(exerciseID: exerciseID, intent: intent, in: context)
+        let sessions = finishedSessionLogs(exerciseID: exerciseID, intent: intent, machineID: machineID, in: context)
 
         // 3. Compute per-session top-set e1RM. Skip sessions where no
         //    working set has a defined e1RM (all-high-rep sessions).
@@ -143,9 +148,12 @@ public enum PlateauDetector {
         intent: Intent,
         in context: ModelContext,
         settings: UserSettings,
-        now: Date = .now
+        now: Date = .now,
+        machineID: UUID? = nil
     ) -> SuggestedAction? {
-        let signal = evaluate(exerciseID: exerciseID, intent: intent, in: context, settings: settings, now: now)
+        let signal = evaluate(
+            exerciseID: exerciseID, intent: intent, in: context, settings: settings, now: now, machineID: machineID
+        )
         guard case .stalled = signal else { return nil }
 
         // Look up Exercise + primary muscle for Branch 1.
@@ -182,6 +190,7 @@ public enum PlateauDetector {
         if hasRPECreep(
             exerciseID: exerciseID,
             intent: intent,
+            machineID: machineID,
             in: context,
             settings: settings
         ) {
@@ -216,6 +225,7 @@ public enum PlateauDetector {
     private static func finishedSessionLogs(
         exerciseID: UUID,
         intent: Intent,
+        machineID: UUID?,
         in context: ModelContext
     ) -> [[SessionExercise]] {
         let targetExerciseID = exerciseID
@@ -232,6 +242,7 @@ public enum PlateauDetector {
         for se in all {
             guard let session = se.session, session.completedAt != nil else { continue }
             guard session.intentRaw == targetIntentRaw else { continue }
+            guard se.machine?.id == machineID else { continue }
             if let index = sessionIndex[session.id] {
                 sessions[index].logs.append(se)
             } else {
@@ -291,6 +302,7 @@ public enum PlateauDetector {
     private static func hasRPECreep(
         exerciseID: UUID,
         intent: Intent,
+        machineID: UUID?,
         in context: ModelContext,
         settings: UserSettings
     ) -> Bool {
@@ -306,7 +318,7 @@ public enum PlateauDetector {
         // recent first. Like evaluate, skip sessions with no top set and stop
         // at N, so both checks read the same N sessions.
         var picks: [(weight: Double, rpe: Double?)] = []
-        for logs in finishedSessionLogs(exerciseID: exerciseID, intent: intent, in: context) {
+        for logs in finishedSessionLogs(exerciseID: exerciseID, intent: intent, machineID: machineID, in: context) {
             guard let top = topSet(in: logs) else { continue }
             picks.append((weight: top.weight, rpe: top.rpe))
             if picks.count >= windowN { break }

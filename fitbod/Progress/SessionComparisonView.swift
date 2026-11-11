@@ -71,7 +71,8 @@ public struct SessionComparisonView: View {
                 BRUDivider(.ink)
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(Array(rows.enumerated()), id: \.element.exerciseID) { index, row in
+                        // One exercise on two machines is two rows (RM-066).
+                        ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
                             rowView(row)
                             if index < rows.count - 1 {
                                 BRUDivider(.hair)
@@ -120,14 +121,19 @@ public struct SessionComparisonView: View {
     }
 
     private var thisWeekDateLabel: String {
-        anchorSession.startedAt.formatted(.dateTime.month(.abbreviated).day())
+        Self.dayLabel(anchorSession.startedAt)
     }
 
     private var lastWeekDateLabel: String {
         if let firstPrior = rows.first(where: { $0.lastWeekTopSet != nil })?.lastWeekTopSet {
-            return firstPrior.sessionStartedAt.formatted(.dateTime.month(.abbreviated).day())
+            return Self.dayLabel(firstPrior.sessionStartedAt)
         }
         return "—"
+    }
+
+    /// A workout's day as the column headers write it, such as "Nov 9".
+    private static func dayLabel(_ date: Date) -> String {
+        date.formatted(.dateTime.month(.abbreviated).day())
     }
 
     // MARK: - Per-Row Body
@@ -136,10 +142,11 @@ public struct SessionComparisonView: View {
     private func rowView(_ row: SessionComparisonRow) -> some View {
         if row.lastWeekTopSet == nil {
             // No prior data — single-cell inline row
-            HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("\(row.exerciseName) — no prior data")
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
+                machineLine(row)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -153,6 +160,7 @@ public struct SessionComparisonView: View {
                     Text(row.exerciseName)
                         .font(BRUFont.bodyEmphasis)
                         .foregroundStyle(Color.bruInk)
+                    machineLine(row)
                     if let top = row.thisWeekTopSet {
                         Text("\(NumberText.weight(top.weight)) × \(top.reps)")
                             .font(BRUFont.bodyDefault)
@@ -170,18 +178,40 @@ public struct SessionComparisonView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
 
-                // Trailing (~35%) — last-week value
+                // Trailing (~35%) — last-week value. Each exercise and
+                // machine compares with its own last workout (RM-066), so a
+                // value from another day than the header's shows its date.
                 VStack(alignment: .leading, spacing: 2) {
                     if let top = row.lastWeekTopSet {
                         Text("\(NumberText.weight(top.weight)) × \(top.reps)")
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruInk)
+                        let day = Self.dayLabel(top.sessionStartedAt)
+                        if day != lastWeekDateLabel {
+                            Text(day.uppercased())
+                                .font(BRUFont.labelMicro)
+                                .tracking(1.2)
+                                .foregroundStyle(Color.bruMuted)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+        }
+    }
+
+    /// The machine both sides were done on, styled as the summary shows it.
+    @ViewBuilder
+    private func machineLine(_ row: SessionComparisonRow) -> some View {
+        if let machineName = row.machineName {
+            Text(machineName)
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

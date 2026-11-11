@@ -78,6 +78,9 @@ public struct ExportDocument: Codable, Equatable, Sendable {
     public let muscleVolumeTargets: [ExportMuscleVolumeTargetDTO]
     public let plateInventories: [ExportPlateInventoryDTO]
     public let userSettings: ExportUserSettingsDTO?
+    /// The machines workouts were done on (RM-066). Optional only for
+    /// decoding archives before format 4, which had none.
+    public let machines: [ExportMachineDTO]?
 
     /// Single source-of-truth schema version. Restore-side compares
     /// against this; backup manifest writes the same string.
@@ -85,10 +88,11 @@ public struct ExportDocument: Codable, Equatable, Sendable {
 
     /// The format this build writes, in the document and in a backup's
     /// manifest. Format 3 adds the optional catalog fields on exercises and
-    /// the optional duration, distance and level on sets; formats 1 and 2
-    /// still restore. A higher number is refused: restoring it would drop
-    /// fields this build does not know.
-    public static let currentFormatVersion = 3
+    /// the optional duration, distance and level on sets; format 4 adds the
+    /// machines and each logged exercise's machine. Formats 1 to 3 still
+    /// restore. A higher number is refused: restoring it would drop fields
+    /// this build does not know.
+    public static let currentFormatVersion = 4
 
     public init(
         formatVersion: Int,
@@ -106,7 +110,8 @@ public struct ExportDocument: Codable, Equatable, Sendable {
         exerciseMuscleStimuli: [ExportExerciseMuscleStimulusDTO],
         muscleVolumeTargets: [ExportMuscleVolumeTargetDTO],
         plateInventories: [ExportPlateInventoryDTO],
-        userSettings: ExportUserSettingsDTO?
+        userSettings: ExportUserSettingsDTO?,
+        machines: [ExportMachineDTO]? = []
     ) {
         self.formatVersion = formatVersion
         self.schemaVersion = schemaVersion
@@ -124,6 +129,23 @@ public struct ExportDocument: Codable, Equatable, Sendable {
         self.muscleVolumeTargets = muscleVolumeTargets
         self.plateInventories = plateInventories
         self.userSettings = userSettings
+        self.machines = machines
+    }
+}
+
+// MARK: - Machine (RM-066)
+
+public struct ExportMachineDTO: Codable, Equatable, Sendable {
+    public let id: UUID
+    public let manufacturer: String?
+    public let model: String?
+    public let createdAt: Date
+
+    public init(id: UUID, manufacturer: String?, model: String?, createdAt: Date) {
+        self.id = id
+        self.manufacturer = manufacturer
+        self.model = model
+        self.createdAt = createdAt
     }
 }
 
@@ -427,6 +449,8 @@ public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
     public let tracksPartialReps: Bool
     public let prescribedWeight: Double?
     public let pinnedNote: String?
+    /// Format 4; absent when no machine was named or in older documents.
+    public let machineID: UUID?
     public let sets: [ExportSetEntryDTO]
 
     public init(
@@ -436,6 +460,7 @@ public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
         tempo: String?, tracksTempo: Bool, tracksPartialReps: Bool,
         prescribedWeight: Double?, pinnedNote: String?,
         exerciseNameSnapshot: String? = nil,
+        machineID: UUID? = nil,
         sets: [ExportSetEntryDTO]
     ) {
         self.id = id; self.exerciseID = exerciseID
@@ -449,7 +474,8 @@ public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
         self.tempo = tempo; self.tracksTempo = tracksTempo
         self.tracksPartialReps = tracksPartialReps
         self.prescribedWeight = prescribedWeight
-        self.pinnedNote = pinnedNote; self.sets = sets
+        self.pinnedNote = pinnedNote; self.machineID = machineID
+        self.sets = sets
     }
 }
 

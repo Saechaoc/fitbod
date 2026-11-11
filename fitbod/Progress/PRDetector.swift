@@ -23,7 +23,10 @@
 //  PR table is keyed by `(exerciseID, Intent, PRKind, RepBucket)` —
 //  CONTEXT D-10 partitions per exercise + intent so a strength PR
 //  doesn't compete with a hypertrophy PR; D-11 partitions per rep
-//  bucket so a 5RM PR doesn't compete with an 8RM PR.
+//  bucket so a 5RM PR doesn't compete with an 8RM PR. RM-066 adds the
+//  machine the set was done on: loads on different machines don't compare,
+//  so a PR is the best on one machine, and sets without a machine are a
+//  group of their own.
 //
 //  Schema reality (verified 2026-05-23 against fitbod/Models/):
 //    - SetEntry.weight: Double
@@ -99,6 +102,8 @@ public struct PRTable: Sendable {
     /// Composite key — value type so it can live inside Sendable dicts.
     fileprivate struct Key: Hashable, Sendable {
         let exerciseID: UUID
+        /// The machine (RM-066); nil for sets logged without one.
+        let machineID: UUID?
         let intent: Intent
         let kind: PRKind
         let bucket: RepBucket
@@ -108,14 +113,16 @@ public struct PRTable: Sendable {
 
     public init() {}
 
-    /// Look up the current PR record (if any) for the given slot.
+    /// Look up the current PR record (if any) for the given slot; `machineID`
+    /// nil reads the sets logged without a machine.
     public func record(
         exerciseID: UUID,
         intent: Intent,
         kind: PRKind,
-        bucket: RepBucket
+        bucket: RepBucket,
+        machineID: UUID? = nil
     ) -> PRRecord? {
-        storage[Key(exerciseID: exerciseID, intent: intent, kind: kind, bucket: bucket)]
+        storage[Key(exerciseID: exerciseID, machineID: machineID, intent: intent, kind: kind, bucket: bucket)]
     }
 
     /// Total number of recorded slots — useful for tests + analytics.
@@ -203,6 +210,7 @@ public enum PRDetector {
         }
         let intent = Intent(rawValue: session.intentRaw) ?? .strength
         let exerciseID = exercise.id
+        let machineID = set.sessionExercise?.machine?.id
 
         let candidate = PRRecord(
             weight: set.weight,
@@ -216,7 +224,7 @@ public enum PRDetector {
 
         // Weight PR — strictly heavier load wins (matches plate-rounded reality).
         let weightKey = PRTable.Key(
-            exerciseID: exerciseID, intent: intent, kind: .weight, bucket: bucket
+            exerciseID: exerciseID, machineID: machineID, intent: intent, kind: .weight, bucket: bucket
         )
         if table.upsertIfTops(candidate: candidate, forKey: weightKey, comparator: { new, old in
             new.weight > old.weight
@@ -226,7 +234,7 @@ public enum PRDetector {
 
         // Reps PR — strictly more reps wins.
         let repsKey = PRTable.Key(
-            exerciseID: exerciseID, intent: intent, kind: .reps, bucket: bucket
+            exerciseID: exerciseID, machineID: machineID, intent: intent, kind: .reps, bucket: bucket
         )
         if table.upsertIfTops(candidate: candidate, forKey: repsKey, comparator: { new, old in
             new.reps > old.reps
@@ -236,7 +244,7 @@ public enum PRDetector {
 
         // Volume PR — strictly more (weight × reps) wins.
         let volumeKey = PRTable.Key(
-            exerciseID: exerciseID, intent: intent, kind: .volume, bucket: bucket
+            exerciseID: exerciseID, machineID: machineID, intent: intent, kind: .volume, bucket: bucket
         )
         if table.upsertIfTops(candidate: candidate, forKey: volumeKey, comparator: { new, old in
             (new.weight * Double(new.reps)) > (old.weight * Double(old.reps))
@@ -247,7 +255,7 @@ public enum PRDetector {
         // e1RM PR — only meaningful for non-highRep buckets per D-04 suppression.
         if bucket != .highRep, let newE1RM = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) {
             let e1RMKey = PRTable.Key(
-                exerciseID: exerciseID, intent: intent, kind: .e1RM, bucket: bucket
+                exerciseID: exerciseID, machineID: machineID, intent: intent, kind: .e1RM, bucket: bucket
             )
             if table.upsertIfTops(candidate: candidate, forKey: e1RMKey, comparator: { new, old in
                 // Compute both sides on demand — the candidate's e1RM is newE1RM,

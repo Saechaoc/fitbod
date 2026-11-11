@@ -109,7 +109,8 @@ public struct SetRow: View {
                     exerciseID: sessionExercise.exercise?.id,
                     intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
                     currentSessionID: sessionExercise.session?.id,
-                    unit: unit
+                    unit: unit,
+                    machineID: sessionExercise.machine?.id
                 )
                 .frame(width: previousWidth, alignment: .leading)
 

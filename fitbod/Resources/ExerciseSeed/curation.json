@@ -811,6 +811,7 @@
       "side raise",
       "side lateral",
       "lat raise",
+      "side delt raise",
       "cable seated lateral raise"
     ]
   },
@@ -2295,7 +2296,8 @@
       "lateral raise - with bands",
       "side raise",
       "side lateral",
-      "lat raise"
+      "lat raise",
+      "side delt raise"
     ]
   },
   "Leg-Over_Floor_Press": {
@@ -2546,6 +2548,7 @@
       "side raise",
       "side lateral",
       "lat raise",
+      "side delt raise",
       "lying one-arm lateral raise"
     ]
   },
@@ -2859,7 +2862,8 @@
       "one-arm side laterals",
       "side raise",
       "side lateral",
-      "lat raise"
+      "lat raise",
+      "side delt raise"
     ]
   },
   "One-Legged_Cable_Kickback": {
@@ -3007,6 +3011,7 @@
     ]
   },
   "Panatta_3D_Abductor": {
+    "hidden": true,
     "family": "Hip Abduction",
     "variant": "Panatta 3D Abductor",
     "brand": "Panatta",
@@ -3016,6 +3021,7 @@
     ]
   },
   "Panatta_Back_Deltoids": {
+    "hidden": true,
     "family": "Rear Delt Fly",
     "variant": "Panatta Back Deltoids",
     "brand": "Panatta",
@@ -3027,6 +3033,7 @@
     ]
   },
   "Panatta_Gluteus_Machine": {
+    "hidden": true,
     "family": "Glute Kickback",
     "variant": "Panatta Gluteus Machine",
     "brand": "Panatta",
@@ -3035,21 +3042,25 @@
     ]
   },
   "Panatta_Hip_Thrust": {
+    "hidden": true,
     "family": "Hip Thrust",
     "variant": "Panatta Hip Thrust",
     "brand": "Panatta"
   },
   "Panatta_Lateral_Deltoids": {
+    "hidden": true,
     "family": "Lateral Raise",
     "variant": "Panatta Lateral Deltoids",
     "brand": "Panatta",
     "aliases": [
       "side raise",
       "side lateral",
-      "lat raise"
+      "lat raise",
+      "side delt raise"
     ]
   },
   "Panatta_Leg_Curling": {
+    "hidden": true,
     "family": "Leg Curl",
     "variant": "Panatta Leg Curling",
     "brand": "Panatta",
@@ -3058,6 +3069,7 @@
     ]
   },
   "Panatta_Leg_Extension": {
+    "hidden": true,
     "family": "Leg Extension",
     "variant": "Panatta Leg Extension",
     "brand": "Panatta",
@@ -3066,6 +3078,7 @@
     ]
   },
   "Panatta_Super_Declined_Chest_Press": {
+    "hidden": true,
     "family": "Chest Press",
     "variant": "Panatta Super Declined Chest Press",
     "brand": "Panatta",
@@ -3075,6 +3088,7 @@
     ]
   },
   "Panatta_Super_Deltoid_Press": {
+    "hidden": true,
     "family": "Overhead Press",
     "variant": "Panatta Super Deltoid Press",
     "brand": "Panatta",
@@ -3086,18 +3100,21 @@
     ]
   },
   "Panatta_Super_Hack_Squat": {
+    "hidden": true,
     "family": "Hack Squat",
     "variant": "Panatta Super Hack Squat",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_High_Row": {
+    "hidden": true,
     "family": "High Row",
     "variant": "Panatta Super High Row",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_Horizontal_Bench_Press": {
+    "hidden": true,
     "family": "Chest Press",
     "variant": "Panatta Super Horizontal Bench Press",
     "brand": "Panatta",
@@ -3107,6 +3124,7 @@
     ]
   },
   "Panatta_Super_Horizontal_Multi_Press": {
+    "hidden": true,
     "family": "Chest Press",
     "variant": "Panatta Super Horizontal Multi Press",
     "brand": "Panatta",
@@ -3116,6 +3134,7 @@
     ]
   },
   "Panatta_Super_Inclined_Bench_Press": {
+    "hidden": true,
     "family": "Chest Press",
     "variant": "Panatta Super Inclined Bench Press",
     "brand": "Panatta",
@@ -3125,6 +3144,7 @@
     ]
   },
   "Panatta_Super_Inclined_Chest_Press": {
+    "hidden": true,
     "family": "Chest Press",
     "variant": "Panatta Super Inclined Chest Press",
     "brand": "Panatta",
@@ -3134,6 +3154,7 @@
     ]
   },
   "Panatta_Super_Lat_Machine_Convergent": {
+    "hidden": true,
     "family": "Lat Pulldown",
     "variant": "Panatta Super Lat Machine Convergent",
     "brand": "Panatta",
@@ -3144,18 +3165,21 @@
     ]
   },
   "Panatta_Super_Leg_Press_45_Degree": {
+    "hidden": true,
     "family": "Leg Press",
     "variant": "Panatta Super Leg Press 45 Degree",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_Low_Row": {
+    "hidden": true,
     "family": "Row",
     "variant": "Panatta Super Low Row",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_Middle_Chest_Flight_Machine": {
+    "hidden": true,
     "family": "Chest Fly",
     "variant": "Panatta Super Middle Chest Flight Machine",
     "brand": "Panatta",
@@ -3167,30 +3191,35 @@
     ]
   },
   "Panatta_Super_Pendulum_Squat": {
+    "hidden": true,
     "family": "Pendulum Squat",
     "variant": "Panatta Super Pendulum Squat",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_Pullover_Machine": {
+    "hidden": true,
     "family": "Pullover",
     "variant": "Panatta Super Pullover Machine",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_Rowing": {
+    "hidden": true,
     "family": "Row",
     "variant": "Panatta Super Rowing",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_Shrug_Machine": {
+    "hidden": true,
     "family": "Shrug",
     "variant": "Panatta Super Shrug Machine",
     "brand": "Panatta",
     "loading": "plate"
   },
   "Panatta_Super_Upper_Chest_Flight_Machine": {
+    "hidden": true,
     "family": "Chest Fly",
     "variant": "Panatta Super Upper Chest Flight Machine",
     "brand": "Panatta",
@@ -3202,6 +3231,7 @@
     ]
   },
   "Panatta_Super_Vertical_Chest_Press": {
+    "hidden": true,
     "family": "Chest Press",
     "variant": "Panatta Super Vertical Chest Press",
     "brand": "Panatta",
@@ -3211,6 +3241,7 @@
     ]
   },
   "Panatta_Three_Angles_Biceps_Machine": {
+    "hidden": true,
     "family": "Biceps Curl",
     "variant": "Panatta Three Angles Biceps Machine",
     "brand": "Panatta",
@@ -3220,6 +3251,7 @@
     ]
   },
   "Panatta_Three_Angles_Triceps_Machine": {
+    "hidden": true,
     "family": "Triceps Extension",
     "variant": "Panatta Three Angles Triceps Machine",
     "brand": "Panatta",
@@ -3884,6 +3916,7 @@
       "side raise",
       "side lateral",
       "lat raise",
+      "side delt raise",
       "seated side lateral raise"
     ]
   },
@@ -3939,6 +3972,7 @@
       "side raise",
       "side lateral",
       "lat raise",
+      "side delt raise",
       "side lateral raise"
     ]
   },
@@ -4541,7 +4575,8 @@
       "standing low-pulley deltoid raise",
       "side raise",
       "side lateral",
-      "lat raise"
+      "lat raise",
+      "side delt raise"
     ]
   },
   "Standing_Low-Pulley_One-Arm_Triceps_Extension": {
@@ -5455,7 +5490,8 @@
       "leaning lateral raise",
       "side raise",
       "side lateral",
-      "lat raise"
+      "lat raise",
+      "side delt raise"
     ]
   },
   "local:lateral-raise-machine": {
@@ -5465,7 +5501,8 @@
     "aliases": [
       "side raise",
       "side lateral",
-      "lat raise"
+      "lat raise",
+      "side delt raise"
     ]
   },
   "local:leg-press-horizontal": {

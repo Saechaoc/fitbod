@@ -16,8 +16,8 @@
 //  saved-name tests (prove `materialize` and `updateExisting(in:)` store
 //  `name` and `canonicalName` without outer whitespace, ticket T54), a
 //  `snapshot()` equality test (proves the dirty-detection contract the
-//  editor's `Discard Changes?` confirmation relies on) and a family and
-//  brand test (RM-022).
+//  editor's `Discard Changes?` confirmation relies on) and a family test
+//  (RM-022).
 //
 //  These tests are deliberately decoupled from the SwiftUI editor view
 //  — they exercise the pure value-type validation logic in isolation.
@@ -112,9 +112,9 @@ struct CustomExerciseDraftTests {
         #expect(!saved.isCardio && saved.trackingRaw == Tracking.weightReps.rawValue)
     }
 
-    @Test("Family and brand save on create and update, a brand only on equipment that takes one, and both make the draft dirty")
+    @Test("A family saves on create and update and makes the draft dirty; an edit keeps a stored brand")
     @MainActor
-    func familyAndBrand() throws {
+    func family() throws {
         let d = CustomExerciseDraft()
         d.name = "Iso-Lateral Chest Press"
         d.equipment = .machine
@@ -122,20 +122,18 @@ struct CustomExerciseDraftTests {
         let untouched = d.snapshot()
         d.familyName = "Chest Press"
         #expect(d.snapshot() != untouched, "picking a family makes the draft dirty")
-        let familyPicked = d.snapshot()
-        d.brand = MachineBrand.hammerStrength.rawValue
-        #expect(d.snapshot() != familyPicked, "picking a brand makes the draft dirty")
 
         let ctx = try LoggerFixtures.makeContext()
         let saved = try d.materialize(into: ctx, allMuscles: [])
-        #expect(saved.familyName == "Chest Press" && saved.brand == "Hammer Strength")
+        // A machine is named in the workout (RM-066), never on the exercise.
+        #expect(saved.familyName == "Chest Press" && saved.brand == nil)
 
-        // A barbell takes no brand: the edit drops it and keeps the family.
+        // A brand saved before RM-066 survives an edit.
+        saved.brand = MachineBrand.hammerStrength.rawValue
         d.editingExisting = saved
         d.equipment = .barbell
-        #expect(!d.takesBrand)
         try d.updateExisting(in: ctx, allMuscles: [])
-        #expect(saved.familyName == "Chest Press" && saved.brand == nil)
+        #expect(saved.familyName == "Chest Press" && saved.brand == "Hammer Strength")
 
         d.familyName = nil
         try d.updateExisting(in: ctx, allMuscles: [])

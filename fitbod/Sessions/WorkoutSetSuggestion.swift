@@ -154,10 +154,15 @@ struct WorkoutSetSuggestions {
         return repeated
     }
 
+    /// The last finished set of an earlier log of this exercise in this
+    /// workout on the same machine (RM-066): another machine's load does not
+    /// carry over, as after a switch partway through.
     private func precedingExerciseSet() -> SetEntry? {
         guard let id = exercise.exercise?.id else { return nil }
         let earlier = (exercise.session?.exercises ?? [])
-            .filter { $0.orderIndex < exercise.orderIndex && $0.exercise?.id == id }
+            .filter {
+                $0.orderIndex < exercise.orderIndex && $0.exercise?.id == id && $0.machine?.id == exercise.machine?.id
+            }
             .sorted { $0.orderIndex > $1.orderIndex }
         for log in earlier {
             if let set = SessionSetActions.ordered(log).last(where: { Self.isReference($0, tracking: tracking) }) {

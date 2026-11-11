@@ -37,6 +37,9 @@ public final class SessionExercise {
     @Attribute(.unique) public var id: UUID = UUID()
     public var session: Session? = nil
     public var exercise: Exercise? = nil
+    /// The machine this exercise was done on in this workout (RM-066), or
+    /// nil when none was named. Loads compare only within one machine.
+    public var machine: MachineProfile? = nil
     public var orderIndex: Int = 0
 
     public var targetSets: Int = 3

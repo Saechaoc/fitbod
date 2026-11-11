@@ -11,6 +11,7 @@
 //   3-cell stat strip: 'Workouts · 30d' / 'Tonnage' bruSignal / 'PRs · 30d'
 //   BRUDivider(.ink)
 //   IntentFilterChipRow full-bleed strip (2pt rules drawn internally)
+//   MachineFilterChipRow, when the exercise was done on more than one machine (RM-066)
 //   set-count summary row
 //   BRUDivider(.hair)
 //   one ExerciseHistoryRow per workout, newest first; the row carries the date
@@ -48,6 +49,7 @@ public struct ExerciseHistoryView: View {
 
     /// nil = "ALL" — no intent filter. Bound to IntentFilterChipRow.
     @State private var intentFilter: Intent? = nil
+    @State private var machineFilter: MachineFilter = .all
 
     /// Navigation state for "PROGRESS" HeaderAction — pushes ExerciseProgressView
     /// on the stack that pushed this view (Library's).
@@ -81,6 +83,7 @@ public struct ExerciseHistoryView: View {
                 FilteredHistoryContent(
                     exercise: exercise,
                     intentFilter: $intentFilter,
+                    machineFilter: $machineFilter,
                     onHistoryChanged: { count in
                         hasHistory = count > 0
                     }
@@ -111,6 +114,7 @@ public struct ExerciseHistoryView: View {
 private struct FilteredHistoryContent: View {
     let exercise: Exercise
     @Binding var intentFilter: Intent?
+    @Binding var machineFilter: ExerciseHistoryView.MachineFilter
 
     /// Callback to inform the outer view whether any history exists (drives PROGRESS affordance).
     let onHistoryChanged: (Int) -> Void
@@ -118,9 +122,13 @@ private struct FilteredHistoryContent: View {
     @Query private var sessionExercises: [SessionExercise]
     @Environment(\.weightUnit) private var defaultUnit
 
-    init(exercise: Exercise, intentFilter: Binding<Intent?>, onHistoryChanged: @escaping (Int) -> Void) {
+    init(
+        exercise: Exercise, intentFilter: Binding<Intent?>, machineFilter: Binding<ExerciseHistoryView.MachineFilter>,
+        onHistoryChanged: @escaping (Int) -> Void
+    ) {
         self.exercise = exercise
         self._intentFilter = intentFilter
+        self._machineFilter = machineFilter
         self.onHistoryChanged = onHistoryChanged
 
         // Pitfall 1 workaround: capture comparison value into local before #Predicate
@@ -134,8 +142,14 @@ private struct FilteredHistoryContent: View {
     }
 
     var body: some View {
-        let completed = completedSets
-        let countsByIntent = buildCounts()
+        // The machine strip shows when the sets were done on two machines or
+        // more, or on one and on none; without it every machine's sets show.
+        let machineOptions = ExerciseHistoryView.machineOptions(
+            in: ExerciseHistoryView.completedSets(from: sessionExercises, intent: nil)
+        )
+        let machine = machineOptions.count >= 2 ? machineFilter : .all
+        let completed = ExerciseHistoryView.completedSets(from: sessionExercises, intent: intentFilter, machine: machine)
+        let countsByIntent = buildCounts(machine: machine)
         let totalCount = completed.count
         // The PR replay runs once: the rows' "★ PR" and "PRs · 30d" read it.
         let prSetIDs = ExerciseHistoryView.prSets(from: completed)
@@ -169,6 +183,12 @@ private struct FilteredHistoryContent: View {
 
         // Intent filter chip row (2pt rules drawn internally)
         IntentFilterChipRow(filter: $intentFilter, counts: countsByIntent)
+        if machineOptions.count >= 2 {
+            let inIntent = ExerciseHistoryView.completedSets(from: sessionExercises, intent: intentFilter)
+            MachineFilterChipRow(filter: $machineFilter, options: machineOptions.map { option in
+                (option.filter, option.label, inIntent.filter { option.filter.includes($0.sessionExercise) }.count)
+            })
+        }
 
         // Set-count summary row: the sets and the workouts the list shows
         HStack {
@@ -242,11 +262,6 @@ private struct FilteredHistoryContent: View {
 
     // MARK: - Computed properties
 
-    /// All completed working sets, post-filtered by intent if filter is active.
-    private var completedSets: [(setEntry: SetEntry, sessionExercise: SessionExercise)] {
-        ExerciseHistoryView.completedSets(from: sessionExercises, intent: intentFilter)
-    }
-
     /// Tonnage display label (e.g. "71.2k").
     private func tonnageLabel(from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]) -> String {
         let total = sets.reduce(0.0) { $0 + $1.setEntry.tonnage }
@@ -256,10 +271,10 @@ private struct FilteredHistoryContent: View {
         return "\(Int(total))"
     }
 
-    /// Counts by intent for IntentFilterChipRow.
-    private func buildCounts() -> [Intent?: Int] {
+    /// Counts by intent for IntentFilterChipRow, on the machine shown.
+    private func buildCounts(machine: ExerciseHistoryView.MachineFilter) -> [Intent?: Int] {
         var counts: [Intent?: Int] = [:]
-        for se in sessionExercises {
+        for se in sessionExercises where machine.includes(se) {
             let sets = (se.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
             if sets.isEmpty { continue }
             let intent = se.session?.intent
@@ -349,13 +364,14 @@ extension ExerciseHistoryView {
 
     /// The sets the history shows: the completed working sets of the
     /// exercise's logs, from the workouts of `intent`, or of any intent
-    /// when it is nil.
+    /// when it is nil, on `machine`.
     static func completedSets(
         from logs: [SessionExercise],
-        intent: Intent?
+        intent: Intent?,
+        machine: MachineFilter = .all
     ) -> [(setEntry: SetEntry, sessionExercise: SessionExercise)] {
         let intentGate: String? = intent?.rawValue
-        return logs.flatMap { se in
+        return logs.filter(machine.includes).flatMap { se in
             (se.sets ?? [])
                 .filter { $0.isComplete && !$0.isWarmup }
                 .map { (setEntry: $0, sessionExercise: se) }
@@ -384,6 +400,46 @@ extension ExerciseHistoryView {
     /// The start of the last 30 days, the window both "· 30d" cells count.
     private static func last30DaysStart(now: Date) -> Date {
         Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
+    }
+}
+
+// MARK: - Machines (RM-066)
+
+extension ExerciseHistoryView {
+
+    /// Which machine's sets the history shows.
+    enum MachineFilter: Hashable {
+        case all
+        /// The sets logged without a machine.
+        case noMachine
+        case machine(UUID)
+
+        func includes(_ log: SessionExercise) -> Bool {
+            switch self {
+            case .all: true
+            case .noMachine: log.machine == nil
+            case .machine(let id): log.machine?.id == id
+            }
+        }
+    }
+
+    /// The machine strip's choices for `sets`: each machine they were done
+    /// on, the most recent first, then NO MACHINE when some named none.
+    static func machineOptions(
+        in sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
+    ) -> [(filter: MachineFilter, label: String)] {
+        var latest: [UUID: (name: String, at: Date)] = [:]
+        var hasNone = false
+        for log in sets.map(\.sessionExercise) {
+            guard let machine = log.machine else { hasNone = true; continue }
+            let at = log.session?.startedAt ?? .distantPast
+            if at >= latest[machine.id]?.at ?? .distantPast { latest[machine.id] = (machine.displayName, at) }
+        }
+        // Two machines of one workout, a switch partway through, go by name.
+        let machines = latest
+            .sorted { $0.value.at != $1.value.at ? $0.value.at > $1.value.at : $0.value.name < $1.value.name }
+            .map { (filter: MachineFilter.machine($0.key), label: $0.value.name) }
+        return machines + (hasNone ? [(filter: .noMachine, label: "No machine")] : [])
     }
 }
 
@@ -469,12 +525,17 @@ extension ExerciseHistoryView {
         // All working sets for this session, across every log of the
         // exercise in it: in log order, then set order (`orderIndex`
         // both times), whatever order SwiftData returns them in.
-        let sets = pairs
+        let ordered = pairs
             .sorted {
                 ($0.sessionExercise.orderIndex, $0.setEntry.orderIndex)
                     < ($1.sessionExercise.orderIndex, $1.setEntry.orderIndex)
             }
-            .map(\.setEntry)
+        let sets = ordered.map(\.setEntry)
+        // The machines the sets were done on, each once, in log order.
+        var machines: [String] = []
+        for name in ordered.compactMap({ $0.sessionExercise.machine?.displayName }) where !machines.contains(name) {
+            machines.append(name)
+        }
 
         // The top set is the set the e1RM comes from, the one with the
         // highest e1RM. When no set has an e1RM, all of them 0 or less so
@@ -503,7 +564,8 @@ extension ExerciseHistoryView {
             e1RMLabel: e1RMLabel,
             topSetLabel: topSet.map { setLabel($0, unit: unit) } ?? "—",
             setCount: sets.count,
-            setChips: sets.map { setLabel($0, unit: unit) }
+            setChips: sets.map { setLabel($0, unit: unit) },
+            machineLabel: machines.isEmpty ? nil : machines.joined(separator: " · ")
         )
     }
 

@@ -15,10 +15,9 @@
 //
 //  - `BRUHeaderBar`: CANCEL, "New exercise" or "Edit exercise", SAVE.
 //  - NAME, in the condensed display font.
-//  - CLASSIFICATION: Family, Equipment, Brand and Tracks each open a BRU
-//    list: the store's families, every `Equipment.allCases`, the
-//    `MachineBrand` cases with None and Other (shown only for equipment that
-//    takes a brand), and every `Tracking.allCases`; Mechanic is a
+//  - CLASSIFICATION: Family, Equipment and Tracks each open a BRU list: the
+//    store's families, every `Equipment.allCases` and every
+//    `Tracking.allCases`; Mechanic is a
 //    `BRUSegmentedControl`, left out for cardio. The design's PATTERN,
 //    TEMPO, BAR WT and INCREMENT cells are left out, because an exercise
 //    has no such fields.
@@ -98,7 +97,6 @@ struct CustomExerciseEditor: View {
     @State private var presentingEquipmentPicker = false
     @State private var presentingTrackingPicker = false
     @State private var presentingFamilyPicker = false
-    @State private var presentingBrandPicker = false
     @State private var presentingCancelConfirmation = false
     @State private var presentingDeleteConfirmation = false
     @State private var persistenceError: String?
@@ -230,22 +228,6 @@ struct CustomExerciseEditor: View {
                 )
             }
 
-            if draft.takesBrand {
-                BRUDivider(.hair)
-                listCell(
-                    "Brand", value: draft.brand ?? "None",
-                    hint: "Opens the list of brands", identifier: "customExercise.brand"
-                ) {
-                    presentingBrandPicker = true
-                }
-                .sheet(isPresented: $presentingBrandPicker) {
-                    ChoicePickerSheet(
-                        title: "Brand", options: Self.brandOptions, selection: $draft.brand,
-                        name: { $0 ?? "None" }, identifier: { "customExercise.brand.\($0 ?? "none")" }
-                    )
-                }
-            }
-
             BRUDivider(.hair)
 
             // What a set records. It follows the equipment until it is picked.
@@ -270,9 +252,6 @@ struct CustomExerciseEditor: View {
             }
         }
     }
-
-    /// None, each `MachineBrand`, then Other for a maker the list lacks.
-    private static let brandOptions: [String?] = [nil] + MachineBrand.allCases.map { Optional($0.rawValue) } + ["Other"]
 
     /// A classification cell that opens a list: its label, the current
     /// choice and a chevron.
@@ -599,8 +578,8 @@ struct CustomExerciseEditor: View {
 
 /// A classification cell's BRU list: one row per choice, the current one
 /// marked. A tap picks it and closes the sheet; CANCEL keeps the current
-/// one.
-private struct ChoicePickerSheet<Value: Hashable>: View {
+/// one. The machine picker's maker list uses it too (RM-066).
+struct ChoicePickerSheet<Value: Hashable>: View {
     let title: String
     let options: [Value]
     @Binding var selection: Value

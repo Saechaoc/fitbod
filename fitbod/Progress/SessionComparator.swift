@@ -22,12 +22,16 @@
 //    4. currentSession.startedAt - prior.session.startedAt ∈ (0, 14d)
 //    5. prior.session counts as a session: finished and not empty
 //       (`SessionSetActions.countedWorkouts`, decision 6)
+//    6. prior.machine?.id == current.machine?.id: loads compare only
+//       within one machine, and logs with no machine with each other
+//       (RM-066)
 //
-//  Per exercise (not per session) so multi-exercise sessions surface
-//  row-by-row diffs even when a single exercise pair lacks a comparable
-//  prior. A workout that logs an exercise more than once gives one row,
-//  in the order of its first log, read across every log of it; the
-//  prior side reads every log of it in the most recent matching workout.
+//  Per exercise and machine (not per session) so multi-exercise sessions
+//  surface row-by-row diffs even when a single exercise pair lacks a
+//  comparable prior. A workout that logs an exercise more than once on one
+//  machine gives one row, in the order of its first log, read across every
+//  log of it; the prior side reads every log of it on that machine in the
+//  most recent matching workout.
 //  Each row takes its name from its first log's `displayName`, the name
 //  the workout logged it under, else the live name.
 //
@@ -92,6 +96,8 @@ public struct TopSetSummary: Sendable, Equatable {
 public struct SessionComparisonRow: Sendable, Equatable {
     public let exerciseID: UUID
     public let exerciseName: String
+    /// The machine both sides were done on (RM-066), nil for none.
+    public let machineName: String?
     public let thisWeekTopSet: TopSetSummary?
     public let lastWeekTopSet: TopSetSummary?
     public let deltaWeight: Double?
@@ -101,6 +107,7 @@ public struct SessionComparisonRow: Sendable, Equatable {
     public init(
         exerciseID: UUID,
         exerciseName: String,
+        machineName: String?,
         thisWeekTopSet: TopSetSummary?,
         lastWeekTopSet: TopSetSummary?,
         deltaWeight: Double?,
@@ -109,6 +116,7 @@ public struct SessionComparisonRow: Sendable, Equatable {
     ) {
         self.exerciseID = exerciseID
         self.exerciseName = exerciseName
+        self.machineName = machineName
         self.thisWeekTopSet = thisWeekTopSet
         self.lastWeekTopSet = lastWeekTopSet
         self.deltaWeight = deltaWeight
@@ -124,35 +132,38 @@ public enum SessionComparator {
 
     /// Compare every exercise in `current` against its most-recent
     /// matching prior workout per the corrected D-22 rule.
-    /// Returns one row per exercise in `current`, in the order of its
-    /// first log (`orderIndex` asc), named as that log was logged. Each
-    /// side reads every log of the exercise in its workout.
+    /// Returns one row per exercise and machine in `current`, in the order
+    /// of its first log (`orderIndex` asc), named as that log was logged.
+    /// Each side reads every log of the exercise on that machine in its
+    /// workout.
     public static func compare(
         current: Session,
         context: ModelContext,
         windowDays: Int = 14
     ) -> [SessionComparisonRow] {
-        // Each exercise's logs, in the order of its first log. A log whose
-        // exercise was deleted from the library stays a row of its own.
-        var groups: [(exercise: Exercise?, logs: [SessionExercise])] = []
-        var groupIndex: [UUID: Int] = [:]
+        // Each exercise's logs per machine, in the order of its first log. A
+        // log whose exercise was deleted from the library stays a row of its
+        // own.
+        var groups: [(exercise: Exercise?, machine: MachineProfile?, logs: [SessionExercise])] = []
+        var groupIndex: [[UUID?]: Int] = [:]
         for se in (current.exercises ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) {
             guard let exercise = se.exercise else {
-                groups.append((nil, [se]))
+                groups.append((nil, se.machine, [se]))
                 continue
             }
-            if let index = groupIndex[exercise.id] {
+            let key: [UUID?] = [exercise.id, se.machine?.id]
+            if let index = groupIndex[key] {
                 groups[index].logs.append(se)
             } else {
-                groupIndex[exercise.id] = groups.count
-                groups.append((exercise, [se]))
+                groupIndex[key] = groups.count
+                groups.append((exercise, se.machine, [se]))
             }
         }
 
         var rows: [SessionComparisonRow] = []
         rows.reserveCapacity(groups.count)
 
-        for (exercise, logs) in groups {
+        for (exercise, machine, logs) in groups {
             let exerciseID = exercise?.id ?? UUID()
             // The name the workout logged it under, so renaming or deleting
             // the exercise in the library later never renames the row.
@@ -160,6 +171,7 @@ public enum SessionComparator {
             let thisTop = topWorkingSet(in: logs)
             let priorLogs = findPriorMatch(
                 exerciseID: exercise?.id,
+                machineID: machine?.id,
                 currentSession: current,
                 context: context,
                 windowDays: windowDays
@@ -181,6 +193,7 @@ public enum SessionComparator {
             rows.append(SessionComparisonRow(
                 exerciseID: exerciseID,
                 exerciseName: exerciseName,
+                machineName: machine?.displayName,
                 thisWeekTopSet: thisTop,
                 lastWeekTopSet: lastTop,
                 deltaWeight: dWeight,
@@ -195,7 +208,9 @@ public enum SessionComparator {
     /// Find the most-recent prior workout matching the
     /// `(sourceRoutineID, exerciseID, intent)` triple within the
     /// strict 14-day window (> 0 days, < windowDays days), and return
-    /// every log of the exercise in it, in workout order (`orderIndex`).
+    /// every log of the exercise on `machineID` in it, in workout order
+    /// (`orderIndex`). A workout with the exercise only on another machine
+    /// is passed over (RM-066).
     /// Only a workout that counts as a session matches, so an unfinished
     /// or empty one is passed over for the one before it (decision 6).
     ///
@@ -204,6 +219,7 @@ public enum SessionComparator {
     /// workout matches.
     public static func findPriorMatch(
         exerciseID: UUID?,
+        machineID: UUID?,
         currentSession: Session,
         context: ModelContext,
         windowDays: Int = 14
@@ -236,7 +252,7 @@ public enum SessionComparator {
             // Walk the session's exercises in Swift — Phase 1 cascade
             // rule keeps these eager-loaded with the parent Session.
             let logs = (session.exercises ?? [])
-                .filter { $0.exercise?.id == targetExerciseID }
+                .filter { $0.exercise?.id == targetExerciseID && $0.machine?.id == machineID }
                 .sorted { $0.orderIndex < $1.orderIndex }
             if !logs.isEmpty {
                 return logs

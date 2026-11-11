@@ -109,6 +109,29 @@ private enum PreCatalogShape {
     }
 }
 
+/// `SessionExercise` as it was before RM-066 named machines, attribute for
+/// attribute, with no `MachineProfile` table. The relationships are left
+/// out, as in `PreCatalogShape`; the store still opens.
+private enum PreMachineShape {
+    @Model final class SessionExercise {
+        @Attribute(.unique) var id: UUID = UUID()
+        var orderIndex: Int = 0
+        var targetSets: Int = 3
+        var targetRepsLow: Int = 8
+        var targetRepsHigh: Int = 12
+        var targetRPE: Double? = nil
+        var targetRIR: Int? = nil
+        var prescribedRestSeconds: Int = 120
+        var tempo: String? = nil
+        var tracksTempo: Bool = false
+        var tracksPartialReps: Bool = false
+        var prescribedWeight: Double? = nil
+        var pinnedNote: String? = nil
+        var exerciseNameSnapshot: String = ""
+        init() {}
+    }
+}
+
 @MainActor
 @Suite("IncompatibleStoreRecovery", .serialized)
 struct IncompatibleStoreRecoveryTests {
@@ -301,6 +324,46 @@ struct IncompatibleStoreRecoveryTests {
         #expect(set.durationSeconds == nil)
         #expect(set.distanceMeters == nil)
         #expect(set.level == nil)
+    }
+
+    @Test("(b) a store from before machines opens in place, its logs without a machine, and takes one")
+    func preMachineStoreOpensInPlace() throws {
+        let dir = try makeDirectory()
+        defer { try? fm.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("default.store")
+        let logID = UUID()
+
+        do {
+            let schema = Schema([PreMachineShape.SessionExercise.self])
+            let container = try ModelContainer(
+                for: schema, configurations: ModelConfiguration(schema: schema, url: url)
+            )
+            let ctx = ModelContext(container)
+            let log = PreMachineShape.SessionExercise()
+            log.id = logID
+            log.exerciseNameSnapshot = "Hack Squat (Machine)"
+            log.prescribedWeight = 140
+            ctx.insert(log)
+            try ctx.save()
+        }
+
+        let container = try FitbodModelContainer.make(storeURL: url, defaults: try stampedDefaults().defaults)
+        #expect(!fm.fileExists(atPath: dir.appendingPathComponent("IncompatibleStores").path))
+
+        let ctx = ModelContext(container)
+        let log = try #require(try ctx.fetch(FetchDescriptor<SessionExercise>()).first)
+        #expect(log.id == logID)
+        #expect(log.exerciseNameSnapshot == "Hack Squat (Machine)" && log.prescribedWeight == 140)
+        #expect(log.machine == nil)
+
+        let machine = MachineProfile()
+        ctx.insert(machine)
+        machine.manufacturer = "Panatta"
+        machine.model = "Super Hack Squat"
+        log.machine = machine
+        try ctx.save()
+        let reread = try #require(try ModelContext(container).fetch(FetchDescriptor<SessionExercise>()).first)
+        #expect(reread.machine?.displayName == "Panatta Super Hack Squat")
     }
 
     // MARK: - (c) failures that are not the schema

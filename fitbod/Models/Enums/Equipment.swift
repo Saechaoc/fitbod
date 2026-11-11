@@ -37,4 +37,10 @@ public enum Equipment: String, CaseIterable, Sendable {
     public var displayName: String {
         self == .ezBar ? "EZ Bar" : rawValue.replacingOccurrences(of: "_", with: " ").capitalized
     }
+
+    /// Equipment whose maker and model change the load (RM-066), so a
+    /// logged exercise on it can name its machine.
+    public var takesMachine: Bool {
+        [.machine, .smithMachine, .cable, .cardioMachine].contains(self)
+    }
 }

@@ -1,0 +1,567 @@
+[
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Converging Chest Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Diverging Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Leg Extension",
+    "families": [
+      "Leg Extension"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Lying Leg Curl",
+    "families": [
+      "Leg Curl"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Pivot Leg Press",
+    "families": [
+      "Leg Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Scorpion High Row",
+    "families": [
+      "High Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Seated Iso Biceps Curl",
+    "families": [
+      "Biceps Curl"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Seated Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Seated Triceps Extension",
+    "families": [
+      "Triceps Extension"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Shoulder Press",
+    "families": [
+      "Overhead Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Upright Decline Fly",
+    "families": [
+      "Chest Fly"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Forgex Wide Chest Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Biceps Curl",
+    "families": [
+      "Biceps Curl"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Donkey Calf Raise",
+    "families": [
+      "Calf Raise"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Glute Isolator",
+    "families": [
+      "Glute Kickback"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Inner/Outer Thigh",
+    "families": [
+      "Hip Abduction",
+      "Hip Adduction"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Lat Pullover",
+    "families": [
+      "Pullover"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Leg Extension",
+    "families": [
+      "Leg Extension"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Lying Leg Curl",
+    "families": [
+      "Leg Curl"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Overhead Triceps Extension",
+    "families": [
+      "Triceps Extension"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Pec Fly/Rear Delt",
+    "families": [
+      "Chest Fly",
+      "Rear Delt Fly"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Standing Calf Raise",
+    "families": [
+      "Calf Raise"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Standing Lateral Raise",
+    "families": [
+      "Lateral Raise"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "M1 Standing Leg Curl",
+    "families": [
+      "Leg Curl"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Belt Squat",
+    "families": [
+      "Belt Squat"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Bilateral Leg Press",
+    "families": [
+      "Leg Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Glute Bridge",
+    "families": [
+      "Glute Bridge"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Hip Hack Press",
+    "families": [
+      "Hack Squat"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Horizontal Leg Press",
+    "families": [
+      "Leg Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Incline Fly",
+    "families": [
+      "Chest Fly"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Iso Converging Shoulder Press",
+    "families": [
+      "Overhead Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Iso Flat Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Iso Incline Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Iso Lat Pulldown",
+    "families": [
+      "Lat Pulldown"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Iso Multi Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Leg Extension/Seated Leg Curl",
+    "families": [
+      "Leg Curl",
+      "Leg Extension"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Lever Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Linear Hack Squat",
+    "families": [
+      "Hack Squat"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Linear Leg Press",
+    "families": [
+      "Leg Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Linear Smith Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Linear Smith Shoulder Press",
+    "families": [
+      "Overhead Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Multi-Grip Pulldown/High Row",
+    "families": [
+      "High Row",
+      "Lat Pulldown"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Pendulum Squat",
+    "families": [
+      "Pendulum Squat"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Posterior Chain Developer",
+    "families": [
+      "Back Extension"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Power Squat",
+    "families": [
+      "Squat"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Seated Calf Raise",
+    "families": [
+      "Calf Raise"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Standing Chest Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded T-Bar Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Triceps Kickback/Dip",
+    "families": [
+      "Dip",
+      "Kickback"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Vertical Chest Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Vertical Leg Press",
+    "families": [
+      "Leg Press"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Vertical Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Arsenal Strength",
+    "model": "Reloaded Viking Press",
+    "families": [
+      "Overhead Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "3D Abductor",
+    "families": [
+      "Hip Abduction"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Back Deltoids",
+    "families": [
+      "Rear Delt Fly"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Gluteus Machine",
+    "families": [
+      "Glute Kickback"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Hip Thrust",
+    "families": [
+      "Hip Thrust"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Lateral Deltoids",
+    "families": [
+      "Lateral Raise"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Leg Curling",
+    "families": [
+      "Leg Curl"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Leg Extension",
+    "families": [
+      "Leg Extension"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Declined Chest Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Deltoid Press",
+    "families": [
+      "Overhead Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Hack Squat",
+    "families": [
+      "Hack Squat"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super High Row",
+    "families": [
+      "High Row"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Horizontal Bench Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Horizontal Multi Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Inclined Bench Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Inclined Chest Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Lat Machine Convergent",
+    "families": [
+      "Lat Pulldown"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Leg Press 45 Degree",
+    "families": [
+      "Leg Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Low Row",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Middle Chest Flight Machine",
+    "families": [
+      "Chest Fly"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Pendulum Squat",
+    "families": [
+      "Pendulum Squat"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Pullover Machine",
+    "families": [
+      "Pullover"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Rowing",
+    "families": [
+      "Row"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Shrug Machine",
+    "families": [
+      "Shrug"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Upper Chest Flight Machine",
+    "families": [
+      "Chest Fly"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Super Vertical Chest Press",
+    "families": [
+      "Chest Press"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Three Angles Biceps Machine",
+    "families": [
+      "Biceps Curl"
+    ]
+  },
+  {
+    "manufacturer": "Panatta",
+    "model": "Three Angles Triceps Machine",
+    "families": [
+      "Triceps Extension"
+    ]
+  }
+]

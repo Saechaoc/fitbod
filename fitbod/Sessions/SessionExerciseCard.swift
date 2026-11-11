@@ -74,6 +74,7 @@ public struct SessionExerciseCard: View {
     /// "View all similar exercises" asks for the full swap list, which
     /// opens once the variation sheet has gone.
     @State private var swapListAfterVariation = false
+    @State private var presentingMachinePicker = false
 
     @Environment(\.modelContext) private var phase5ModelContext
 
@@ -185,7 +186,7 @@ public struct SessionExerciseCard: View {
                 if collapsed {
                     BRUDivider(.ink)
                 } else {
-                    headerDetails(explanation, offers: offers)
+                    headerDetails(explanation, offers: offers, otherMachine: guidance?.otherMachine)
                 }
             }
             .cardRow()
@@ -228,6 +229,12 @@ public struct SessionExerciseCard: View {
             } message: {
                 Text("The workout is still saved as it was. Try the variation again.")
             }
+            .sheet(isPresented: $presentingMachinePicker) {
+                MachinePickerSheet(
+                    sessionExercise: sessionExercise,
+                    choices: SessionMachine.choices(for: sessionExercise.exercise, in: ctx)
+                )
+            }
 
             if !collapsed {
                 // SetRows — one List row each so swipe-to-delete works.
@@ -251,9 +258,10 @@ public struct SessionExerciseCard: View {
                                 onEditCommitted: onEditCommitted,
                                 startsNext: set.id == nextSetID
                             )
-                            // A swap/Undo changes the inputs behind these local
-                            // text fields, not the persisted set's identity.
-                            .id(sessionExercise.exercise?.id)
+                            // A swap, Undo or machine change resets the inputs
+                            // behind these local text fields, not the persisted
+                            // set's identity.
+                            .id(inputsID)
                             if sessionExercise.tracksTempo {
                                 TempoEntryRow(entry: set)
                             }
@@ -308,8 +316,8 @@ public struct SessionExerciseCard: View {
         }
         .listSectionSeparator(.hidden)
         // Phase 5 PROG-06 — evaluate plateau signal on first appear and
-        // whenever a swap changes the exercise.
-        .task(id: sessionExercise.exercise?.id) {
+        // whenever a swap changes the exercise or its machine changes.
+        .task(id: inputsID) {
             expandedEffortSetID = nil
             evaluatePlateau()
         }
@@ -358,14 +366,16 @@ public struct SessionExerciseCard: View {
             exerciseID: exerciseID,
             intent: intent,
             in: phase5ModelContext,
-            settings: settings
+            settings: settings,
+            machineID: sessionExercise.machine?.id
         )
         if case .stalled = plateauSignal {
             suggestedAction = PlateauDetector.suggestedAction(
                 exerciseID: exerciseID,
                 intent: intent,
                 in: phase5ModelContext,
-                settings: settings
+                settings: settings,
+                machineID: sessionExercise.machine?.id
             )
         } else {
             suggestedAction = nil
@@ -406,9 +416,15 @@ public struct SessionExerciseCard: View {
     @ViewBuilder
     private func headerDetails(
         _ explanation: PrescriptionExplanation?,
-        offers: [UUID: WorkoutSetSuggestion]
+        offers: [UUID: WorkoutSetSuggestion],
+        otherMachine: PreviousMatchingIntentHit?
     ) -> some View {
         BRUDivider(.hair)
+
+        if sessionExercise.machine != nil || sessionExercise.exercise?.equipment.takesMachine == true {
+            machineRow(otherMachine: otherMachine)
+            BRUDivider(.hair)
+        }
 
         // A picked variation can be undone until a set of it is
         // logged; after that the logged sets belong to it.
@@ -520,7 +536,7 @@ public struct SessionExerciseCard: View {
             loggedWeight: topLoggedWeight,
             hasSetOffer: offers.values.contains { $0.weight != nil || $0.reps != nil || $0.durationSeconds != nil }
         )
-        .id(sessionExercise.exercise?.id)
+        .id(inputsID)
 
         // Stacked accessibility inputs carry their own labels; the
         // fixed-width table headings would split into fragments.
@@ -595,6 +611,57 @@ public struct SessionExerciseCard: View {
         }
 
         BRUDivider(.hair)
+    }
+
+    /// The machine this exercise is done on in this workout (RM-066): one
+    /// compact line that opens the picker. When the machine has no matching
+    /// workout of its own, a note says LAST TIME is from another one.
+    private func machineRow(otherMachine: PreviousMatchingIntentHit?) -> some View {
+        let name = sessionExercise.machine?.displayName
+        let note = otherMachine.map { Self.otherMachineNote($0, onMachine: name != nil) }
+        return Button {
+            presentingMachinePicker = true
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("Machine")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruMuted)
+                    Text(name ?? "None")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(name == nil ? Color.bruMuted : Color.bruInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 8)
+                    Text("›")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
+                }
+                if let note {
+                    Text(note)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(["Machine, \(name ?? "none")", note].compactMap { $0 }.joined(separator: ". "))
+        .accessibilityHint("Opens the list of machines")
+        .accessibilityIdentifier("card.machine.\(sessionExercise.orderIndex + 1)")
+    }
+
+    /// Why LAST TIME is from another machine, or from none, and nothing is
+    /// suggested from it.
+    static func otherMachineNote(_ reference: PreviousMatchingIntentHit, onMachine: Bool) -> String {
+        let start = onMachine ? "First time on this machine" : "No sets without a machine yet"
+        let source = reference.machineName ?? "sets with no machine"
+        return "\(start). LAST TIME shows \(source), and its loads don't carry over."
     }
 
     private func columnHeading(_ text: String, width: CGFloat) -> some View {
@@ -677,6 +744,12 @@ public struct SessionExerciseCard: View {
         return name.isEmpty ? "Exercise" : name
     }
 
+    /// What the set rows, the weight guidance and the plateau check are
+    /// built from: a swap or a machine change rebuilds them.
+    private var inputsID: [UUID?] {
+        [sessionExercise.exercise?.id, sessionExercise.machine?.id]
+    }
+
     /// A working set of this exercise is logged.
     private var hasLoggedWorkingSet: Bool {
         (sessionExercise.sets ?? []).contains { $0.isComplete && !$0.isWarmup }
@@ -730,8 +803,12 @@ public struct SessionExerciseCard: View {
     // MARK: - currentExplanation (Phase 3 plan 03-08)
 
     /// What WHY explains: `SessionFactory`'s prescription for this
-    /// exercise, frozen at the weight the sets were started with.
-    private func currentExplanation() -> (explanation: PrescriptionExplanation, prior: [SetEntry])? {
+    /// exercise on its machine, frozen at the weight the sets were started
+    /// with, and the other machine's top set when this one has no workout
+    /// of its own (RM-066).
+    private func currentExplanation() -> (
+        explanation: PrescriptionExplanation, prior: [SetEntry], otherMachine: PreviousMatchingIntentHit?
+    )? {
         let se = sessionExercise
         guard let session = se.session else { return nil }
         let prescription = SessionFactory.prescription(
@@ -742,13 +819,15 @@ public struct SessionExerciseCard: View {
             in: session,
             strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
             userSettings: settingsList.first,
-            context: ctx
+            context: ctx,
+            machine: se.machine
         )
         var explanation = prescription.explanation
         explanation.sessionIntent = session.intent
         return (
             explanation.frozen(at: se.prescribedWeight, unitLabel: unit.rawValue),
-            prescription.previousWorkingSets
+            prescription.previousWorkingSets,
+            prescription.otherMachineReference
         )
     }
 
