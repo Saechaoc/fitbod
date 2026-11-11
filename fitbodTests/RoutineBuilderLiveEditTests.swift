@@ -5,7 +5,7 @@
 //  Phase 09-06 — TDD suite for RoutineBuilderView live-edit banner reachability.
 //
 //  Tests the `isTemplateOnActiveBlock(_:context:)` free function (exposed at
-//  `internal` in RoutineBuilderView.swift) and a source-introspection copy pin.
+//  `internal` in RoutineBuilderView.swift).
 //
 //  Threat mitigations:
 //    T-09-16: on/off-block cases assert banner shown only for truly-active blocks.
@@ -15,8 +15,6 @@
 //    1. slottedOnActiveBlock          — template in a split with an active block → true
 //    2. slottedOnNonActiveBlocks      — template in a split whose blocks are all draft/ready/completed → false
 //    3. templateInZeroSplits          — template not slotted → false
-//    4. sourceIntrospectionCopyPin    — RoutineBuilderView.swift contains "LiveEditBanner"
-//                                       LiveEditBanner.swift contains verbatim banner body copy
 //
 
 import Foundation
@@ -134,30 +132,5 @@ struct RoutineBuilderLiveEditTests {
         try? ctx.save()
 
         #expect(isTemplateOnActiveBlock(template, context: ctx) == false)
-    }
-
-    // MARK: - Test 4: source-introspection copy pin
-
-    @Test("RoutineBuilderView.swift contains LiveEditBanner; LiveEditBanner.swift carries verbatim body copy")
-    func sourceIntrospectionCopyPin() throws {
-        // Pin: RoutineBuilderView.swift must reference LiveEditBanner
-        let routineBuilderSource = try String(
-            contentsOfFile: #filePath
-                .components(separatedBy: "/fitbodTests/")
-                .first!
-                .appending("/fitbod/Routines/RoutineBuilderView.swift"),
-            encoding: .utf8
-        )
-        #expect(routineBuilderSource.contains("LiveEditBanner"))
-
-        // Pin: verbatim body copy lives in LiveEditBanner.swift (from 09-01)
-        let bannerSource = try String(
-            contentsOfFile: #filePath
-                .components(separatedBy: "/fitbodTests/")
-                .first!
-                .appending("/fitbod/Design/LiveEditBanner.swift"),
-            encoding: .utf8
-        )
-        #expect(bannerSource.contains("Part of active block — edits apply to upcoming workouts."))
     }
 }

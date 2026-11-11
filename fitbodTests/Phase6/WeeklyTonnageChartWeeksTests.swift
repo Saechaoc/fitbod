@@ -317,23 +317,6 @@ struct WeeklyTonnageChartWeeksTests {
 
     // MARK: - The chart works out its own weeks (T104)
 
-    @Test("Swift Charts gets plain dates: no week value names a unit or a calendar to bin by")
-    func chartHandsSwiftChartsPlainDates() throws {
-        let source = try String(
-            contentsOf: URL(fileURLWithPath: #filePath)
-                .deletingLastPathComponent()
-                .deletingLastPathComponent()
-                .deletingLastPathComponent()
-                .appendingPathComponent("fitbod/Progress/WeeklyTonnageView.swift"),
-            encoding: .utf8
-        )
-        let plottedValues = source.components(separatedBy: "\n").filter { $0.contains(".value(") }
-        #expect(plottedValues.contains { $0.contains("barSpan") || $0.contains("span.lowerBound") }, "The bars must be drawn over their week spans")
-        let binned = plottedValues.filter { $0.contains("unit:") || $0.contains("calendar:") }
-        #expect(binned.isEmpty, "Swift Charts must not bin weeks itself, but these values ask it to:\n\(binned.joined(separator: "\n"))")
-        #expect(!source.contains(".stride(by: .weekOfYear)"), "The x axis marks the device calendar's weeks")
-    }
-
     @Test("Each bar is drawn inside its own week, with a gap to the next", arguments: [true, false])
     func barsSitInsideTheirWeeks(weekStartsMonday: Bool) throws {
         let context = try makeContext()

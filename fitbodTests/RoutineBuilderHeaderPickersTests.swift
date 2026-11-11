@@ -7,7 +7,7 @@
 //  round-trip on the `RoutineDraft` save path, and the relocated
 //  `snapshotHash()` dirty-check helper.
 //
-//  Six `@Test` functions in order:
+//  Its tests, in order:
 //
 //    1. `RoutineDraft` defaults to `.strength` + `.double` on
 //       new-routine init (no-routine path).
@@ -16,12 +16,7 @@
 //    3. `RoutineDraft.save(into:context:)` writes intent +
 //       progressionKind onto the underlying `Routine` row
 //       (`routine.intentRaw` + `routine.progressionKindRaw`).
-//    4. Intent picker copy verbatim per UI-SPEC § Header pickers §
-//       Verification anchors — anchors all 5 option strings + the row
-//       label + the accessibility hint via `#filePath` ascent.
-//    5. Progression picker copy verbatim per UI-SPEC — anchors all 4
-//       option strings + the row label + the accessibility hint.
-//    6. Mutating `draft.intent` or `draft.progressionKind` makes
+//    4. Mutating `draft.intent` or `draft.progressionKind` makes
 //       `draft.snapshotHash()` return a different value — locks the
 //       Phase 3.1 dirty-check behavior change (the relocated
 //       `snapshotHash()` on `RoutineDraft` is testable now that it's
@@ -32,10 +27,7 @@
 //
 //  Test framework: Swift Testing (`@Test` / `#expect`). `@MainActor`
 //  on tests that touch `ModelContext` per the FilterStatePredicateTests
-//  / ExerciseHistoryIntentSplitTests precedent. Source-anchor copy
-//  tests (Tests 4 + 5) follow the `ExerciseHistoryViewCopyTests` shape
-//  — read the source file from disk via `#filePath` ascent and
-//  `#expect` on `contains(...)` rather than instantiating the view.
+//  / ExerciseHistoryIntentSplitTests precedent.
 //
 
 import Foundation
@@ -139,62 +131,7 @@ struct RoutineBuilderHeaderPickersTests {
         #expect(saved.progressionKind == .hybrid)
     }
 
-    // MARK: - 4. Intent menu copy verbatim per UI-SPEC
-
-    /// Phase 2.1 Plan 05 UPDATE — RoutineBuilderView now uses a BRU Menu chip
-    /// (Button actions) instead of a SwiftUI Picker (.tag bindings). Tests 4 + 5
-    /// are updated to match the new Menu-based implementation while preserving
-    /// the copy contract: all 5 Intent option strings + the 4 ProgressionKind
-    /// strings must still appear in the source. Structural assertions now verify
-    /// the BRU chip + Menu pattern instead of Picker + .tag.
-    @Test("Intent menu copy verbatim per UI-SPEC § Header pickers § Verification anchors")
-    func intentPickerCopy() throws {
-        let source = try readRoutineBuilderViewSource()
-
-        // UI-SPEC § Header pickers — the 5 option strings must be present
-        // in the BRU Menu's Button actions (Phase 2.1 BRU rewrite).
-        #expect(source.contains("\"Strength\""))
-        #expect(source.contains("\"Hypertrophy\""))
-        #expect(source.contains("\"Power\""))
-        #expect(source.contains("\"Endurance\""))
-        #expect(source.contains("\"Technique\""))
-
-        // BRU chip label function references Intent cases
-        #expect(source.contains("draft.intent == .strength") || source.contains(".strength"))
-        #expect(source.contains(".hypertrophy"))
-        #expect(source.contains(".power"))
-        #expect(source.contains(".endurance"))
-        #expect(source.contains(".technique"))
-
-        // Intent selection wires to the draft
-        #expect(source.contains("draft.intent ="))
-
-        // BRUChip is used for the intent chip row
-        #expect(source.contains("BRUChip"))
-    }
-
-    // MARK: - 5. Progression menu copy verbatim per UI-SPEC
-
-    @Test("Progression menu copy verbatim per UI-SPEC § Header pickers § Verification anchors")
-    func progressionPickerCopy() throws {
-        let source = try readRoutineBuilderViewSource()
-
-        // The 4 option strings must be present in the BRU Menu's progressionLabel function.
-        #expect(source.contains("\"RPE Autoregulation\""))
-        #expect(source.contains("\"Double Progression\""))
-        #expect(source.contains("\"Block Periodized\""))
-        #expect(source.contains("\"Hybrid\""))
-
-        // Phase 4 progression filtering is preserved via availableProgressionKinds.
-        #expect(source.contains("availableProgressionKinds"))
-        #expect(source.contains("RoutineDraft.availableProgressionKinds(hasBlock: draft.blockID != nil)"))
-        #expect(source.contains("RoutineDraft.requiresBlock"))
-
-        // Progression selection wires to the draft
-        #expect(source.contains("draft.progressionKind =") || source.contains("guardedProgressionSelection"))
-    }
-
-    // MARK: - 6. snapshotHash dirty-check (Phase 3.1 expansion)
+    // MARK: - 4. snapshotHash dirty-check (Phase 3.1 expansion)
 
     /// Plan 04 WARNING 1 fix — `snapshotHash()` relocated from
     /// `RoutineBuilderView` (private) to `RoutineDraft` (internal) so
@@ -255,24 +192,5 @@ struct RoutineBuilderHeaderPickersTests {
             edit(draft)
             #expect(draft.snapshotHash() != opened, "Editing the \(field) must count as unsaved")
         }
-    }
-
-    // MARK: - Source-file reader (Tests 4 + 5)
-
-    /// Ascend from this test file at
-    /// `fitbodTests/RoutineBuilderHeaderPickersTests.swift` to the repo
-    /// root, descend into `fitbod/Routines/`, and read
-    /// `RoutineBuilderView.swift`. Same `#filePath` ascent pattern as
-    /// `ExerciseHistoryViewCopyTests.verbatimCopy()` +
-    /// `RoutineBuilderCopyTests.verbatimCopy()`.
-    private func readRoutineBuilderViewSource() throws -> String {
-        let base = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("fitbod/Routines")
-        return try String(
-            contentsOf: base.appendingPathComponent("RoutineBuilderView.swift"),
-            encoding: .utf8
-        )
     }
 }

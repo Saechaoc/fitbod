@@ -17,7 +17,7 @@
 //  It offers no per-set overrides: the logger never applies them, so the
 //  section is gone and stored overrides stay untouched (T110).
 //
-//  Verbatim copy preserved for RoutineBuilderCopyTests:
+//  Verbatim copy:
 //    "Sets" / "Min reps" / "Max reps" / "Target RPE" / "Rest" /
 //    "Track tempo" / "Track partial reps" / "Auto warm-up"
 //

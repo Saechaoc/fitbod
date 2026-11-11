@@ -15,7 +15,7 @@
 // NO .buttonStyle(.bordered) — always .plain via BRUButton internals.
 //
 // Reference: bru-screens/routine-builder.jsx lines 160-168
-// Verbatim copy: "Discard" / "Save routine ▸" — anchored in RoutineBuilderBRUCopyTests.
+// Verbatim copy: "Discard" / "Save routine ▸".
 
 import SwiftUI
 

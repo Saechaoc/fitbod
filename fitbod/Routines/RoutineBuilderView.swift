@@ -37,7 +37,6 @@
 //  Verbatim copy: "New routine" / "Edit routine" / "Routine name" /
 //    "•••" / "Discard" / "Save routine ▸" / "Discard changes?" /
 //    "Your edits will not be saved." / "Keep editing"
-//    — anchored in RoutineBuilderBRUCopyTests.
 //
 //  BRU contract: NO nav-bar title / NO editMode / NO accentColor /
 //  NO Apple HIG semantic fonts / NO Form / NO Section

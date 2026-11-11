@@ -8,7 +8,7 @@
 //  Mutation surface: writes to RoutineExerciseDraft.supersetGroupID (in-memory draft).
 //  The persisted write happens at Save time via RoutineDraft.persist(into:context:).
 //
-//  Verbatim copy: "ADD TO SUPERSET" / "Cancel" — anchored in RoutineBuilderBRUCopyTests.
+//  Verbatim copy: "ADD TO SUPERSET" / "Cancel".
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule / NO RoundedRectangle
 //  NO .navigationTitle / NO .toolbar / NO accentColor

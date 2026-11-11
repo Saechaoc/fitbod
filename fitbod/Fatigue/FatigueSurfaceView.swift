@@ -26,8 +26,7 @@
 //
 //  BRU contract: no system accent or system colors, no rounded or capsule
 //  shapes, no SF Symbols, no segmented Front/Back picker, and no system
-//  text styles. FatigueSurfaceViewBRUTests greps this whole file, so this
-//  comment must not spell those APIs out.
+//  text styles; .swiftlint.yml enforces it.
 //
 
 import SwiftData

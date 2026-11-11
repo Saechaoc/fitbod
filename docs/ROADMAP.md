@@ -70,6 +70,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-053](#rm-053) | P3 · Done | Local checks are the delivery policy for `main`; CI stays for pull requests and manual runs. User decision 2026-11-09. | Policy only; no workflow change. |
+| [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
 | <a id="rm-057"></a>RM-057 | P1 · Done for step 1.1 | Redesign 1.1 TodayState/plan line/day refresh/oldest-ready/advisory. Removed stat strip/block band/week cells/deload banner/plan-complete note. 23 state tests/captures `a3b3ead4`–`56dc453c`; full run had 5 failures/1 expected, with fixes/remaining risks owned separately; [plan/results](archive/features/today-state-and-plan-line.md); D-159/D-341 elements replaced. R-2/R-4/R-6/R-8/R-13: today.root/Progress history entry, calendar refresh, shared BlockPosition and long-name layout shipped. | [state](../fitbod/Views/TodayState.swift), [position](../fitbod/Periodization/BlockPosition.swift); does not complete 1.3. |
@@ -85,7 +86,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 Finish one gym day reliably, then running a block, then the approved Today/Program redesign in order: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6, followed by phase 2.
 Steps 1.1–1.3 shipped ([RM-057](#rm-057), [RM-058](#rm-058), [RM-006](#rm-006)); 1.4 ([RM-010](#rm-010)) follows after RM-003.
 Resolve data risks in the paths being changed before adding more prototype behavior.
-Each redesign step keeps affected tests serial on dedicated simulators and captures its changed 390pt states in light and dark. Broader AX3/two-phone/VoiceOver work returns at stability. For Program changes, keep NewBlockBuilderFidelityTests, ProgramViewFidelityTests and AdaptiveColorSourceTests in the affected checks.
+Each redesign step keeps affected tests serial on dedicated simulators and captures its changed 390pt states in light and dark. Broader AX3/two-phone/VoiceOver work returns at stability. For Program changes, keep NewBlockBuilderFidelityTests and ProgramViewFidelityTests in the affected checks; SwiftLint covers the fixed colors AdaptiveColorSourceTests used to catch.
 
 ### <a id="rm-001"></a>RM-001 — Preserve a good store when opening fails
 
@@ -848,26 +849,46 @@ T110-ext recorded an AX3 editor hang on the small iOS 26.5 phone: scroll EDIT PR
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
 **References:** F17/F20/F22/F35/F42/F82/F86/F135/F150/F164/F180/F202/F208/F218/F239/F241/F263/F271/F299/F349/F374–379/F381/F386/F388; [guide](test-performance-guide.md), [helpers](../fitbodUITests/UITestNavigation.swift)/[logger helpers](../fitbodUITests/WorkoutUITestNavigation.swift).
 
-### <a id="rm-063"></a>RM-063 — MetricKit reports shared from Settings
+### <a id="rm-063"></a>RM-063 - MetricKit reports shared from Settings
 
-**P2 · Implemented; verification pending (user decision 2026-11-10).** The app saves each MetricKit report as a JSON file and keeps the newest 30. Settings → Diagnostics → Share reports shares them as files.
+**P2 · Implemented; verification pending (user decision 2026-11-10).**
+The app saves each MetricKit report as a JSON file and keeps the newest 30.
+Settings → Diagnostics → Share reports shares them as files.
 Unproven: a real report on the phone.
 **Done when:** a report MetricKit delivered on the phone is shared from Settings and opens as JSON.
-**Scope / sequence:** `DiagnosticsStore` saves metrics and diagnostics payloads to `Application Support/Diagnostics/` → one Settings row shares them, or reads "None yet" and cannot be tapped. Not included: a launch-argument seed, a UI test, payload parsing or a viewer screen.
+**Scope / sequence:** `DiagnosticsStore` saves metrics and diagnostics payloads to `Application Support/Diagnostics/` → one Settings row shares them, or reads "None yet" and cannot be tapped.
+Not included: a launch-argument seed, a UI test, payload parsing or a viewer screen.
 **Requires:** None.
-**Verify when:** The first report reaches the phone, about a day after an install. For one sooner, run the app from Xcode on the phone and choose Debug → Simulate MetricKit Payloads.
-**Evidence:** 2026-11-10: the unit target and `SettingsExportUITests` passed on iPhone 17/iOS 26.5 (1,387 run: 1,384 passed, 2 skipped, 1 expected failure, none failed). `DiagnosticsStoreTests` checks that 31 saves keep the newest 30, newest first, and that two reports saved in the same millisecond both stay.
-At 390pt (iPhone 17e, default text, light) the empty row reads "None yet", muted and without "›", and a tap does nothing. With three sample reports in the app's container it reads "3 reports ›", and one tap opens the share sheet with 3 documents and Save to Files.
+**Verify when:** The first report reaches the phone, about a day after an install.
+For one sooner, run the app from Xcode on the phone and choose Debug → Simulate MetricKit Payloads.
+**Evidence:** 2026-11-10: the unit target and `SettingsExportUITests` passed on iPhone 17/iOS 26.5 (1,387 run: 1,384 passed, 2 skipped, 1 expected failure, none failed).
+`DiagnosticsStoreTests` checks that 31 saves keep the newest 30, newest first, and that two reports saved in the same millisecond both stay.
+At 390pt (iPhone 17e, default text, light) the empty row reads "None yet", muted and without "›", and a tap does nothing.
+With three sample reports in the app's container it reads "3 reports ›", and one tap opens the share sheet with 3 documents and Save to Files.
 Installed on the iPhone 15 Pro Max with `scripts/phone.sh` the same evening, over the existing app and its data.
-**Limits:** MetricKit gives exit reasons and peak memory per day, plus the stacks of crashes and hangs, but no stack for a memory kill. It does show whether exits are memory kills, which [RM-024](#rm-024)'s phone run could not tell. The files stay on the phone until the lifter shares them.
+**Limits:** MetricKit gives exit reasons and peak memory per day, plus the stacks of crashes and hangs, but no stack for a memory kill.
+It does show whether exits are memory kills, which [RM-024](#rm-024)'s phone run could not tell.
+The files stay on the phone until the lifter shares them.
 **References:** [store](../fitbod/App/DiagnosticsStore.swift), [Settings](../fitbod/Settings/SettingsView.swift), [test](../fitbodTests/DiagnosticsStoreTests.swift).
 
-### <a id="rm-064"></a>RM-064 — Lint rules replace the source-reading tests
+### <a id="rm-064"></a>RM-064 - Lint rules replace the source-reading tests
 
-**P3 · Active (2026-11-10): the lint rules shipped; deleting the source-reading tests is next.**
+**P3 · Done (2026-11-10).**
+SwiftLint checks Fitbod's own rules on each file an agent edits and before every `scripts/test.sh` run, and the tests that only matched text in `.swift` source are gone.
 **Done when:** `swiftlint lint` is clean on `main`; a planted violation of each rule group is reported by the edit hook and stops `scripts/test.sh`; a token in a comment or a test file stays silent; and the tests whose only assertions match text in `.swift` source are gone, with the unit target passing.
-**Scope / sequence:** SwiftLint with only Fitbod's own rules (`.swiftlint.yml`), a Claude edit hook (`scripts/lint-hook.sh`) and a lint step in both `scripts/test.sh` tiers → delete the source-reading tests. No default style rules, no baseline and no pre-commit block; CI only reports ([RM-053](#rm-053)). Add a rule only when a mistake repeats.
+**Scope / sequence:** SwiftLint with only Fitbod's own rules (`.swiftlint.yml`), a Claude edit hook (`scripts/lint-hook.sh`) and a lint step in both `scripts/test.sh` tiers → delete the source-reading tests.
+No default style rules, no baseline and no pre-commit block; CI only reports ([RM-053](#rm-053)).
+Add a rule only when a mistake repeats.
 **Requires:** None.
-**Evidence:** Lint (2026-11-10): SwiftLint 0.65.1 lints `fitbod/` and `FitbodWidgets/` clean in 0.4 s. The rules are the five BRU audit suites' regexes with their scopes, `AdaptiveColorSourceTests`' fixed-RGB check and the `CONVENTIONS.md` bans. They apply app-wide where code had no hit, everywhere but `BlockBuilderView.swift` for SF Symbols and rounded shapes, and only in the named files for `Picker(`, `.toolbar`, `Stepper(`, `Divider()` and `Section(`.
-Of 23 planted cases, every rule group was reported by the hook and by the whole-tree lint that `scripts/test.sh` runs, which then exited 1 before building. Tokens in comments, in `BlockBuilderView.swift`, outside a scoped file, in a test file and in non-app Swift stayed silent. The unit target passed through the new step: 1,383 run, 1,380 passed, 2 skipped, 1 expected failure.
+**Evidence:** Lint (2026-11-10): SwiftLint 0.65.1 lints `fitbod/` and `FitbodWidgets/` clean in 0.4 s.
+The rules are the five BRU audit suites' regexes with their scopes, `AdaptiveColorSourceTests`' fixed-RGB check and the `CONVENTIONS.md` bans.
+They apply app-wide where code had no hit, everywhere but `BlockBuilderView.swift` for SF Symbols and rounded shapes, and only in the named files for `Picker(`, `.toolbar`, `Stepper(`, `Divider()` and `Section(`.
+Of 23 planted cases, every rule group was reported by the hook and by the whole-tree lint that `scripts/test.sh` runs, which then exited 1 before building.
+Tokens in comments, in `BlockBuilderView.swift`, outside a scoped file, in a test file and in non-app Swift stayed silent.
+The unit target passed through the new step: 1,383 run, 1,380 passed, 2 skipped, 1 expected failure.
+Test removal (2026-11-10): 23 files of source-reading tests were deleted, and 51 such tests were cut from 13 files that also test app behavior.
+The unit target went from 1,383 tests to 1,220, a drop of 163: the 112 tests in the deleted files plus the 51 cut tests.
+It passed on iPhone 17/iOS 26.5: 1,217 passed, 2 skipped, 1 expected failure, none failed.
+Four route tests now run under `MuscleSlugRoute` and the font license check under `Font licenses`; the Program font test now reads the app bundle, not the source.
+Kept on purpose: tests that run app code, read fixtures or guard stored data, and the two rule checks that parse string literals, `UICopyRulesTests` and `ExerciseDisplayNameSourceTests`.
 **References:** [rules](../.swiftlint.yml), [hook](../scripts/lint-hook.sh), [test tiers](SETUP.md#test-tiers).

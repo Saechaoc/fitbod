@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# lint-hook.sh — Claude Code PostToolUse hook, wired in .claude/settings.json.
+# lint-hook.sh: Claude Code PostToolUse hook, wired in .claude/settings.json.
 # Lints the app Swift file an agent just edited with .swiftlint.yml, run from
 # that file's own git root so a worktree uses its own rules, and hands any
 # violation back to the agent (exit 2 shows stderr to it). Silent when the

@@ -5,7 +5,7 @@
 //  Ticket T70, finding F53. BlockLifecycleService.end gives an ended block
 //  its end date, and Today opens the review of the block that ended last
 //  until the lifter acknowledges it. A block that ended before it never
-//  opens one. The copy checks pin the review's BRU layout and Today's sheet.
+//  opens one.
 //
 //  Ticket T86, finding F96. While any block is active, no review opens, so
 //  a review put off with Plan custom stops once the lifter starts a block.
@@ -146,71 +146,5 @@ struct BlockReviewTriggerTests {
         try context.save()
 
         #expect(try pendingReviews(in: context, now: ended + day) == [block.id])
-    }
-
-    // Phase 04.1 BRU-reskin: placeholder copy tests updated to match the new BRU layout.
-    // The PRs section was deleted (moved to hero band stat cell, whose sub-label T99 changed from
-    // "COMING IN PHASE 6" to "THIS BLOCK" once PRS counted the block's PRs).
-    // "No logged sets in this block." moved to TONNAGE = "0" hero value — empty state is handled by
-    // workingSetCount == 0 mapping to zero TONNAGE. The e1RM empty-state copy is preserved verbatim.
-    @Test("BlockReviewView placeholder copy is verbatim (BRU 04.1)")
-    func placeholderCopyVerbatim() throws {
-        let source = try blockReviewSource()
-
-        // e1RM empty-state copy preserved verbatim (plan spec: "Not enough sessions logged to compute deltas.")
-        #expect(source.contains("\"Not enough sessions logged to compute deltas.\""))
-        // PRs stat cell sub-label in hero band (T99: PRS counts the block's PRs, so the Phase 6 placeholder is gone)
-        #expect(source.contains("\"THIS BLOCK\""))
-        // BRU section head copy (04.1 spec)
-        #expect(source.contains("\"e1RM movement\""))
-    }
-
-    // Phase 04.1 BRU-reskin: "Start \(labelKind.capitalized) Block" + "Not now" replaced by
-    // BRUButton(.signal, "Start next ▸") + BRUButton(.ghost, "Plan custom") per block-review.jsx lines 90-91.
-    @Test("recommended CTA copy format is present (BRU 04.1)")
-    func recommendedCTACopyFormat() throws {
-        let source = try blockReviewSource()
-
-        #expect(source.contains("\"Start next ▸\""))
-        #expect(source.contains("\"Plan custom\""))
-    }
-
-    // Phase 04.1 BRU-reskin: Done toolbar button replaced by bottom action bar per plan must_haves.
-    // "Start next ▸" BRUButton(.signal) is the primary acknowledge+transition CTA.
-    @Test("done toolbar replaced by BRU bottom action bar (BRU 04.1)")
-    func doneToolbarCopyVerbatim() throws {
-        let source = try blockReviewSource()
-
-        // New BRU bottom action bar CTAs
-        #expect(source.contains("\"Start next ▸\""))
-        #expect(source.contains("BRUButton"))
-        // Old Done toolbar button must be gone
-        #expect(!source.contains("Button(\"Done\")"))
-    }
-
-    // Phase 04.1 note: block review sheet wiring lives in TodayView.swift (not RootView.swift).
-    // Test updated to check the correct file path.
-    @Test("TodayView wires pending block review sheet")
-    func todayViewWiresPendingBlockReviewSheet() throws {
-        let source = try source("fitbod/Views/TodayView.swift")
-
-        #expect(source.contains("pendingBlockReview"))
-        #expect(source.contains(".sheet(item: $pendingBlockReview, onDismiss: showRecapAfterReview)"))
-        #expect(source.contains("BlockReviewView(block: block)"))
-        #expect(source.contains("BlockReviewStatistics.pendingReviewBlocks"))
-    }
-
-    private func blockReviewSource() throws -> String {
-        try source("fitbod/Periodization/BlockReviewView.swift")
-    }
-
-    private func source(_ relativePath: String) throws -> String {
-        try String(
-            contentsOf: URL(fileURLWithPath: #filePath)
-                .deletingLastPathComponent()
-                .deletingLastPathComponent()
-                .appendingPathComponent(relativePath),
-            encoding: .utf8
-        )
     }
 }

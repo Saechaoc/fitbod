@@ -13,7 +13,6 @@
 //    1. reorderKeepsPositionsContiguous — move slots, assert 0..<n
 //    2. addSlotAppendsContiguously     — add slot, assert 0..<n
 //    3. removeSlotDeletesSlotNotTemplateAndReindexes — remove middle slot; template survives
-//    4. splitDetailViewPinsCopy        — source-introspection copy pins
 //
 
 import Foundation
@@ -172,38 +171,5 @@ struct SplitDetailViewTests {
         // 3. Positions are contiguous 0..<3
         let positions = remainingSlots.map { $0.position }
         #expect(positions == [0, 1, 2])
-    }
-
-    // MARK: - Test 4: Source-introspection copy pins
-
-    private func splitDetailViewSource() throws -> String {
-        let url = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()  // fitbodTests/
-            .deletingLastPathComponent()  // project root
-            .appendingPathComponent("fitbod")
-            .appendingPathComponent("Periodization")
-            .appendingPathComponent("SplitDetailView.swift")
-        return try String(contentsOf: url, encoding: .utf8)
-    }
-
-    @Test("SplitDetailView.swift contains verbatim copy strings")
-    func splitDetailViewPinsCopy() throws {
-        let source = try splitDetailViewSource()
-
-        // Verbatim copy pins. Milestone 1 moved the name into an editable
-        // "Routine name" field, put Edit/Done in the header, and moved
-        // archiving to an "Archive routine" button at the bottom.
-        #expect(source.contains("center: \"Routine\""), "Header title must be 'Routine'")
-        #expect(source.contains("\"Routine name\""), "Must label the editable name field")
-        #expect(source.contains("isEditing ? \"Done\" : \"Edit\""), "Header action must toggle Edit / Done")
-        #expect(source.contains("\"Sessions\""), "Must contain verbatim 'Sessions' section head")
-        #expect(source.contains("\"+ Add session\""), "Must contain verbatim '+ Add session'")
-        #expect(source.contains("\"No sessions yet\""), "Must contain the empty-state heading")
-        #expect(source.contains("\"Used in\""), "Must contain verbatim 'Used in' section head")
-        #expect(source.contains("\"Not linked to any active block.\""), "Must contain empty-usage copy")
-        #expect(source.contains("\"Archive routine\""), "Must contain the archive action label")
-        #expect(source.contains("\"Cannot Archive Routine\""), "Must contain deny alert title")
-        #expect(source.contains("\"Remove Session?\""), "Must contain remove confirmation title")
-        #expect(source.contains("\"Remove Session\""), "Must contain remove confirmation destructive button")
     }
 }

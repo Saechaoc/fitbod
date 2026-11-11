@@ -44,4 +44,4 @@ VoiceOver and UI tests therefore read words ("Add set"), not letters.
 
 BRU screens use no navigation bars, toolbars, `Form`, segmented `Picker`, system `Stepper` or system toggle styling.
 BRU components replace each of them: [components.md](components.md).
-Unit tests grep the BRU screens for the banned APIs (`BRUGrepAuditPhase6Tests`, `Phase3BRUGrepAuditTests`, `BRUPrimitivesTests`).
+SwiftLint rules in `.swiftlint.yml` reject the banned APIs: an agent's edit is linted at once, and `scripts/test.sh` stops on a violation.
