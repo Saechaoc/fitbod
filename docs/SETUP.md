@@ -48,6 +48,8 @@ test simulator so normal personal workout data is not affected.
 
 `scripts/test.sh` offers unit feedback and full verification. Set `FITBOD_TEST_DEVICE` to
 a dedicated simulator's UUID first.
+Both tiers first run SwiftLint, installed once with `brew install swiftlint`, and stop on a violation.
+It checks only Fitbod's own rules in `.swiftlint.yml`, the BRU and `CONVENTIONS.md` bans; `scripts/lint-hook.sh` also lints each file a Claude agent edits.
 
 | Tier | Command | Runs | Typical time |
 |---|---|---|---|

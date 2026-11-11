@@ -167,6 +167,12 @@ if [[ "$TIER" == full ]]; then
     { echo "scripts/test_results_test.py failed; see $RUN/self-test.log" >&2; exit 1; }
 fi
 
+# The BRU and CONVENTIONS.md rules in .swiftlint.yml stop either tier before
+# the build, as the source-reading tests they replaced did (RM-064).
+command -v swiftlint >/dev/null || { echo "install SwiftLint first: brew install swiftlint" >&2; exit 1; }
+step "swiftlint"
+(cd "$ROOT" && swiftlint lint --quiet) || { echo "fix the swiftlint violations above" >&2; exit 1; }
+
 step "build-for-testing"
 xb "$RUN/build.log" "${flags[@]}" build-for-testing
 xctestrun="$(ls -t "$DD"/Build/Products/*.xctestrun | head -1)"

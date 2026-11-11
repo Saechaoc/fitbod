@@ -1,0 +1,158 @@
+# SwiftLint runs only Fitbod's own rules (RM-064): the BRU design-system
+# bans (docs/design-system/) and the CONVENTIONS.md bans. No default style
+# rule runs, so there is no baseline and no reformat.
+# Matches inside comments are ignored, because many files name these tokens
+# in comments. Add a rule only when a mistake repeats.
+#
+# An agent's edit is linted at once by scripts/lint-hook.sh, and
+# scripts/test.sh stops on a violation before it builds.
+
+only_rules:
+  - custom_rules
+
+included:
+  - fitbod
+  - FitbodWidgets
+
+custom_rules:
+  # --- BRU, app-wide ---
+
+  bru_color:
+    name: BRU color
+    regex: 'Color\.accentColor|Color\("AccentColor"\)|\.tint\(\.accentColor\)|Color\(\.(system|secondarySystem|tertiarySystem)|\bColor\.(white|red|yellow)\b|Color\("Volume[A-Za-z]+"\)|Color\(red:'
+    message: Use an adaptive BRU color token (Color.bru*), not an accent, system, plain or fixed RGB color.
+    excluded_match_kinds: &comments [comment, comment.mark, comment.url, doccomment, doccomment.field]
+    severity: error
+
+  bru_font:
+    name: BRU font
+    regex: '\.font\(\.(body|headline|title|title2|title3|caption|caption2|subheadline|footnote|callout|largeTitle)\b'
+    message: Use a BRUFont role, not a system text style.
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_button_style:
+    name: BRU button style
+    regex: '\.buttonStyle\(\.bordered(Prominent)?\)'
+    message: Use BRUButton or a BRU button style, not .bordered.
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_material:
+    name: BRU material
+    regex: '\.regularMaterial\b'
+    message: BRU has no blur; use a paper or ink fill.
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_empty_state:
+    name: BRU empty state
+    regex: '\bContentUnavailableView\b'
+    message: Use a BRU empty state, not ContentUnavailableView.
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_navigation_title:
+    name: BRU navigation title
+    regex: '\.navigationTitle\s*\('
+    message: Use BRUHeaderBar for the screen title, not .navigationTitle.
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_segmented_picker:
+    name: BRU segmented picker
+    regex: '\.pickerStyle\(\.segmented'
+    message: Use BRUSegmentedControl, not a segmented Picker.
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_system_list:
+    name: BRU system list
+    regex: '\bForm\s*[{(]|List\(\.insetGrouped|InsetGroupedListStyle|\.listStyle\(\.insetGrouped'
+    message: Use a ScrollView with BRU rows, not Form or an inset grouped list.
+    excluded_match_kinds: *comments
+    severity: error
+
+  # --- BRU, app-wide except the New Block screen's rounded-card design ---
+
+  bru_sf_symbol:
+    name: BRU SF Symbol
+    regex: 'Image\(systemName:'
+    message: BRU uses no SF Symbols; use a typographic glyph (‹ › ▸ + −) or a word label (docs/design-system/iconography.md).
+    excluded: 'fitbod/Periodization/BlockBuilderView\.swift$'
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_rounded_shape:
+    name: BRU rounded shape
+    regex: '\bCapsule\(\)|\.clipShape\(\.capsule|\.clipShape\(Circle\(\)|RoundedRectangle\(cornerRadius:'
+    message: BRU corners are square; use Rectangle (docs/design-system/layout.md).
+    excluded: 'fitbod/Periodization/BlockBuilderView\.swift$'
+    excluded_match_kinds: *comments
+    severity: error
+
+  # --- BRU, only on the screens that already follow these ---
+
+  bru_picker:
+    name: BRU picker
+    regex: '\bPicker\('
+    message: Use a BRU chip row or picker sheet, not Picker.
+    included: 'fitbod/(Progress/(ProgressHomeView|ExerciseProgressView|SeriesToggleChipRow|ProgressFilterChip|ExercisePRsView|SessionComparisonView|WeeklyTonnageView|WeeklyTonnageFilterChips|WeekDetailView)|Settings/SettingsView|Sessions/InSessionPRBanner|ExerciseLibrary/ExerciseHistoryView)\.swift$'
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_toolbar:
+    name: BRU toolbar
+    regex: '\.toolbar\b(?![A-Za-z])'
+    message: Use BRUHeaderBar, not .toolbar.
+    included: 'fitbod/(Progress/(ProgressHomeView|ExerciseProgressView|SeriesToggleChipRow|ProgressFilterChip|ExercisePRsView|SessionComparisonView|WeeklyTonnageView|WeeklyTonnageFilterChips|WeekDetailView)|Settings/SettingsView|Sessions/InSessionPRBanner|ExerciseLibrary/ExerciseHistoryView)\.swift$'
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_stepper:
+    name: BRU stepper
+    regex: '\bStepper\('
+    message: Use PlateTallyRow, not Stepper.
+    included: 'fitbod/Settings/PlateInventoryEditor\.swift$'
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_divider:
+    name: BRU divider
+    regex: '\bDivider\(\)'
+    message: Use BRUDivider, not Divider().
+    included: 'fitbod/Periodization/(MesocycleWeekPage|BlockReviewView|BlockOverviewScreen)\.swift$'
+    excluded_match_kinds: *comments
+    severity: error
+
+  bru_section:
+    name: BRU section
+    regex: '\bSection\('
+    message: Use BRUSectionHead, not Section.
+    included: 'fitbod/Periodization/(MesocycleWeekPage|BlockReviewView|BlockOverviewScreen)\.swift$'
+    excluded_match_kinds: *comments
+    severity: error
+
+  # --- CONVENTIONS.md ---
+
+  legacy_observation:
+    name: Legacy observation
+    regex: '\bObservableObject\b|@Published\b|@StateObject\b|@ObservedObject\b'
+    message: Use @Observable with @State, @Bindable or the environment (CONVENTIONS.md).
+    excluded_match_kinds: *comments
+    severity: error
+
+  banned_import:
+    name: Banned import
+    regex: '^\s*(@preconcurrency\s+)?import\s+(\w+\s+)?(Combine|CloudKit|HealthKit)\b'
+    message: Not in Fitbod v1; use @Observable and AsyncSequence, not Combine, and no CloudKit or HealthKit (CONVENTIONS.md).
+    excluded_match_kinds: *comments
+    severity: error
+
+  core_data_import:
+    name: Core Data import
+    regex: '^\s*(@preconcurrency\s+)?import\s+(\w+\s+)?CoreData\b'
+    message: Use SwiftData; only FitbodModelContainer asks Core Data why a store did not open (CONVENTIONS.md).
+    excluded: 'fitbod/Persistence/FitbodModelContainer\.swift$'
+    excluded_match_kinds: *comments
+    severity: error

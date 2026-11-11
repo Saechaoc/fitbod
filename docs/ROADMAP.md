@@ -861,3 +861,13 @@ At 390pt (iPhone 17e, default text, light) the empty row reads "None yet", muted
 Installed on the iPhone 15 Pro Max with `scripts/phone.sh` the same evening, over the existing app and its data.
 **Limits:** MetricKit gives exit reasons and peak memory per day, plus the stacks of crashes and hangs, but no stack for a memory kill. It does show whether exits are memory kills, which [RM-024](#rm-024)'s phone run could not tell. The files stay on the phone until the lifter shares them.
 **References:** [store](../fitbod/App/DiagnosticsStore.swift), [Settings](../fitbod/Settings/SettingsView.swift), [test](../fitbodTests/DiagnosticsStoreTests.swift).
+
+### <a id="rm-064"></a>RM-064 — Lint rules replace the source-reading tests
+
+**P3 · Active (2026-11-10): the lint rules shipped; deleting the source-reading tests is next.**
+**Done when:** `swiftlint lint` is clean on `main`; a planted violation of each rule group is reported by the edit hook and stops `scripts/test.sh`; a token in a comment or a test file stays silent; and the tests whose only assertions match text in `.swift` source are gone, with the unit target passing.
+**Scope / sequence:** SwiftLint with only Fitbod's own rules (`.swiftlint.yml`), a Claude edit hook (`scripts/lint-hook.sh`) and a lint step in both `scripts/test.sh` tiers → delete the source-reading tests. No default style rules, no baseline and no pre-commit block; CI only reports ([RM-053](#rm-053)). Add a rule only when a mistake repeats.
+**Requires:** None.
+**Evidence:** Lint (2026-11-10): SwiftLint 0.65.1 lints `fitbod/` and `FitbodWidgets/` clean in 0.4 s. The rules are the five BRU audit suites' regexes with their scopes, `AdaptiveColorSourceTests`' fixed-RGB check and the `CONVENTIONS.md` bans. They apply app-wide where code had no hit, everywhere but `BlockBuilderView.swift` for SF Symbols and rounded shapes, and only in the named files for `Picker(`, `.toolbar`, `Stepper(`, `Divider()` and `Section(`.
+Of 23 planted cases, every rule group was reported by the hook and by the whole-tree lint that `scripts/test.sh` runs, which then exited 1 before building. Tokens in comments, in `BlockBuilderView.swift`, outside a scoped file, in a test file and in non-app Swift stayed silent. The unit target passed through the new step: 1,383 run, 1,380 passed, 2 skipped, 1 expected failure.
+**References:** [rules](../.swiftlint.yml), [hook](../scripts/lint-hook.sh), [test tiers](SETUP.md#test-tiers).

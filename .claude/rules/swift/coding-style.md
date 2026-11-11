@@ -5,12 +5,10 @@ paths:
 ---
 # Swift Coding Style
 
-> This file extends [common/coding-style.md](../common/coding-style.md) with Swift specific content.
-
 ## Formatting
 
-- **SwiftFormat** for auto-formatting, **SwiftLint** for style enforcement
-- `swift-format` is bundled with Xcode 16+ as an alternative
+- No formatter runs; match the surrounding code.
+- **SwiftLint** runs only Fitbod's own rules (`.swiftlint.yml`): the BRU and `CONVENTIONS.md` bans, not general style.
 
 ## Immutability
 

@@ -5,8 +5,6 @@ paths:
 ---
 # Swift Testing
 
-> This file extends [common/testing.md](../common/testing.md) with Swift specific content.
-
 ## Framework
 
 Use **Swift Testing** (`import Testing`) for new tests. Use `@Test` and `#expect`:
