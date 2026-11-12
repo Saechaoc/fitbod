@@ -115,6 +115,45 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
         XCTAssertFalse(app.alerts.firstMatch.exists, "Nothing logged, so no question")
     }
 
+    /// Program's banner shows DISCARD and follows Today's rule: with a set
+    /// logged it asks first and names it. A failed save keeps the workout
+    /// with its set and says so; Discard again removes it for good (RM-012).
+    @MainActor
+    func testProgramDiscardKeepsTheWorkoutWhenTheSaveFails() throws {
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout + ["-fitbod-fail-discard-once"])
+        openWorkout(app)
+        logSet(app, "1.S1", reps: "6")
+        app.buttons["Back"].firstMatch.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["resumeSlab.resume"]))
+
+        UITestNavigation.selectTab("Program", in: app)
+        let resume = app.buttons["resumeBanner.resume"]
+        let discard = app.buttons["resumeBanner.discard"]
+        XCTAssertTrue(UITestNavigation.appears(discard), "Program's banner must show DISCARD, no long press")
+        discard.tap()
+        let question = app.alerts["Discard workout?"]
+        XCTAssertTrue(UITestNavigation.appears(question, within: 5), "A logged set must make DISCARD ask first")
+        XCTAssertTrue(question.staticTexts["1 logged set will be deleted."].exists)
+        question.buttons["Discard"].tap()
+
+        let failure = app.alerts["Couldn't discard workout"]
+        XCTAssertTrue(UITestNavigation.appears(failure, within: 5), "A failed save must say so")
+        failure.buttons["OK"].tap()
+        XCTAssertTrue(UITestNavigation.appears(resume), "A failed save must keep the workout open")
+        let oneSet = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH %@", "· 1 set")).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(oneSet), "The kept workout must keep its logged set")
+
+        discard.tap()
+        XCTAssertTrue(UITestNavigation.appears(question, within: 5))
+        question.buttons["Discard"].tap()
+        XCTAssertTrue(waitForDisappearance(resume), "Discard must remove the workout")
+        XCTAssertFalse(failure.exists, "Only the first save was set to fail")
+
+        UITestNavigation.relaunch(app)
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"], within: 30))
+        XCTAssertFalse(app.buttons["resumeSlab.resume"].exists, "A discarded workout must stay gone")
+    }
+
     // MARK: - Finish, summary, history
 
     /// A record set shows the PR banner. Finishing opens the summary, and

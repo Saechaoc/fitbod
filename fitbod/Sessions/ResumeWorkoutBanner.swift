@@ -4,8 +4,8 @@
 // BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 45).
 // UI-SPEC v2 § Session logger line 583.
 //
-// Slim resume banner that appears whenever an active (completedAt == nil)
-// Session exists. Mounted at the top of the Program tab (ProgramView).
+// Slim resume banner for the workout in progress, mounted at the top of
+// the Program tab (ProgramView), which owns the query for it.
 //
 // NOTE: This is DISTINCT from Plan 02.1-04's ResumeWorkoutSlab which lives in
 // fitbod/Views/ and shows on Today.
@@ -15,15 +15,14 @@
 //   Routine name:   routineSnapshotName   (bodyEmphasis bruInk)
 //   Meta:           "{elapsed} · 1 set" / "{elapsed} · {n} sets" (labelSmall bruMuted);
 //                   "{elapsed}" alone once only cardio bouts are logged (RM-062)
-//   CTA:            BRUPillButton("Resume ▸")
+//   CTA:            BRUPillButton("Resume ▸") beside a ghost "Discard" (RM-012)
 //
 // Style: 2pt bruInk-bordered Rectangle slim band per UI-SPEC line 583.
 //
-// The banner uses its own @Query<Session> filtered by completedAt == nil so
-// it is reactive — when the active session finishes elsewhere the banner
-// disappears without any explicit dismiss call from the parent.
-//
-// When no active session exists the view body is EmptyView().
+// RESUME ▸ is the page's one signal (RM-012). DISCARD is a visible ghost
+// button with Today's rule (DiscardWorkoutButton): it asks first only when
+// sets are logged. The two share a row under the labels, or stack at
+// accessibility sizes.
 //
 // BRU contract:
 //   NO rounded-rectangle shape — removed per plan spec
@@ -36,36 +35,13 @@ import SwiftUI
 import SwiftData
 
 public struct ResumeWorkoutBanner: View {
-    @Environment(\.modelContext) private var ctx
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Query(filter: #Predicate<Session> { $0.completedAt == nil })
-    private var activeSessions: [Session]
 
-    public let onResume: @MainActor (Session) -> Void
-    public let onDiscard: @MainActor (Session) -> Void
-
-    @State private var discardConfirm = false
-
-    public init(
-        onResume: @escaping @MainActor (Session) -> Void,
-        onDiscard: @escaping @MainActor (Session) -> Void
-    ) {
-        self.onResume = onResume
-        self.onDiscard = onDiscard
-    }
+    let session: Session
+    let onResume: @MainActor () -> Void
 
     public var body: some View {
-        if let active = activeSessions.first {
-            bannerBody(active: active)
-        } else {
-            EmptyView()
-        }
-    }
-
-    @ViewBuilder
-    private func bannerBody(active: Session) -> some View {
-        bannerLayout {
-            // Left: stacked labels
+        VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("RESUME")                                                      // UI-SPEC verbatim
                     .font(BRUFont.labelSmall)
@@ -73,29 +49,31 @@ public struct ResumeWorkoutBanner: View {
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
 
-                Text(active.displayName)
+                Text(session.displayName)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
 
-                TimelineView(.periodic(from: active.startedAt, by: 1)) { _ in
-                    Text(Self.caption(for: active, elapsed: elapsedLabel(for: active)))
+                TimelineView(.periodic(from: session.startedAt, by: 1)) { _ in
+                    Text(Self.caption(for: session, elapsed: elapsedLabel))
                         .font(BRUFont.labelSmall)
                         .tracking(0.5)
                         .foregroundStyle(Color.bruMuted)
                 }
             }
 
-            if !dynamicTypeSize.isAccessibilitySize {
-                Spacer()
-            }
+            actionLayout {
+                BRUPillButton("Resume ▸") {                                        // UI-SPEC verbatim
+                    onResume()
+                }
+                .accessibilityIdentifier("resumeBanner.resume")
 
-            // Right: Resume CTA; under the labels at accessibility sizes
-            BRUPillButton("Resume ▸") {                                            // UI-SPEC verbatim
-                onResume(active)
+                DiscardWorkoutButton(session: session, kind: .ghost)
+                    .accessibilityIdentifier("resumeBanner.discard")
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.bruPaper)
         .overlay(
             Rectangle()
@@ -103,38 +81,19 @@ public struct ResumeWorkoutBanner: View {
         )
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        // Discard is exposed via swipe / contextMenu per plan spec — alert confirmation retained
-        .contextMenu {
-            Button("Discard", role: .destructive) {
-                discardConfirm = true
-            }
-        }
-        .alert(
-            "Discard active workout?",
-            isPresented: $discardConfirm
-        ) {
-            Button("Discard", role: .destructive) {
-                RestTimerEngine.clearPersisted(sessionID: active.id)
-                onDiscard(active)
-                discardConfirm = false
-            }
-            Button("Cancel", role: .cancel) {
-                discardConfirm = false
-            }
-        }
     }
 
-    /// Labels beside the pill, or the pill under the labels at accessibility
-    /// sizes, where a pill squeezed beside them breaks "RESUME" mid-word.
-    private var bannerLayout: AnyLayout {
+    /// RESUME ▸ beside DISCARD, or above it at accessibility sizes, where
+    /// half the banner breaks "RESUME ▸" mid-word.
+    private var actionLayout: AnyLayout {
         dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-            : AnyLayout(HStackLayout(spacing: 12))
+            ? AnyLayout(VStackLayout(spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 8))
     }
 
     /// Elapsed time since session start: "m:ss" below an hour, "h:mm" from
     /// an hour on.
-    private func elapsedLabel(for session: Session) -> String {
+    private var elapsedLabel: String {
         NumberText.elapsed(max(0, Int(Date().timeIntervalSince(session.startedAt))))
     }
 
@@ -156,26 +115,8 @@ public struct ResumeWorkoutBanner: View {
     session.routineSnapshotName = "Push Day A"
     ctx.insert(session)
     try? ctx.save()
-    return List {
-        ResumeWorkoutBanner(
-            onResume: { _ in },
-            onDiscard: { _ in }
-        )
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(Color.clear)
-    }
-    .modelContainer(container)
-}
-
-#Preview("no active session") {
-    List {
-        ResumeWorkoutBanner(
-            onResume: { _ in },
-            onDiscard: { _ in }
-        )
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(Color.clear)
-    }
-    .modelContainer(PreviewModelContainer.make())
+    return ResumeWorkoutBanner(session: session, onResume: {})
+        .background(Color.bruPaper)
+        .modelContainer(container)
 }
 #endif

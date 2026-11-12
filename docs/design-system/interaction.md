@@ -29,6 +29,9 @@ How BRU controls respond to touch, and the rules that keep set logging fast with
 - The dialog names the consequence, and the destructive button uses the verb ("Discard workout"), never "OK".
 - Cancel is always available and never destructive.
 - Reversible actions (removing a set, reordering) act immediately without a dialog.
+- One exception: DISCARD on a workout in progress acts at once when nothing is logged, since nothing is lost.
+  With sets or bouts logged it asks "Discard workout?" and names them ("1 logged set will be deleted.").
+  Today's resume slab and Program's resume banner share this rule (`DiscardWorkoutButton`).
 
 ## Set logging, one-handed
 

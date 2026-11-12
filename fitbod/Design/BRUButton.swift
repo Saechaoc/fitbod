@@ -1,8 +1,8 @@
 // BRUButton.swift
 // fitbod
 //
-// BRU button primitive — a sharp-cornered brutalist button in three kind variants
-// (primary, signal, ghost) and three size variants (sm, md, lg).
+// BRU button primitive: a sharp-cornered brutalist button in four kind variants
+// (primary, signal, ghost, ghostOnSlab) and three size variants (sm, md, lg).
 //
 // Source of truth: UI-SPEC v2 § Component Inventory, line 514.
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
@@ -19,10 +19,11 @@ import SwiftUI
 
 /// A brutalist full-width button with no rounded corners and no Apple HIG chrome.
 ///
-/// Three `Kind` variants control the fill + text + border treatment:
+/// Four `Kind` variants control the fill + text + border treatment:
 /// - `.primary` — ink fill, paper text (solid ink slab)
 /// - `.signal`  — signal fill, constant ink text (strong CTA)
 /// - `.ghost`   — transparent fill, ink text, 1.5pt ink outline
+/// - `.ghostOnSlab`: `.ghost` on a dark `bruSlab`, with bruOnSlab text and outline
 ///
 /// Three `Size` variants provide at least BRU's 44pt touch-target floor.
 ///
@@ -40,12 +41,16 @@ public struct BRUButton: View {
         case signal
         /// Transparent fill with ink text and a 1.5pt ink outline — secondary / destructive-neutral.
         case ghost
+        /// `ghost` on a dark `bruSlab` slab, which stays dark in dark mode:
+        /// constant `bruOnSlab` text and 1.5pt outline. The slab's secondary
+        /// action, such as DISCARD on Today's resume slab.
+        case ghostOnSlab
 
         fileprivate var fillColor: Color {
             switch self {
             case .primary: return .bruInk
             case .signal:  return .bruSignal
-            case .ghost:   return .clear
+            case .ghost, .ghostOnSlab: return .clear
             }
         }
 
@@ -54,6 +59,7 @@ public struct BRUButton: View {
             case .primary: return .bruPaper
             case .signal:  return .bruOnSignal
             case .ghost:   return .bruInk
+            case .ghostOnSlab: return .bruOnSlab
             }
         }
 
@@ -62,13 +68,14 @@ public struct BRUButton: View {
             case .primary: return .bruInk
             case .signal:  return .bruInk
             case .ghost:   return .bruInk
+            case .ghostOnSlab: return .bruOnSlab
             }
         }
 
         fileprivate var showBorder: Bool {
             switch self {
             case .primary: return false
-            case .signal, .ghost: return true
+            case .signal, .ghost, .ghostOnSlab: return true
             }
         }
     }
@@ -140,8 +147,9 @@ public struct BRUButton: View {
 /// Renders a `BRUButton` in its three interaction states.
 ///
 /// - Normal: the kind's fill, text and border.
-/// - Pressed: fills darken to `bruInk` (ghost inverts to an ink slab) so the
-///   press reads on every kind without animation.
+/// - Pressed: fills darken to `bruInk` (ghost inverts to an ink slab, and a
+///   ghost on a slab to `bruOnSlab`) so the press reads on every kind
+///   without animation.
 /// - Disabled: `bruFaint` fill, `bruMuted` text, `bruHair` border. Text stays
 ///   legible (contrast ≥ 4.5:1) instead of fading the whole control.
 ///
@@ -190,12 +198,16 @@ public struct BRUButtonStyle: ButtonStyle {
     private func fillColor(pressed: Bool) -> Color {
         guard isEnabled else { return .bruFaint }
         guard pressed else { return fill ?? kind.fillColor }
-        return kind == .ghost ? .bruInk : .bruInk.opacity(0.85)
+        switch kind {
+        case .ghost: return .bruInk
+        case .ghostOnSlab: return .bruOnSlab
+        case .primary, .signal: return .bruInk.opacity(0.85)
+        }
     }
 
     private func textColor(pressed: Bool) -> Color {
         guard isEnabled else { return .bruMuted }
-        if pressed { return .bruPaper }
+        if pressed { return kind == .ghostOnSlab ? .bruSlab : .bruPaper }
         return fill?.bruLabelOnFill ?? kind.textColor
     }
 }

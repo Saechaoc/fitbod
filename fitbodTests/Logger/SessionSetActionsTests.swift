@@ -72,6 +72,37 @@ struct SessionSetActionsTests {
         #expect(set.isComplete && set.weight == 100 && set.reps == 8)
     }
 
+    @Test("A discard whose save fails keeps the workout and its sets, with nothing left for a later save")
+    func failedDiscardKeepsWorkout() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("fitbod-discard-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("discard.store")
+
+        let workoutID = try autoreleasepool {
+            let ctx = ModelContext(try FitbodModelContainer.make(storeURL: url))
+            return try LoggerFixtures.session(
+                exercise: LoggerFixtures.exercise("Bench", in: ctx), startedAt: .now, completedAt: nil,
+                sets: [(100, 5, true), (100, 5, false)], in: ctx
+            ).id
+        }
+
+        // The same store opened so that every save fails, as a full disk would.
+        let schema = Schema(versionedSchema: FitbodModelContainer.CurrentSchema.self)
+        let ctx = ModelContext(try ModelContainer(
+            for: schema, configurations: ModelConfiguration(schema: schema, url: url, allowsSave: false)
+        ))
+        let workout = try #require(try ctx.fetch(FetchDescriptor<Session>(predicate: #Predicate { $0.id == workoutID })).first)
+
+        #expect(throws: (any Error).self) { try SessionSetActions.deleteWorkout(workout, context: ctx) }
+        #expect(!ctx.hasChanges, "Nothing may stay pending for a later save to write")
+        #expect(!workout.isDeleted)
+        #expect(workout.loggedSetCount == 1)
+        #expect(try ctx.fetchCount(FetchDescriptor<Session>()) == 1)
+        #expect(try ctx.fetchCount(FetchDescriptor<SetEntry>()) == 2)
+    }
+
     @Test("uncomplete persists and keeps weight and reps")
     func uncompletePersists() throws {
         let ctx = try LoggerFixtures.makeContext()

@@ -35,9 +35,8 @@ import SwiftData
 /// At accessibility sizes RESUME ▸ spans the slab with DISCARD under it,
 /// since half the slab is too narrow to keep "RESUME ▸" on one line.
 ///
-/// Note: The ghost variant's "Discard" button uses bruOnSlab text + bruOnSlab outline
-/// because the slab background is bruSlab — this inverts BRUButton.ghost's defaults
-/// (which assume a paper background). A comment in the code documents this inversion.
+/// DISCARD is `DiscardWorkoutButton` in BRUButton's `.ghostOnSlab` kind:
+/// bruOnSlab text and outline, since the plain ghost draws ink for paper.
 public struct ResumeWorkoutSlab: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -45,10 +44,6 @@ public struct ResumeWorkoutSlab: View {
 
     let session: Session
     let onResume: @MainActor () -> Void
-    let onDiscard: @MainActor () -> Void
-
-    /// Discard confirmation, shown only when completed sets would be lost.
-    @State private var confirmingDiscard = false
 
     // MARK: - Computed
 
@@ -113,58 +108,23 @@ public struct ResumeWorkoutSlab: View {
                     .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("resumeSlab.resume")
 
-                // Secondary — ghost but on the dark slab, so we invert:
-                // BRUButton.ghost defaults to bruInk text + bruInk outline on a paper bg.
-                // On this bruSlab background we need bruOnSlab text + bruOnSlab outline.
-                // We implement this directly rather than through BRUButton to avoid coupling
-                // BRUButton to caller context. See threat model T-02.1-04-01 note.
-                Button {
-                    if session.loggedSetCount > 0 {
-                        confirmingDiscard = true
-                    } else {
-                        discard()
-                    }
-                } label: {
-                    Text("Discard")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        // bruOnSlab text on bruSlab — inverted ghost (slab-context inversion)
-                        .foregroundStyle(Color.bruOnSlab)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.bruOnSlab, lineWidth: 1.5)
-                        )
-                }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
-                .accessibilityIdentifier("resumeSlab.discard")
+                // Secondary: the ghost on the dark slab, bruOnSlab text and
+                // outline. It asks first only when sets are logged, as
+                // Program's banner does, and deletes in one save.
+                DiscardWorkoutButton(session: session, kind: .ghostOnSlab)
+                    .accessibilityIdentifier("resumeSlab.discard")
             }
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)
         .background(Color.bruSlab)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .alert("Discard workout?", isPresented: $confirmingDiscard) {
-            Button("Discard", role: .destructive) { discard() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(SessionHistoryFormat.discardWarning(for: session) ?? "No data will be saved.")
-        }
     }
 
     /// "3 sets logged"; nil once only cardio bouts are logged, which show
     /// no set count (RM-062).
     static func loggedCaption(for session: Session) -> String? {
         SessionHistoryFormat.inProgressSetCount(of: session).map { "\(BRUCountLabel.text($0, "set")) logged" }
-    }
-
-    /// Clears any persisted rest timer (and its alert + Live Activity)
-    /// for this session, then hands off to the caller's delete.
-    private func discard() {
-        RestTimerEngine.clearPersisted(sessionID: session.id)
-        onDiscard()
     }
 
     /// RESUME ▸ beside DISCARD, or above it at accessibility sizes.
@@ -183,7 +143,7 @@ private struct ResumeWorkoutSlabPreviewContainer: View {
     let session: Session
 
     var body: some View {
-        ResumeWorkoutSlab(session: session, onResume: {}, onDiscard: {})
+        ResumeWorkoutSlab(session: session, onResume: {})
             .modelContainer(container)
     }
 

@@ -11,7 +11,10 @@
 //    entry: its popover offers + New block and + New routine. The popover
 //    opens under the header's measured height.
 //  - ResumeWorkoutBanner while a workout is open. Its RESUME ▸ opens the
-//    logger on Today's stack through ResumeWorkoutRequest (FT-02).
+//    logger on Today's stack through ResumeWorkoutRequest (FT-02), and
+//    its DISCARD follows Today's slab (RM-012). RESUME ▸ is then the
+//    page's one signal: START BLOCK ▸, + NEW ROUTINE and the + NEW BLOCK
+//    and + NEW ROUTINE links draw in ink.
 //  - The lead block (`ProgramBlocks.lead`): the active block as an ink slab
 //    that opens Block overview (no week cells, O-13); with none active, the
 //    oldest created ready block with START BLOCK ▸ (O-6); with drafts only,
@@ -74,6 +77,10 @@ public struct ProgramView: View {
     @Query(filter: #Predicate<Split> { $0.isArchived })
     private var archivedSplits: [Split]
 
+    // The workout in progress, for the resume banner.
+    @Query(filter: #Predicate<Session> { $0.completedAt == nil })
+    private var openWorkouts: [Session]
+
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: BlockBuilderRoute? = nil
     @State private var showingNewPopover = false
@@ -109,13 +116,9 @@ public struct ProgramView: View {
 
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ResumeWorkoutBanner(
-                                onResume: { _ in resumeRequest?.isPending = true },
-                                onDiscard: { session in
-                                    ctx.delete(session)
-                                    try? ctx.save()
-                                }
-                            )
+                            if let openWorkout {
+                                ResumeWorkoutBanner(session: openWorkout) { resumeRequest?.isPending = true }
+                            }
 
                             if allBlocks.isEmpty && allSplits.isEmpty {
                                 startWithARoutine
@@ -156,6 +159,10 @@ public struct ProgramView: View {
             .modifier(TodayBlockAlerts(failedBlock: $failedBlockStart, onRetry: startBlock, onOpen: openBlock))
         }
     }
+
+    /// The workout in progress. Its banner's RESUME ▸ is then the page's one
+    /// signal, so every other signal control draws in ink (RM-012).
+    private var openWorkout: Session? { openWorkouts.first }
 
     /// "Fitbod / Program" outgrows its third of the header at default text,
     /// where no-break spaces keep it on one line, a little smaller, as
@@ -246,7 +253,7 @@ public struct ProgramView: View {
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
                 .fixedSize(horizontal: false, vertical: true)
-            BRUButton("+ New routine", kind: .signal, size: .lg, action: startNewRoutine)
+            BRUButton("+ New routine", kind: openWorkout == nil ? .signal : .primary, size: .lg, action: startNewRoutine)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -262,7 +269,8 @@ public struct ProgramView: View {
         } else if let ready = blocks.ready.first {
             ReadyBlockCard(
                 block: ready, readyCount: blocks.ready.count,
-                onStart: { startBlock(ready) }, onOpen: { openBlock(ready) }
+                onStart: { startBlock(ready) }, onOpen: { openBlock(ready) },
+                isSignal: openWorkout == nil
             )
         } else if let draft = blocks.drafts.first {
             DraftBlockSlab(block: draft) { openBlock(draft) }
@@ -274,7 +282,7 @@ public struct ProgramView: View {
             // A block runs a routine, so with none the routine link is the signal.
             EmptySectionLine(
                 message: blocks.past.isEmpty ? "No block yet." : "No block planned.",
-                action: "+ New block", isSignal: !allSplits.isEmpty,
+                action: "+ New block", isSignal: !allSplits.isEmpty && openWorkout == nil,
                 onTap: { presentingStartChoice = true }
             )
         }
@@ -297,7 +305,7 @@ public struct ProgramView: View {
         BRUSectionHead("Routines")
 
         if allSplits.isEmpty {
-            EmptySectionLine(message: "No routines yet.", action: "+ New routine", isSignal: true, onTap: startNewRoutine)
+            EmptySectionLine(message: "No routines yet.", action: "+ New routine", isSignal: openWorkout == nil, onTap: startNewRoutine)
         }
 
         ForEach(Array(allSplits.enumerated()), id: \.element.id) { index, split in

@@ -82,7 +82,6 @@ public struct TodayView: View {
     /// Session detail pushed from the hero, repair action or session sheet.
     @State private var openedSession: OpenedSession? = nil
     @State private var startError: String? = nil
-    @State private var discardError: String? = nil
     @State private var presentingSettings = false
     /// All live sessions, grouped by routine.
     @State private var choosingSession = false
@@ -248,17 +247,6 @@ public struct TodayView: View {
             } message: {
                 Text(startError ?? "")
             }
-            .alert(
-                "Couldn't discard workout",
-                isPresented: Binding(
-                    get: { discardError != nil },
-                    set: { if !$0 { discardError = nil } }
-                )
-            ) {
-                Button("OK", role: .cancel) { discardError = nil }
-            } message: {
-                Text(discardError ?? "")
-            }
             // ─── Lifecycle (preserved verbatim from Phase 4/5) ───────────────
             // Both run on every appearance. The advisory check lives only in
             // onAppear: running it from the task as well repeated the deload
@@ -299,11 +287,7 @@ public struct TodayView: View {
         case .resume(let session):
             ResumeWorkoutSlab(
                 session: session,
-                onResume: { navigationPath.append(SessionRoute.logger(session)) },
-                onDiscard: {
-                    do { try SessionSetActions.deleteWorkout(session, context: ctx) }
-                    catch { discardError = "The workout wasn't discarded. Try again." }
-                }
+                onResume: { navigationPath.append(SessionRoute.logger(session)) }
             )
         case .done(let sessions):
             DoneTodaySlab(

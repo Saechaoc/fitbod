@@ -19,7 +19,7 @@ Read a component's file header before using it: each one documents its contract 
 
 | Component | What it is | Variants and states | Replaces | Used on | Reference |
 | --- | --- | --- | --- | --- | --- |
-| `BRUButton`, `BRUButtonStyle` | Square button | Kinds `.primary` (ink), `.signal` (the one CTA), `.ghost` (outline); sizes `.sm`, `.md`, `.lg`; pressed and disabled states | `.bordered`, `.borderedProminent` | About 25 screens | `phase-2--routine-builder.png` |
+| `BRUButton`, `BRUButtonStyle` | Square button | Kinds `.primary` (ink), `.signal` (the one CTA), `.ghost` (outline), `.ghostOnSlab` (`bruOnSlab` outline and text on a dark `bruSlab`: DISCARD on Today's resume slab at `.sm`, START BLOCK ▸ on the ready slab at `.lg` while a workout holds the signal); sizes `.sm`, `.md`, `.lg`; pressed and disabled states | `.bordered`, `.borderedProminent` | About 25 screens | `phase-2--routine-builder.png` |
 | `BRUPillButton` | Full-width signal CTA ("Start workout ▸"). A rectangle despite the name. | Default, pressed, disabled; shares `BRUButtonStyle` | Prominent system buttons | Today slab, resume slab and banner | `phase-2--today.png` |
 | `BRUDashedSlot` | Dashed "+ Add exercise ↘ From library" slot | Label plus hint | Plain add rows | Session builder, workout logger | `phase-2--routine-builder.png` |
 | `BRUActionPopover` | Square-cornered menu | A list of titled actions | `confirmationDialog` menus | Program "New" menu | `phase-2--program-newmenu.png` |
