@@ -146,13 +146,22 @@ enum UITestNavigation {
     }
 
     /// Swipes slowly up on the last scroll view a user can tap, which is
-    /// the one on top, or on the app when there is none.
+    /// the one on top, or on the app when there is none. It swipes by
+    /// coordinates: XCUITest finds a scroll view bound by its index again
+    /// once the app idles, and a push that ends in between can take that
+    /// index away (RM-054).
     private static func swipeUp(in app: XCUIApplication) {
-        if let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) {
-            scroll.swipeUp(velocity: .slow)
-        } else {
-            app.swipeUp(velocity: .slow)
+        guard let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) else {
+            return app.swipeUp(velocity: .slow)
         }
+        // Gone already: the screen changed, and the caller looks again.
+        guard let frame = (try? scroll.snapshot())?.frame.intersection(app.frame), !frame.isEmpty else { return }
+        // swipeUp(velocity: .slow)'s own path: 100pt each side of the middle, at 750pt/s.
+        let middle = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX, dy: frame.midY))
+        middle.withOffset(CGVector(dx: 0, dy: 100)).press(
+            forDuration: 0, thenDragTo: middle.withOffset(CGVector(dx: 0, dy: -100)),
+            withVelocity: 750, thenHoldForDuration: 0
+        )
     }
 
     /// Taps a BRUStepper's visible − or + cell until it reads `target`, the
