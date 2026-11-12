@@ -16,8 +16,8 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; [RM-020](#rm-020) past weekly recaps; and the first nightly run's two failures, [RM-001](#rm-001)'s store test, which reopens RM-001, and a large-iPhone PR list test ([RM-053](#rm-053)).
-Done on 2026-11-12: [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow in the analytics stream.
+In flight: [RM-012](#rm-012) redesign 1.6, Program's resume and discard; [RM-020](#rm-020) past weekly recaps; and the first nightly run's two failures, [RM-001](#rm-001)'s store test, which reopens RM-001, and a large-iPhone PR list test ([RM-053](#rm-053)).
+Done on 2026-11-12: [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow in the analytics stream; and [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past, which [RM-012](#rm-012) follows in the redesign order.
 Delivered on 2026-11-12: [RM-026](#rm-026)'s first delivery, superset partners in one trip; its second, unsaved duplication, follows.
 On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
@@ -44,13 +44,14 @@ Authoring, catalog, logging and calculator deliveries use their actual condition
 ## Needs input or device verification
 
 Only the named observation/decision is unavailable; this section does not pause unrelated work.
-Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `db6ff930` (2026-11-12), whose store is on seed 10.
+Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `fe05c084` (2026-11-12), whose store is on seed 10.
 
 | Owner | Missing input or proof | What depends on it |
 |---|---|---|
 | [RM-007](#rm-007), FT-19 | Exact repeated prompt text/owner on phone, then allow/deny/Focus reproduction | Identifying/fixing that prompt and its release acceptance. |
 | [RM-008](#rm-008), FT-20 | Lock Screen/Island rendering, rest adjustment/expiry/end on installed build | Closing widget rendering/lifecycle acceptance; implementation plan is archived. |
 | [RM-010](#rm-010) | On the phone: the week board with this week's real workouts. The user's call: whether Volume's amber ring outlasts a dismissed week, and whether Volume needs words for the ring | Closing RM-010; the ring keeps today's rules until the user decides. |
+| [RM-011](#rm-011) | On the phone: Program's Now slab, Planned cards and Past blocks on iOS 26.7 | Nothing waits on it; a phone-only layout bug would reopen RM-011. |
 | [RM-019](#rm-019) | The user's call: whether DROP INTENSITY should open the next workout instead of explaining with an alert | Only DROP INTENSITY's route; the Stalled list and the charts are done. |
 | [RM-026](#rm-026) | The user's call: whether a superset's sets alternate between its lifts in the workout, and whether to build the mock-up's REST BEHAVIOR and CLUSTER chip; each needs new stored fields | Only those pieces; the superset sheet says each lift keeps its own sets and rest until then. |
 | [RM-022](#rm-022) | On the phone: Bench Press folds into one line, History keeps logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds Lateral Raise (Dumbbell) | Closing the families and grouped-list slices; slices 7–8 can proceed. |
@@ -96,6 +97,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
 | [RM-065](#rm-065) | P1 · Done | Three delts with RP landmarks, audited muscle credits in `muscles.json` (seed 8), the week's total as working sets logged, and NOT TRAINED for an untrained muscle everywhere. Unit, full UI, 390pt and phone-store evidence in RM-065. | [RM-038](#rm-038) decision; [RM-022](#rm-022) adds a profile with each new family. |
 | [RM-019](#rm-019) | P2 · Done | Progress lists stalled exercises by intent with the flat-workout count, newest top set and the workout card's suggestion, and each exercise's chart shades its stalls; the search takes about 90 ms on four years of history. Unit, full UI, timing and 390pt evidence in RM-019. | Advisory only; DROP INTENSITY explains with an alert until the user decides. |
+| [RM-011](#rm-011) | P1 · Done | Program leads with the active block in a four-line ink slab, else the oldest ready or the newest draft block; Planned cards carry READY and DRAFT chips, routine rows name the blocks that use them, and finished blocks move to Past blocks. Unit, full UI and 390pt evidence in RM-011. | Resume and discard stay [RM-012](#rm-012), This week [RM-015](#rm-015); the rest of D-302 moved to [RM-035](#rm-035). |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
 | <a id="rm-057"></a>RM-057 | P1 · Done for step 1.1 | Redesign 1.1 TodayState/plan line/day refresh/oldest-ready/advisory. Removed stat strip/block band/week cells/deload banner/plan-complete note. 23 state tests/captures `a3b3ead4`–`56dc453c`; full run had 5 failures/1 expected, with fixes/remaining risks owned separately; [plan/results](archive/features/today-state-and-plan-line.md); D-159/D-341 elements replaced. R-2/R-4/R-6/R-8/R-13: today.root/Progress history entry, calendar refresh, shared BlockPosition and long-name layout shipped. | [state](../fitbod/Views/TodayState.swift), [position](../fitbod/Periodization/BlockPosition.swift); does not complete 1.3. |
@@ -330,7 +332,9 @@ Review fixes: Program's START BLOCK ▸ takes Today's DEBUG `-fitbod-fail-block-
 A block that ended this year but began last year now reads "Dec 5, 2022 - Jan 16"; `ProgramViewFidelityTests` covers it, 12 of 12 with the seed suite (`fast-20261112-125102`).
 The long-name captures were retaken after the no-break fix: the slab's routine line wraps as "… AND CALF" over "WORK · ROTATION" in light and dark.
 The orchestrator's full tier on `a1607cfe` (`full-20261112-124611`): the unit target ran 1,265 tests, 1,262 passed, 0 failed, 2 skipped, 1 expected failure.
-Its UI tests ran 1,371 of 1,371 enumerated, 1,367 passed and 1 failed: `SessionHistoryBRUUITests.testKilogramExerciseOverrideSurvivesHistoryCorrectionAndRelaunch`, which goes through Library, Today and History, not Program; rerun by the orchestrator.
+Its UI tests ran 1,371 of 1,371 enumerated, 1,367 passed and 1 failed: `SessionHistoryBRUUITests.testKilogramExerciseOverrideSurvivesHistoryCorrectionAndRelaunch`, which goes through Library, Today and History, not Program.
+The orchestrator's reruns traced it to a swipe race in the shared `UITestNavigation.swipeUp` under load, not to this work: three runs each of this branch and of `main`, swapped across lane A's two iPhone 17s, passed (`fast-20261112-132250`, `fast-20261112-132432`), and [RM-054](#rm-054) owns the fix.
+After the rebase onto `38a8a2c0`, `ProgramViewFidelityTests`, `ProgramStatesSeedTests`, `UICopyRulesTests` and `BlockLifecycleEntryPointsUITests` passed 18/18 (`fast-20261112-133442`).
 Open: a look on the phone; accessibility sizes were not inspected.
 **References:** D-125–D-127/D-299–D-304, redesign R-9/R-11/R-23; [Program](../fitbod/Periodization/ProgramView.swift), [Past blocks](../fitbod/Periodization/PastBlocksView.swift), [seed](../fitbod/App/ProgramStatesSeed.swift), [budget](design-map/redesign/screen_budget.py).
 
@@ -1048,6 +1052,9 @@ T110-ext recorded an AX3 editor hang on the small iOS 26.5 phone: scroll EDIT PR
 **Requires:** Kept-test/helper reproduction or iteration-blocking slowdown.
 **Verify when:** On retained-test failures, necessary helper changes or iteration-blocking slowdowns.
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
+Reveal's swipe (2026-11-12): `UITestNavigation.swipeUp` picks the last hittable scroll view by its index, and XCUITest resolves that index again at the swipe.
+On a loaded Mac, RM-011's full tier (`full-20261112-124611`) and a rerun each failed one `SessionHistoryBRUUITests` case with "No matches found for Element at index 2 from input {( ScrollView )}", while three runs each of that branch and of `main`, swapped across two iPhone 17s, passed.
+Next: swipe by coordinates inside the picked scroll view's frame, then one full tier, since every UI class reaches `reveal`.
 Typing helper (2026-11-11): in manual CI [run 42986732910](https://github.com/Saechaoc/fitbod/actions/runs/42986732910), `CustomExerciseEditorBRUUITests.testCardioSavesWithoutAMuscleAndKeepsItsTracking` typed "T62 Arc Trainer" and return in one go, and the field held "T62 Arc Traine".
 It did not fail that way again in 55 runs on the Mac, including with the keyboard daemon or the whole simulator slowed, or in 30 runs on GitHub's runner ([run 43047416342](https://github.com/Saechaoc/fitbod/actions/runs/43047416342)).
 `UITestNavigation.type` now presses return only once the field shows the whole text, which removes the race between the last letter and return; whether that race caused the failure is unproven.
