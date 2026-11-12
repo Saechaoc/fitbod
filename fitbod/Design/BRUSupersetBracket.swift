@@ -11,15 +11,14 @@
 //   // NO borderRight — that's the BRU brutalist bracket signature
 //
 // SIZING NOTE (threat T-02.1-03-02):
-//   The Canvas bracket uses `.frame(width: 8)` for explicit width.
-//   Vertical height comes from the parent's intrinsic content height.
-//   The wrapped content MUST have an intrinsic height or the Canvas
-//   collapses to zero. Wrap inside a container with known height.
+//   The 8pt bracket draws over the content's 16pt leading gutter, 4pt in,
+//   so a bracketed row keeps the columns of a plain one (RM-026). Give the
+//   content that gutter. The bracket takes the content's height.
 //
 // USAGE:
 //   BRUSupersetBracket {
-//       ExerciseRow(exercise: bench)
-//       ExerciseRow(exercise: row)
+//       VStack { ExerciseRow(exercise: bench); ExerciseRow(exercise: row) }
+//           .padding(.leading, 16)
 //   }
 
 import SwiftUI
@@ -33,11 +32,10 @@ import SwiftUI
 ///
 /// ```
 /// ┌──────────────────────────────────────┐
-/// ├ ← 8pt bracket   Content (16pt pad)  │
-/// │  ┐                                  │
-/// │  │ (3-sided: top, left, bottom)      │
-/// │  ┘                                  │
-/// ├──────────────────────────────────────┤
+/// │ ┌─  Content, past its 16pt gutter     │
+/// │ │   (3-sided: top, left, bottom)      │
+/// │ └─                                    │
+/// └──────────────────────────────────────┘
 /// ```
 public struct BRUSupersetBracket<Content: View>: View {
 
@@ -61,7 +59,7 @@ public struct BRUSupersetBracket<Content: View>: View {
     // MARK: Body
 
     public var body: some View {
-        HStack(spacing: 0) {
+        content.overlay(alignment: .leading) {
             // 3-edge bracket Canvas — explicit width 8pt per interfaces spec
             Canvas { ctx, size in
                 // Half the 2pt stroke in from the canvas edge, which clipped it.
@@ -84,10 +82,9 @@ public struct BRUSupersetBracket<Content: View>: View {
                 ctx.stroke(p, with: .color(Color.bruSignal), lineWidth: 2)
             }
             .frame(width: 8)
-
-            // Wrapped content with 16pt leading inset
-            content
-                .padding(.leading, 16)
+            // An open end runs on 1pt, across the hairline between rows.
+            .padding(.bottom, closes ? 0 : -1)
+            .padding(.leading, 4)
         }
     }
 }

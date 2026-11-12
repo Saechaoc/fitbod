@@ -111,10 +111,14 @@ struct BRUComponentGallery: View {
                     BRUSectionHead("Structure")
                     samples {
                         BRUSupersetBracket {
-                            Text("A1 · Incline Dumbbell Press · 3 × 8–12")
-                                .font(BRUFont.bodyEmphasis)
-                            Text("A2 · Chest Supported Dumbbell Row · 3 × 10–12")
-                                .font(BRUFont.bodyEmphasis)
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("A1 · Incline Dumbbell Press · 3 × 8–12")
+                                    .font(BRUFont.bodyEmphasis)
+                                Text("A2 · Chest Supported Dumbbell Row · 3 × 10–12")
+                                    .font(BRUFont.bodyEmphasis)
+                            }
+                            .padding(.vertical, 8)
+                            .padding(.leading, BRUMetrics.Spacing.gutter)
                         }
                         LiveEditBanner()
                         BRUDivider(.ink)

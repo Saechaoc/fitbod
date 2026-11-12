@@ -44,7 +44,7 @@ Read a component's file header before using it: each one documents its contract 
 | `BRUCornerBadge` | Tiny badge on a corner ("DL", "PR") | Any fill and text token | Overlay badges | Week ticker, block cards, history rows | `phase-2--history.png` |
 | `BRUSpark` | Eight-bar mini chart | Highlighted trailing bar | Small charts | Weekly tonnage card | `phase-2--history.png` |
 | `SetCompletionGlyph` | 22pt set square inside a 44pt target | Incomplete (1.5pt ink outline), complete (signal fill) | Checkmark symbols | Workout set rows | `phase-2--active-session.png` |
-| `BRUSupersetBracket` | Signal bracket on the left of grouped exercises | Any number of rows | Grouped list styling | Session builder cards | `phase-2--modal-superset.png` |
+| `BRUSupersetBracket` | Signal bracket on the left of grouped exercises, drawn in the content's 16pt leading gutter | Any number of rows; per-row pieces open toward a partner beside them, so one superset reads as one bracket | Grouped list styling | Session builder cards | `phase-2--modal-superset.png` |
 | `PlateStackViz` | Plates drawn to scale on a bar | Scales with height | None | Warm-up rows, plate disclosure, plate calculator | `phase-3--plate-calc.png` |
 | `CalibratingProgressMeter` | Progress card while an exercise is calibrating | Progress clamped to its range | `ProgressView` | Why-this-weight sheet | `phase-3--why-weight.png` |
 | `LiveEditBanner` | Warning that a routine is on the active block | Signal stripe, label, body | Inline alerts | Routine detail, session builder | None (from the program graph spec) |

@@ -57,26 +57,110 @@ struct SupersetDraftPersistenceTests {
         let benchGroup = try #require(bench.supersetGroupID)
         #expect(squat.supersetGroupID != benchGroup)
 
-        // Bench swaps Row for Squat; Curl, left alone, leaves its superset too.
+        // Bench swaps Row for Squat, which joins it; Curl, left alone, leaves its superset too.
         draft.setSuperset(of: bench, partners: [squat])
         #expect(bench.supersetGroupID == benchGroup)
         #expect(squat.supersetGroupID == benchGroup)
         #expect(row.supersetGroupID == nil)
         #expect(curl.supersetGroupID == nil)
+        #expect(names(draft) == ["Bench", "Squat", "Row", "Curl"])
     }
 
-    @Test func leavingAPairEndsItButATrioKeepsTwo() throws {
-        let (_, template) = try fixture(["Bench", "Row", "Squat"])
+    @Test func leavingAPairEndsItButATrioKeepsTwoTogether() throws {
+        let (ctx, template) = try fixture(["Bench", "Row", "Squat"])
         let draft = RoutineDraft(routine: template)
         let (bench, row, squat) = (draft.exercises[0], draft.exercises[1], draft.exercises[2])
         draft.setSuperset(of: bench, partners: [row, squat])
-        draft.leaveSuperset(squat)
-        #expect(squat.supersetGroupID == nil)
-        #expect(bench.supersetGroupID != nil)
-        #expect(bench.supersetGroupID == row.supersetGroupID)
+        // The middle lift leaves, and moves past the two that stay together.
         draft.leaveSuperset(row)
-        #expect(bench.supersetGroupID == nil)
         #expect(row.supersetGroupID == nil)
+        #expect(bench.supersetGroupID != nil)
+        #expect(bench.supersetGroupID == squat.supersetGroupID)
+        #expect(names(draft) == ["Bench", "Squat", "Row"])
+        draft.leaveSuperset(squat)
+        #expect(draft.exercises.allSatisfy { $0.supersetGroupID == nil })
+        #expect(!ctx.hasChanges)
+    }
+
+    @Test func pairingLiftsApartGathersThemAtTheFirst() throws {
+        let (ctx, template) = try fixture(["Bench", "Row", "Squat", "Curl"])
+        let draft = RoutineDraft(routine: template)
+        let (bench, squat) = (draft.exercises[0], draft.exercises[2])
+        draft.setSuperset(of: squat, partners: [bench])
+        #expect(names(draft) == ["Bench", "Squat", "Row", "Curl"])
+        #expect(draft.exercises.map(\.orderIndex) == [0, 1, 2, 3])
+        #expect(bench.supersetGroupID != nil)
+        #expect(bench.supersetGroupID == squat.supersetGroupID)
+        #expect(!ctx.hasChanges)
+    }
+
+    @Test func aSupersetWithNoPartnersEnds() throws {
+        let (ctx, template) = try fixture(["Bench", "Row", "Squat"])
+        let draft = RoutineDraft(routine: template)
+        let (bench, row, squat) = (draft.exercises[0], draft.exercises[1], draft.exercises[2])
+        draft.setSuperset(of: bench, partners: [row])
+        draft.setSuperset(of: bench, partners: [])
+        draft.setSuperset(of: squat, partners: [])
+        #expect(draft.exercises.allSatisfy { $0.supersetGroupID == nil })
+        #expect(names(draft) == ["Bench", "Row", "Squat"])
+        #expect(!ctx.hasChanges)
+    }
+
+    @Test func theBracketOpensAndClosesAtASupersetsEnds() throws {
+        let (_, template) = try fixture(["Bench", "Row", "Squat", "Curl"])
+        let draft = RoutineDraft(routine: template)
+        draft.setSuperset(of: draft.exercises[0], partners: [draft.exercises[1], draft.exercises[2]])
+        #expect(draft.supersetEdges(at: 0) == (opens: true, closes: false))
+        #expect(draft.supersetEdges(at: 1) == (opens: false, closes: false))
+        #expect(draft.supersetEdges(at: 2) == (opens: false, closes: true))
+        #expect(draft.supersetEdges(at: 3) == (opens: true, closes: true))
+    }
+
+    @Test func aMoveInsideASupersetReordersItAndOneOutOfItLeaves() throws {
+        let (ctx, template) = try fixture(["Bench", "Row", "Squat", "Curl"])
+        let draft = RoutineDraft(routine: template)
+        let (squat, curl) = (draft.exercises[2], draft.exercises[3])
+        draft.setSuperset(of: squat, partners: [curl])
+
+        // Row passes the Squat and Curl superset whole, down and back up.
+        draft.move(at: 1, up: false)
+        #expect(names(draft) == ["Bench", "Squat", "Curl", "Row"])
+        draft.move(at: 3, up: true)
+        #expect(names(draft) == ["Bench", "Row", "Squat", "Curl"])
+        #expect(squat.supersetGroupID != nil)
+        #expect(squat.supersetGroupID == curl.supersetGroupID)
+
+        // Inside the superset, Curl swaps with Squat and both stay in it.
+        draft.move(at: 3, up: true)
+        #expect(names(draft) == ["Bench", "Row", "Curl", "Squat"])
+        #expect(squat.supersetGroupID == curl.supersetGroupID)
+
+        // Curl moves up out past Row: it leaves, and Squat, left alone, leaves too.
+        draft.move(at: 2, up: true)
+        #expect(names(draft) == ["Bench", "Curl", "Row", "Squat"])
+        #expect(draft.exercises.allSatisfy { $0.supersetGroupID == nil })
+        #expect(draft.exercises.map(\.orderIndex) == [0, 1, 2, 3])
+        #expect(!ctx.hasChanges)
+    }
+
+    @Test func aCopyOfAPairedLiftGoesAfterItsSuperset() throws {
+        let (ctx, template) = try fixture(["Bench", "Row", "Squat"])
+        let draft = RoutineDraft(routine: template)
+        let (bench, row) = (draft.exercises[0], draft.exercises[1])
+        draft.setSuperset(of: bench, partners: [row])
+        draft.duplicate(bench)
+        #expect(names(draft) == ["Bench", "Row", "Bench", "Squat"])
+        #expect(draft.exercises[2].supersetGroupID == nil)
+        #expect(draft.exercises[2].id == nil)
+        #expect(bench.supersetGroupID == row.supersetGroupID)
+        draft.duplicate(draft.exercises[3])
+        #expect(names(draft) == ["Bench", "Row", "Bench", "Squat", "Squat"])
+        #expect(draft.exercises.map(\.orderIndex) == [0, 1, 2, 3, 4])
+        #expect(!ctx.hasChanges)
+    }
+
+    private func names(_ draft: RoutineDraft) -> [String?] {
+        draft.exercises.map { $0.exercise?.name }
     }
 
     @Test func saveDeletesAGroupNoLiftUsesAndAFailedSaveKeepsIt() throws {

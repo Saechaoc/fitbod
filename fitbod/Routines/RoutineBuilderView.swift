@@ -446,11 +446,7 @@ public struct RoutineBuilderView: View {
                 ForEach(rows, id: \.key) { row in
                     let i = row.index
                     let exDraft = row.exercise
-                    // Neighbors in one superset share one bracket (RM-026).
-                    let group = exDraft.supersetGroupID
-                    let joinsPrevious = group != nil && i > 0 && draft.exercises[i - 1].supersetGroupID == group
-                    let joinsNext = group != nil && i + 1 < draft.exercises.count
-                        && draft.exercises[i + 1].supersetGroupID == group
+                    let edges = draft.supersetEdges(at: i)
                     RoutineExerciseCard(
                         draft: exDraft,
                         hasBlock: draft.blockID != nil,
@@ -465,25 +461,19 @@ public struct RoutineBuilderView: View {
                         ),
                         onAssignSuperset: { ed in pendingSupersetAssignment = ed },
                         onRemoveFromSuperset: { ed in draft.leaveSuperset(ed) },
-                        onDuplicate: { ed in duplicateExercise(ed) },
+                        onDuplicate: { ed in draft.duplicate(ed) },
                         onRemove: { ed in removeExercise(ed) },
                         onEditWarmup: { ed in pendingWarmupSheet = ed },
-                        onMoveUp: i > 0 ? { moveExercise(from: i, to: i - 1) } : nil,
+                        onMoveUp: i > 0 ? { draft.move(at: i, up: true) } : nil,
                         onMoveDown: i + 1 < draft.exercises.count
-                            ? { moveExercise(from: i, to: i + 2) } : nil,
-                        opensSuperset: !joinsPrevious,
-                        closesSuperset: !joinsNext
+                            ? { draft.move(at: i, up: false) } : nil,
+                        opensSuperset: edges.opens,
+                        closesSuperset: edges.closes
                     )
 
-                    if joinsNext {
-                        // The bracket's 2pt rail runs on across the divider.
-                        HStack(spacing: 0) {
-                            Rectangle().fill(Color.bruSignal).frame(width: 2, height: 1)
-                            BRUDivider(.hair).padding(.leading, 6)
-                        }
-                    } else {
-                        BRUDivider(.hair)
-                    }
+                    // Between partners the hairline starts past the bracket's rail.
+                    BRUDivider(.hair)
+                        .padding(.leading, edges.closes ? 0 : BRUMetrics.Spacing.gutter)
                 }
 
                 // BRUDashedSlot — "+ Add exercise ↘ FROM LIBRARY". At
@@ -503,13 +493,6 @@ public struct RoutineBuilderView: View {
     }
 
     // MARK: - Stable Key
-
-    private func moveExercise(from index: Int, to destination: Int) {
-        draft.exercises.move(fromOffsets: IndexSet(integer: index), toOffset: destination)
-        for (position, exercise) in draft.exercises.enumerated() {
-            exercise.orderIndex = position
-        }
-    }
 
     private func stableKey(for exDraft: RoutineExerciseDraft) -> UUID {
         if let id = exDraft.id { return id }
@@ -630,27 +613,6 @@ public struct RoutineBuilderView: View {
     }
 
     // MARK: - Long-press menu handlers
-
-    private func duplicateExercise(_ exDraft: RoutineExerciseDraft) {
-        guard let index = draft.exercises.firstIndex(where: { $0 === exDraft }) else { return }
-        let clone = RoutineExerciseDraft()
-        clone.exercise = exDraft.exercise
-        clone.targetSets = exDraft.targetSets
-        clone.targetRepsLow = exDraft.targetRepsLow
-        clone.targetRepsHigh = exDraft.targetRepsHigh
-        clone.targetRPE = exDraft.targetRPE
-        clone.prescribedRestSeconds = exDraft.prescribedRestSeconds
-        clone.tempo = exDraft.tempo
-        clone.tracksTempo = exDraft.tracksTempo
-        clone.tracksPartialReps = exDraft.tracksPartialReps
-        clone.targetDurationSeconds = exDraft.targetDurationSeconds
-        clone.targetLevel = exDraft.targetLevel
-        clone.targetSpeedKmh = exDraft.targetSpeedKmh
-        clone.targetIncline = exDraft.targetIncline
-        clone.supersetGroupID = nil
-        draft.exercises.insert(clone, at: index + 1)
-        for (i, ex) in draft.exercises.enumerated() { ex.orderIndex = i }
-    }
 
     private func removeExercise(_ exDraft: RoutineExerciseDraft) {
         // An unsaved row's open state is keyed by its address, which a later

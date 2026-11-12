@@ -258,6 +258,8 @@ Volume surfaces render immutable `RPVolumeLandmarks.Landmark` values from persis
 
 Session-editor changes, including supersets, stay in `RoutineDraft` until Save, in a new session too.
 One sheet sets a lift's superset partners, two to four lifts; a superset left with one lift ends.
+A superset's lifts always sit together: pairing gathers them at the first one's place, in list order, and a copy of a paired lift goes after its superset, in none.
+Move swaps a lift with a partner and passes another superset whole; a lift moved out of its superset leaves it.
 `persist(into:context:)` writes the session and its used new groups in one save and deletes the session's groups that no lift uses; failure rolls back the store while keeping the draft for retry. Discard writes no groups.
 The workout does not read supersets: each lift keeps its own sets and rest.
 

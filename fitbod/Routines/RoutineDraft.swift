@@ -114,7 +114,8 @@ public final class RoutineDraft {
 
     /// Makes `exercise` and `partners` one superset, in the draft only
     /// (RM-026). The exercise keeps its group when it has one, a partner
-    /// left unchecked leaves it, and a group left with one lift ends.
+    /// left unchecked leaves it, and a group left with one lift ends. The
+    /// superset's lifts then sit together, at the first one's place.
     func setSuperset(of exercise: RoutineExerciseDraft, partners: [RoutineExerciseDraft]) {
         let members = [exercise] + partners
         var touched = Set(members.compactMap(\.supersetGroupID))
@@ -125,6 +126,7 @@ public final class RoutineDraft {
         }
         for member in members { member.supersetGroupID = id }
         endLoneSupersets(touched)
+        gatherSupersets()
     }
 
     /// Takes `exercise` out of its superset; a partner left alone leaves too.
@@ -132,6 +134,62 @@ public final class RoutineDraft {
         guard let id = exercise.supersetGroupID else { return }
         exercise.supersetGroupID = nil
         endLoneSupersets([id])
+        gatherSupersets()
+    }
+
+    /// Moves the lift at `index` one place up or down. Within its superset
+    /// it swaps with a partner; it passes another superset whole; and a move
+    /// out of its own superset takes it out of that superset (RM-026).
+    func move(at index: Int, up: Bool) {
+        let step = up ? -1 : 1
+        guard exercises.indices.contains(index), exercises.indices.contains(index + step) else { return }
+        let lift = exercises[index]
+        let neighbor = exercises[index + step].supersetGroupID
+        if neighbor != nil && neighbor == lift.supersetGroupID {
+            exercises.swapAt(index, index + step)
+        } else {
+            var far = index + step
+            while let neighbor, exercises.indices.contains(far + step), exercises[far + step].supersetGroupID == neighbor {
+                far += step
+            }
+            exercises.remove(at: index)
+            exercises.insert(lift, at: far)
+            leaveSuperset(lift)
+        }
+        for (position, lift) in exercises.enumerated() { lift.orderIndex = position }
+    }
+
+    /// Adds a copy of `exercise`, in no superset, right after it, or after
+    /// its superset's last lift so the superset stays together (RM-026).
+    func duplicate(_ exercise: RoutineExerciseDraft) {
+        guard let index = exercises.firstIndex(where: { $0 === exercise }) else { return }
+        let clone = RoutineExerciseDraft()
+        clone.exercise = exercise.exercise
+        clone.targetSets = exercise.targetSets
+        clone.targetRepsLow = exercise.targetRepsLow
+        clone.targetRepsHigh = exercise.targetRepsHigh
+        clone.targetRPE = exercise.targetRPE
+        clone.prescribedRestSeconds = exercise.prescribedRestSeconds
+        clone.tempo = exercise.tempo
+        clone.tracksTempo = exercise.tracksTempo
+        clone.tracksPartialReps = exercise.tracksPartialReps
+        clone.targetDurationSeconds = exercise.targetDurationSeconds
+        clone.targetLevel = exercise.targetLevel
+        clone.targetSpeedKmh = exercise.targetSpeedKmh
+        clone.targetIncline = exercise.targetIncline
+        let last = exercise.supersetGroupID.flatMap { id in exercises.lastIndex { $0.supersetGroupID == id } } ?? index
+        exercises.insert(clone, at: last + 1)
+        for (position, lift) in exercises.enumerated() { lift.orderIndex = position }
+    }
+
+    /// Whether the superset bracket opens and closes at the lift at `index`:
+    /// it stays open toward a partner beside it (RM-026).
+    func supersetEdges(at index: Int) -> (opens: Bool, closes: Bool) {
+        let group = exercises[index].supersetGroupID
+        func joins(_ other: Int) -> Bool {
+            group != nil && exercises.indices.contains(other) && exercises[other].supersetGroupID == group
+        }
+        return (!joins(index - 1), !joins(index + 1))
     }
 
     /// A superset needs two lifts, so a group left with one ends.
@@ -140,6 +198,17 @@ public final class RoutineDraft {
             let members = exercises.filter { $0.supersetGroupID == id }
             if members.count == 1 { members[0].supersetGroupID = nil }
         }
+    }
+
+    /// Keeps each superset's lifts together: they move up to the group's
+    /// first lift, in list order, and the positions are renumbered.
+    private func gatherSupersets() {
+        var gathered: [RoutineExerciseDraft] = []
+        for lift in exercises where !gathered.contains(where: { $0 === lift }) {
+            gathered += lift.supersetGroupID.map { id in exercises.filter { $0.supersetGroupID == id } } ?? [lift]
+        }
+        exercises = gathered
+        for (position, lift) in exercises.enumerated() { lift.orderIndex = position }
     }
 
     /// Phase 3.1 PIVOT-04 — session-level training intent for THIS
