@@ -68,19 +68,17 @@ public struct PastBlocksView: View {
 
     /// "6 weeks · Mar 3 - Apr 14 · 18 workouts": the plan's length, the
     /// dates it ran and its counted workouts. The dates tell two blocks with
-    /// one name apart (D-127). A block that ended in an earlier year than
-    /// `now` carries the end's year, and the start's too when it began in
-    /// another year.
+    /// one name apart (D-127). The end carries its year when the block
+    /// ended in an earlier year than `now`, and the start carries its own
+    /// whenever the block began in another year than it ended.
     static func line(of block: Block, now: Date = .now, calendar: Calendar = .current) -> (line: String, spoken: String) {
         let end = block.endDate ?? now
         let endYear = calendar.component(.year, from: end)
-        let showsYear = endYear < calendar.component(.year, from: now)
         var day = Date.FormatStyle.dateTime.month(.abbreviated).day()
         day.calendar = calendar
         day.timeZone = calendar.timeZone
-        let startsInOtherYear = calendar.component(.year, from: block.startDate) != endYear
-        let start = block.startDate.formatted(showsYear && startsInOtherYear ? day.year() : day)
-        let ended = end.formatted(showsYear ? day.year() : day)
+        let start = block.startDate.formatted(calendar.component(.year, from: block.startDate) != endYear ? day.year() : day)
+        let ended = end.formatted(endYear < calendar.component(.year, from: now) ? day.year() : day)
 
         let weeks = MesocycleWeekPage.totalWeeks(of: block)
         let workouts = BRUCountLabel.text(SessionSetActions.countedWorkouts(block.sessions ?? []).count, "workout")

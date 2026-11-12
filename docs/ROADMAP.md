@@ -312,7 +312,7 @@ A dismissed week hides the ring as well as the notice, as before `5aa93d05`; whe
 Today's T-READY and Program share `ProgramBlocks.readyOrder`.
 The header is `BRUHeaderBar` with + New in ink, and its popover still opens under the measured header, in front of the page.
 Planned cards carry outlined READY and DRAFT chips, weeks, phases and routine, then "Created Nov 10" or the missing piece; routine rows read "3 sessions · used by Spring Block".
-Finished blocks moved to one PAST BLOCKS · n › row, whose list reads "6 weeks · Sep 1 - Oct 13 · 3 workouts", with the year when a block ended in an earlier year; each row opens Block overview.
+Finished blocks moved to one PAST BLOCKS · n › row, whose list reads "6 weeks · Sep 1 - Oct 13 · 3 workouts", with the end's year when a block ended in an earlier year and the start's whenever it began in another year; each row opens Block overview.
 A fresh store starts with a routine, with Archived routines under it when one exists; the template cards, NO PROGRAM and `BlockBuilderRoute.template` are gone, and presets stay in + New block › Use Preset (O-8).
 Block overview takes `origin` from the stack that pushed it, `.today` or `.program`, for RM-013's review sheet.
 `ProgramStatesSeed` adds `-fitbod-seed-program-drafts`, `-past`, `-long-names` and `-archived`, and `ProgramStatesSeedTests` checks each.
@@ -323,8 +323,14 @@ The DONE-card checks in `BlockLifecycleEntryPointsUITests`, `BlockOverviewStates
 390pt light and dark captures were inspected for active, ready only, drafts only, empty with an archived routine, past blocks across two years, long names and the open + New popover, which still sits under the header in front of the page; a long routine name no longer starts a slab line with "·".
 The `screen_budget.py` re-tally keeps P-ACTIVE at 8 elements above the fold with no signal (header, Now slab, Planned head, chip, cards, Routines head, rows, Past blocks row) until This week (RM-015) lands.
 D-125, D-127, D-299, D-300, D-301, D-303 and D-304 are fixed by the layout, and D-126 stays with RM-012.
-D-302 is fixed in part: Program's "ACCUM · INTNS" rows are gone, but New Block's chart keeps the "ACCUM." and "INTENS." that the [color tokens](design-system/color.md) name, beside Block overview's "ACCUM 3 · INTNS 2".
+D-302 is fixed on Program: its "ACCUM · INTNS" rows are gone.
+New Block's chart ("ACCUM." and "INTENS.", the names the [color tokens](design-system/color.md) use) and Block overview's "ACCUM 3 · INTNS 2" move to [RM-035](#rm-035) with New Block's other polish rows.
 The Program-screen rows of RM-028 (D-22, D-123, D-124, D-150, D-151) sit in CREATE BLOCK and CHOOSE PRESET, which keep their copy, so they stay in RM-028.
+Review fixes: Program's START BLOCK ▸ takes Today's DEBUG `-fitbod-fail-block-start-once` hook, and a new `BlockLifecycleEntryPointsUITests` case checks that the retry alert shows, a relaunch reads the block back as ready with none active, and Try again starts it; the class passed 3 of 3 (`fast-20261112-131518`, iPhone 17e iOS 26.5).
+A block that ended this year but began last year now reads "Dec 5, 2022 - Jan 16"; `ProgramViewFidelityTests` covers it, 12 of 12 with the seed suite (`fast-20261112-125102`).
+The long-name captures were retaken after the no-break fix: the slab's routine line wraps as "… AND CALF" over "WORK · ROTATION" in light and dark.
+The orchestrator's full tier on `a1607cfe` (`full-20261112-124611`): the unit target ran 1,265 tests, 1,262 passed, 0 failed, 2 skipped, 1 expected failure.
+Its UI tests ran 1,371 of 1,371 enumerated, 1,367 passed and 1 failed: `SessionHistoryBRUUITests.testKilogramExerciseOverrideSurvivesHistoryCorrectionAndRelaunch`, which goes through Library, Today and History, not Program; rerun by the orchestrator.
 Open: a look on the phone; accessibility sizes were not inspected.
 **References:** D-125–D-127/D-299–D-304, redesign R-9/R-11/R-23; [Program](../fitbod/Periodization/ProgramView.swift), [Past blocks](../fitbod/Periodization/PastBlocksView.swift), [seed](../fitbod/App/ProgramStatesSeed.swift), [budget](design-map/redesign/screen_budget.py).
 
@@ -735,7 +741,7 @@ Deferred stays open until its trigger. Visual work returns at workflow stability
 ### <a id="rm-035"></a>RM-035 — Approved-screen visual/copy polish
 
 **P3 · Deferred until design approved.** Remaining “Polish later” D-rows, readout type, anatomical refinement if feedback requires it and T43 refresh once a newer approved export exists.
-**Done when:** resolve mapped outcomes without behavior regressions. T120 (D-13/F258/F260/F261/F345) still needs one-line undo toast, phase/stat/direction stepper labels and reproduction of short slow drags opening phase editors from cards/margins or not scrolling chart. WIP `2ef8ea3`/`conway-t120` was not merged/validated. T127/F295 needs verified thousands grouping, decimals/no-break parts and spoken numbers. D-270's selected-type mark shipped, but the native rounded menu presentation remains polish. Keep F23/F57/F87/F119/F139/F175/F201/F225/F284/F341/F360/F361/F368 for their screen passes.
+**Done when:** resolve mapped outcomes without behavior regressions. T120 (D-13/F258/F260/F261/F345) still needs one-line undo toast, phase/stat/direction stepper labels and reproduction of short slow drags opening phase editors from cards/margins or not scrolling chart. WIP `2ef8ea3`/`conway-t120` was not merged/validated. T127/F295 needs verified thousands grouping, decimals/no-break parts and spoken numbers. D-270's selected-type mark shipped, but the native rounded menu presentation remains polish. Keep F23/F57/F87/F119/F139/F175/F201/F225/F284/F341/F360/F361/F368 for their screen passes. D-302's remaining phase abbreviations, on New Block's chart and Block overview, pick one form when those screens are polished.
 **Scope / sequence:** Select approved screens/mapped findings → reproduce remaining defects → shared token/copy fixes → inspect. Unapproved/unrelated visual work stays deferred.
 **Requires:** Approved design for the affected screen.
 **Verify when:** At approved screen implementation; [RM-044](#rm-044) accessibility refinement at stability.

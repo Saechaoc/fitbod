@@ -80,6 +80,10 @@ public struct ProgramView: View {
     @State private var presentingStartChoice = false
     /// The ready block whose START BLOCK ▸ threw; its alert offers Try again and Open block.
     @State private var failedBlockStart: Block? = nil
+    #if DEBUG
+    /// UI tests' `-fitbod-fail-block-start-once` makes the first START BLOCK ▸ throw, as on Today.
+    @State private var failNextBlockStart = ProcessInfo.processInfo.arguments.contains("-fitbod-fail-block-start-once")
+    #endif
     /// The header's height, which places + New's popover under it: a 44pt row and a 2pt rule at default text.
     @State private var headerHeight = BRUMetrics.touchTarget + BRUMetrics.Border.structural
 
@@ -214,6 +218,12 @@ public struct ProgramView: View {
     /// block stays on Block overview, which asks first.
     private func startBlock(_ block: Block) {
         do {
+            #if DEBUG
+            if failNextBlockStart {
+                failNextBlockStart = false
+                throw CocoaError(.fileWriteUnknown)
+            }
+            #endif
             try BlockLifecycleService.start(block: block, context: ctx)
             failedBlockStart = nil
         } catch {

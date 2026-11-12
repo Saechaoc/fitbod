@@ -106,6 +106,38 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
                       "With a routine, Program must list the block as ready")
     }
 
+    // MARK: - START BLOCK ▸ on Program
+
+    /// Program's ready slab starts the block through the lifecycle service,
+    /// as Today's T-READY does. A failed start shows "Couldn't start block"
+    /// and saves nothing: read back after a relaunch, the block is still
+    /// ready and none is active. Try again then starts it.
+    @MainActor
+    func testProgramStartFailureLeavesTheBlockReadyAndTryAgainStartsIt() throws {
+        let failOnce = "-fitbod-fail-block-start-once"
+        let app = UITestNavigation.launch(UITestNavigation.freshStore + ["-fitbod-seed-today-ready", failOnce])
+        let start = app.buttons["today.startBlock"]
+        let alert = app.alerts["Couldn't start block"]
+        UITestNavigation.selectTab("Program", in: app)
+        XCTAssertTrue(UITestNavigation.appears(start), "Program must lead with the ready block's START BLOCK ▸")
+        start.tap()
+        XCTAssertTrue(UITestNavigation.appears(alert), "A failed start must show the retry alert")
+
+        // Reopened with the failure armed again, the store must still hold the block as ready.
+        app.terminate()
+        app.launchArguments = [UITestNavigation.resetSignalFlag, failOnce]
+        app.launch()
+        UITestNavigation.selectTab("Program", in: app)
+        XCTAssertTrue(UITestNavigation.appears(start), "A failed start must leave the block ready")
+        XCTAssertFalse(activeBlockCards(in: app).firstMatch.exists, "A failed start must start no block")
+        start.tap()
+        XCTAssertTrue(UITestNavigation.appears(alert), "A failed start must show the retry alert")
+        alert.buttons["Try again"].tap()
+        let started = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "ACTIVE block: Spring Block"))
+        XCTAssertTrue(UITestNavigation.appears(started.firstMatch), "Try again must start Spring Block")
+        XCTAssertTrue(UITestNavigation.disappears(start), "A started block offers no START BLOCK ▸")
+    }
+
     // MARK: - Helpers
 
     /// Today's band for the seeded active block opens its overview.

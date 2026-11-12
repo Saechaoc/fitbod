@@ -132,7 +132,7 @@ struct ProgramViewFidelityTests: ProgramFixtures {
         #expect(line.spoken == "6 weeks, Sep 23 to Nov 4, 2 workouts")
     }
 
-    @Test("A block that ended in an earlier year carries its year, and its start's when that differs (D-127)")
+    @Test("The end carries its year when it fell in an earlier year, and the start whenever its year differs (D-127)")
     func pastLineShowsTheYearAcrossYears() throws {
         let lastYear = try past("Winter", from: (2022, 11, 4), to: (2022, 12, 1), weeks: 4)
         let acrossNewYear = try past("Winter", from: (2021, 12, 2), to: (2022, 1, 13), weeks: 6)
@@ -143,7 +143,7 @@ struct ProgramViewFidelityTests: ProgramFixtures {
         #expect(PastBlocksView.line(of: acrossNewYear, now: now, calendar: calendar).line
             == "6 weeks · Dec 2, 2021 - Jan 13, 2022 · 0 workouts")
         #expect(PastBlocksView.line(of: intoThisYear, now: now, calendar: calendar).line
-            == "6 weeks · Dec 5 - Jan 16 · 0 workouts")
+            == "6 weeks · Dec 5, 2022 - Jan 16 · 0 workouts")
     }
 
     // MARK: - Fixtures
