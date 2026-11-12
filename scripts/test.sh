@@ -48,7 +48,8 @@ WORKERS="${FITBOD_TEST_WORKERS:-2}"
 DD="${FITBOD_TEST_DD:-/tmp/fitbod-test-dd-$(printf %s "$ROOT" | shasum | cut -c1-8)}"
 OUT="${FITBOD_TEST_OUT:-/tmp/fitbod-test-out}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-RUN="$OUT/$TIER-$STAMP"
+# The process ID keeps two runs that start in the same second apart.
+RUN="$OUT/$TIER-$STAMP-$$"
 mkdir -p "$RUN"
 
 flags=(
