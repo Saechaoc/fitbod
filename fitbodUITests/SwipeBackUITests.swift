@@ -48,7 +48,8 @@ final class SwipeBackUITests: XCTestCase {
         assertStillNavigates(from: newRoutine, to: nameStep(in: app), in: app)
 
         UITestNavigation.selectTab("Program", in: app)
-        let program = app.staticTexts["PROGRAM"]
+        // At default text the title's spaces are no-break spaces (RM-011).
+        let program = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "Fitbod./.Program")).firstMatch
         assertRootIgnoresSwipe(program, alongRowOf: program, "Program", in: app)
         UITestNavigation.hittable(app.buttons, "+ NEW").tap()
         UITestNavigation.hittable(app.buttons, "+ New routine").tap()

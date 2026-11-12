@@ -53,10 +53,8 @@ enum TodayState: Equatable {
             }
         }
 
-        let ready = readyBlocks.min {
-            ($0.startDate, $0.name, $0.id.uuidString) < ($1.startDate, $1.name, $1.id.uuidString)
-        }
-        if let ready { return .ready(ready) }
+        // Program's ready slab leads with the same block (O-6).
+        if let ready = readyBlocks.min(by: ProgramBlocks.readyOrder) { return .ready(ready) }
 
         if let suggestion = StartSlot.suggestion(liveRoutines: liveRoutines, sessions: sessions, finished: finishedWorkouts) {
             return .pick(suggestion)

@@ -29,8 +29,7 @@ struct ReadyBlockCard: View {
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruOnSlab)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Created \(block.startDate.formatted(.dateTime.month(.abbreviated).day()))"
-                 + (readyCount > 1 ? " · 1 of \(readyCount) ready" : ""))
+            Text(Self.created(block) + (readyCount > 1 ? " · 1 of \(readyCount) ready" : ""))
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
@@ -53,6 +52,11 @@ struct ReadyBlockCard: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.bruSlab)
+    }
+
+    /// "Created Oct 3": `startDate` is the creation date until the block starts (O-14).
+    static func created(_ block: Block) -> String {
+        "Created \(block.startDate.formatted(.dateTime.month(.abbreviated).day()))"
     }
 
     static func summary(of block: Block) -> String {

@@ -708,7 +708,8 @@ public struct TodayView: View {
 #endif
 
 /// A failed block start, kept out of TodayView's body so the compiler can type-check it.
-private struct TodayBlockAlerts: ViewModifier {
+/// Program's ready slab shows the same alert (RM-011).
+struct TodayBlockAlerts: ViewModifier {
     @Binding var failedBlock: Block?
     let onRetry: (Block) -> Void
     let onOpen: (Block) -> Void

@@ -60,11 +60,11 @@ final class NewBlockSavesUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.disappears(newBlockTitle(in: app), within: 5), "SAVE DRAFT must close New Block")
 
         UITestNavigation.selectTab("Program", in: app)
-        let card = app.buttons.labeled("DRAFT block: Name Only")
-        XCTAssertTrue(UITestNavigation.appears(card), "Program must list the name-only block as a draft")
+        // With drafts only, the newest draft leads Program on its own slab (RM-011).
+        let slab = app.descendants(matching: .any).labeled("DRAFT block: Name Only")
+        XCTAssertTrue(UITestNavigation.appears(slab), "Program must lead with the name-only block as a draft")
 
-        UITestNavigation.reveal(card, in: app)
-        card.tap()
+        UITestNavigation.hittable(app.buttons, "Continue block ▸").tap()
         UITestNavigation.hittable(app.buttons, "EDIT").tap()
         XCTAssertTrue(UITestNavigation.appears(editBlockTitle(in: app)), "EDIT must open EDIT BLOCK")
         expectBottomAction("SAVE CHANGES", in: app)

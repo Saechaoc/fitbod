@@ -2,63 +2,30 @@
 //  ProgramView.swift
 //  fitbod
 //
-//  Quick task 260525-gen — BRU Program empty-state surface that replaces
-//  the Routines tab body in the bottom nav.
+//  The Program tab: what the lifter is running now, what comes after it,
+//  and the routines it runs (RM-011, docs/design-map/redesign/program-layouts.md).
 //
-//  Source of truth: bru-screens/Program/empty-state.png (PNG primary),
-//  bru-screens/Program/empty-state.html (typography + measurement
-//  reference). The PNG governs spacing, vertical rhythm, and proportions;
-//  the HTML governs exact copy, font weights, and inline emphasis.
+//  ## Composition, top to bottom
 //
-//  ## Composition
-//
-//  - ProgramChromeHeader (not BRUHeaderBar) starts below the native
-//    status bar:
-//      - 2pt top rule
-//      - PROGRAM (left) / + NEW (right) row
-//      - 2pt bottom rule
-//    BRUHeaderBar is bypassed here because BRUHeaderBar centers the
-//    title and only paints a bottom rule — the mockup needs left-aligned
-//    PROGRAM, right-aligned + NEW, and a top rule above the row.
-//  - ResumeWorkoutBanner (reactive via its own @Query) when an active
-//    Session exists. Its RESUME ▸ opens the logger on Today's stack
-//    through ResumeWorkoutRequest, so ‹ lands on Today (FT-02).
-//  - NoProgramHero: "ACTIVE BLOCK · NONE" caption, Bebas Neue
-//    "NO PROGRAM" headline, Geist paragraph with inline bold on the
-//    accumulation/intensification/peak/deload keywords.
-//  - Coral "+ DEFINE BLOCK ▶" CTA with the measured 71pt height.
-//  - Feature chips rendered by a wrapping layout using measured chip tokens.
-//  - ProgramTemplateSection: compact ProgramTemplateHeader + one
-//    ProgramTemplateRow per BlockTemplates.catalog template, showing only
-//    its weeks, name and phases.
+//  - BRUHeaderBar "Fitbod / Program" with "+ New" in ink, the one creation
+//    entry: its popover offers + New block and + New routine. The popover
+//    opens under the header's measured height.
+//  - ResumeWorkoutBanner while a workout is open. Its RESUME ▸ opens the
+//    logger on Today's stack through ResumeWorkoutRequest (FT-02).
+//  - The lead block (`ProgramBlocks.lead`): the active block as an ink slab
+//    that opens Block overview (no week cells, O-13); with none active, the
+//    oldest created ready block with START BLOCK ▸ (O-6); with drafts only,
+//    the newest created draft with CONTINUE BLOCK ▸.
+//  - PLANNED: the other ready blocks, oldest created first, then the other
+//    drafts, newest created first.
+//  - ROUTINES, and Archived routines while one is archived.
 //
 //  ## Accessibility sizes
 //
-//  The measured heights are minimums, so larger text grows the hero, CTA,
-//  chips and rows instead of drawing over them. At accessibility sizes
-//  NO PROGRAM wraps, and the template header and rows stack their parts.
-//  The chrome header grows with its text, and + NEW's popover opens under
-//  its measured height. CREATE BLOCK and CHOOSE PRESET open at full height
-//  and scroll, and every row's chevron scales with the text.
-//
-//  ## Scope decisions (260525-gen)
-//
-//  - Always renders the empty-state design regardless of existing Block
-//    count. The "active block" populated state is a separate task.
-//  - Drops the search bar, folder/routine list, New Folder / History menu,
-//    and the active-session conflict alert that lived in RoutinesListView.
-//  - "+ NEW" opens the custom BRU action popover from bru-screens/New-modal:
-//    "+ New block" routes to a blank block builder, "+ New routine" pushes
-//    the name step (NewRoutineNameScreen), whose SAVE creates the routine
-//    (code `Split`) and swaps the step for its SplitDetailView.
-//  - The hero CTA still routes directly to the blank-block flow.
-//
-//  ## Font departures from the design system
-//
-//  Two BRU departures are intentional on this screen:
-//  - BebasNeue-Regular.ttf and Geist-Regular.ttf are registered in
-//    Info.plist for this measured mockup pass. Space Grotesk remains the
-//    BRU default elsewhere.
+//  Rows grow with their text from a 44pt minimum and nothing truncates.
+//  The active slab stacks ACTIVE BLOCK over OPEN ›, and Planned cards keep
+//  their chevron on the first line. CREATE BLOCK and CHOOSE PRESET open at
+//  full height and scroll.
 //
 //  ## File location & Xcode wiring
 //
@@ -74,11 +41,6 @@ import SwiftData
 // MARK: - ProgramView
 
 /// Program tab body — BRU brutalist surface for periodization.
-/// Empty-state (NoProgramHero + ProgramTemplateSection) is shown ONLY when
-/// there are zero blocks AND zero non-archived splits. When either exists the
-/// BLOCKS and ROUTINES sections are rendered instead, and BLOCKS offers
-/// + DEFINE BLOCK ▶ until the first block exists. In both states an
-/// "Archived routines" entry follows while at least one split is archived.
 ///
 /// THREADING NOTE: `derivedStatus` is a computed property on Block and is NOT
 /// addressable in #Predicate. All status-based ordering and usage-tag filtering
@@ -89,13 +51,9 @@ public struct ProgramView: View {
 
     @Environment(\.modelContext) private var ctx
 
-    @Query(filter: #Predicate<Session> { $0.completedAt == nil })
-    private var activeSessions: [Session]
-
-    // All blocks, sorted by startDate descending. Status ordering applied as
-    // Swift post-filter in `orderedBlocks` (derivedStatus is computed, not stored).
-    @Query(sort: [SortDescriptor(\Block.startDate, order: .reverse)])
-    private var allBlocks: [Block]
+    // Every block; `ProgramBlocks` orders them by status in Swift, since
+    // derivedStatus is computed, not stored.
+    @Query private var allBlocks: [Block]
 
     // Non-archived splits only — isArchived is a stored Bool so predicate-safe.
     @Query(
@@ -113,7 +71,10 @@ public struct ProgramView: View {
     @State private var showingNewPopover = false
     @State private var presentingStartChoice = false
     @State private var showAllDone = false
-    @State private var headerHeight = ProgramChromeHeader.totalHeight
+    /// The ready block whose START BLOCK ▸ threw; its alert offers Try again and Open block.
+    @State private var failedBlockStart: Block? = nil
+    /// The header's height, which places + New's popover under it: a 44pt row and a 2pt rule at default text.
+    @State private var headerHeight = BRUMetrics.touchTarget + BRUMetrics.Border.structural
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -126,13 +87,14 @@ public struct ProgramView: View {
     // MARK: Body
 
     public var body: some View {
+        let blocks = ProgramBlocks(allBlocks)
         NavigationStack(path: $navigationPath) {
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 0) {
-                    ProgramChromeHeader(onNew: { showingNewPopover = true })
+                    BRUHeaderBar(center: title, right: HeaderAction("+ New") { showingNewPopover = true })
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
-                        // + NEW's 44pt target overhangs the header; in front
-                        // of the scroll view, the overhang takes taps.
+                        // + New's touch area reaches past the header; in front
+                        // of the scroll view, it takes those taps.
                         .zIndex(1)
 
                     ScrollView {
@@ -158,7 +120,7 @@ public struct ProgramView: View {
                                     }
                                 )
                             } else {
-                                blocksSection
+                                blocksSection(blocks)
                                 routinesSection
                             }
 
@@ -186,7 +148,15 @@ public struct ProgramView: View {
                 route.builder(origin: .program)
             }
             .blockCreateFlow(isPresented: $presentingStartChoice) { pendingBlockBuilder = $0 }
+            .modifier(TodayBlockAlerts(failedBlock: $failedBlockStart, onRetry: startBlock, onOpen: openBlock))
         }
+    }
+
+    /// "Fitbod / Program" outgrows its third of the header at default text,
+    /// where no-break spaces keep it on one line, a little smaller, as
+    /// Archived routines does. Larger text wraps between the words.
+    private var title: String {
+        dynamicTypeSize <= .large ? "Fitbod\u{00A0}/\u{00A0}Program" : "Fitbod / Program"
     }
 
     // MARK: Popover
@@ -233,62 +203,69 @@ public struct ProgramView: View {
         navigationPath.append(NewRoutineRoute.name)
     }
 
+    private func openBlock(_ block: Block) {
+        navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
+    }
+
+    /// START BLOCK ▸ on the ready slab. It shows only while no block is
+    /// active, so there is nothing to confirm; starting beside an active
+    /// block stays on Block overview, which asks first.
+    private func startBlock(_ block: Block) {
+        do {
+            try BlockLifecycleService.start(block: block, context: ctx)
+            failedBlockStart = nil
+        } catch {
+            failedBlockStart = block
+        }
+    }
+
     // MARK: Static data
 
     /// One row per catalog template, in catalog order.
     static let templateRows: [ProgramTemplateRowContent] =
         BlockTemplates.catalog.map(ProgramTemplateRowContent.init)
 
-    // MARK: - Ordered blocks (Swift post-filter — derivedStatus is computed, not stored)
+    // MARK: - Blocks
 
-    /// Blocks sorted by status precedence ACTIVE → READY → DRAFT → DONE,
-    /// then by startDate descending within each status group.
-    /// NOTE: derivedStatus is a computed property on Block and is NOT
-    /// addressable in #Predicate — ordering performed in Swift post-filter.
-    private var orderedBlocks: [Block] {
-        let statusOrder: [BlockStatus: Int] = [
-            .active: 0, .ready: 1, .draft: 2, .completed: 3
-        ]
-        return allBlocks.sorted { a, b in
-            let aPriority = statusOrder[a.derivedStatus] ?? 4
-            let bPriority = statusOrder[b.derivedStatus] ?? 4
-            if aPriority != bPriority { return aPriority < bPriority }
-            return a.startDate > b.startDate
+    /// The lead block, then PLANNED, then the finished blocks.
+    @ViewBuilder
+    private func blocksSection(_ blocks: ProgramBlocks) -> some View {
+        if let active = blocks.active {
+            ActiveBlockSlab(block: active) { openBlock(active) }
+        } else if let ready = blocks.ready.first {
+            ReadyBlockCard(
+                block: ready, readyCount: blocks.ready.count,
+                onStart: { startBlock(ready) }, onOpen: { openBlock(ready) }
+            )
+        } else if let draft = blocks.drafts.first {
+            DraftBlockSlab(block: draft) { openBlock(draft) }
+        } else {
+            BRUSectionHead("Blocks")
+            if allBlocks.isEmpty {
+                noBlocksRow
+            }
         }
+
+        if !blocks.planned.isEmpty {
+            BRUSectionHead("Planned")
+            ForEach(Array(blocks.planned.enumerated()), id: \.element.id) { index, block in
+                if index > 0 {
+                    BRUDivider(.hair)
+                }
+                BlockStatusCard(block: block) { openBlock(block) }
+            }
+        }
+
+        doneBlocks(blocks.past)
     }
 
-    // MARK: - BLOCKS section
-
     @ViewBuilder
-    private var blocksSection: some View {
-        BRUSectionHead("Blocks")
-
-        if allBlocks.isEmpty {
-            noBlocksRow
-        }
-
-        let liveBlocks = orderedBlocks.filter { $0.derivedStatus != .completed }
-        let doneBlocks = orderedBlocks.filter { $0.derivedStatus == .completed }
+    private func doneBlocks(_ doneBlocks: [Block]) -> some View {
         let visibleDone = showAllDone ? doneBlocks : Array(doneBlocks.prefix(3))
 
-        ForEach(liveBlocks) { block in
-            BlockStatusCard(
-                block: block,
-                onTap: {
-                    navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
-                }
-            )
-            BRUDivider(.hair)
-        }
-
         ForEach(visibleDone) { block in
-            BlockStatusCard(
-                block: block,
-                onTap: {
-                    navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
-                }
-            )
             BRUDivider(.hair)
+            BlockStatusCard(block: block) { openBlock(block) }
         }
 
         if !showAllDone && doneBlocks.count > 3 {
@@ -314,8 +291,6 @@ public struct ProgramView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Show all \(doneCount) completed blocks")
         }
-
-        BRUDivider(.ink)
     }
 
     /// BLOCKS once a routine has taken the first-run screen's place but no
@@ -436,80 +411,235 @@ public struct ProgramView: View {
     }
 }
 
+// MARK: - ProgramBlocks
+
+/// Program's blocks by status, each list in the order the page shows it.
+/// `startDate` is a block's creation date until it starts (O-14), so it
+/// orders the blocks that have not started.
+struct ProgramBlocks {
+    /// The running block; one at most (`BlockLifecycleService`).
+    let active: Block?
+    /// Oldest created first (O-6).
+    let ready: [Block]
+    /// Newest created first: the draft made last is the one the lifter moved on to (O-6).
+    let drafts: [Block]
+    /// Completed blocks, the newest ended first.
+    let past: [Block]
+
+    init(_ blocks: [Block]) {
+        active = blocks.first { $0.derivedStatus == .active }
+        ready = blocks.filter { $0.derivedStatus == .ready }.sorted(by: Self.readyOrder)
+        drafts = blocks.filter { $0.derivedStatus == .draft }.sorted {
+            ($1.startDate, $0.name, $0.id.uuidString) < ($0.startDate, $1.name, $1.id.uuidString)
+        }
+        past = blocks.filter { $0.derivedStatus == .completed }.sorted {
+            ($0.endDate ?? .distantPast) > ($1.endDate ?? .distantPast)
+        }
+    }
+
+    /// The block the page leads with: the active one, else the first ready
+    /// one, else the newest draft.
+    var lead: Block? { active ?? ready.first ?? drafts.first }
+
+    /// PLANNED: the ready blocks, then the drafts, without the lead.
+    var planned: [Block] { (ready + drafts).filter { $0.id != lead?.id } }
+
+    /// Today's T-READY and Program's ready slab both lead with the first
+    /// ready block in this order: oldest created, then name, then id (O-6).
+    static func readyOrder(_ a: Block, _ b: Block) -> Bool {
+        (a.startDate, a.name, a.id.uuidString) < (b.startDate, b.name, b.id.uuidString)
+    }
+}
+
+extension Block {
+    /// The name Program shows, "Untitled Block" while it has none.
+    var programName: String { name.isEmpty ? "Untitled Block" : name }
+}
+
+private extension BlockStatus {
+    /// The chip's word, and the start of the block's VoiceOver label, "READY block: …".
+    var word: String {
+        switch self {
+        case .active: "Active"
+        case .ready: "Ready"
+        case .draft: "Draft"
+        case .completed: "Done"
+        }
+    }
+}
+
+private extension BlockMissingPiece {
+    /// What a draft still lacks, as Program says it: "No routine yet".
+    var draftLine: String {
+        switch self {
+        case .name: "No name yet"
+        case .phase: "No phases yet"
+        case .routine: "No routine yet"
+        case .session: "Its routine has no sessions"
+        case .trainingDays(let count): "Pick \(BRUCountLabel.text(count, "training day"))"
+        }
+    }
+}
+
+// MARK: - ActiveBlockSlab
+
+/// The active block, first and largest: its name, where it is in its plan
+/// and the routine it runs. The whole slab opens Block overview, which keeps
+/// the week cells (O-13).
+fileprivate struct ActiveBlockSlab: View {
+    let block: Block
+    let onOpen: () -> Void
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        let position = BlockPosition.label(block, on: .now)
+        Button(action: onOpen) {
+            VStack(alignment: .leading, spacing: 8) {
+                labelRowLayout {
+                    slabLabel("● Active block", muted: true)
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        Spacer(minLength: 12)
+                    }
+                    slabLabel("Open ›", muted: false)
+                }
+                BRUDisplay(block.programName, size: .large, color: .bruOnSlab)
+                    .fixedSize(horizontal: false, vertical: true)
+                slabLabel(position.line, muted: false)
+                slabLabel(routineLine, muted: true)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.bruSlab)
+        }
+        .buttonStyle(.bruRow)
+        .accessibilityLabel("ACTIVE block: \(block.programName). \(position.spoken).")
+        .accessibilityValue(routineLine.replacingOccurrences(of: " · ", with: ", "))
+    }
+
+    /// The routine's name, "· Rotation" on a rotation block.
+    private var routineLine: String {
+        guard let routine = block.split else { return "No routine" }
+        return block.schedulingMode == .rotation ? "\(routine.name) · Rotation" : routine.name
+    }
+
+    private func slabLabel(_ text: String, muted: Bool) -> some View {
+        Text(text)
+            .font(BRUFont.labelSmall)
+            .tracking(1.5)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruOnSlab.opacity(muted ? 0.6 : 1))
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// ACTIVE BLOCK beside OPEN ›, or over it at accessibility sizes.
+    private var labelRowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 0))
+    }
+}
+
+// MARK: - DraftBlockSlab
+
+/// With drafts only, nothing can start: the newest draft leads on paper,
+/// naming what it lacks, and CONTINUE BLOCK ▸ opens it in Block overview,
+/// whose Edit opens the builder.
+fileprivate struct DraftBlockSlab: View {
+    let block: Block
+    let onContinue: () -> Void
+
+    var body: some View {
+        let missing = block.missingPiece?.draftLine ?? ""
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Draft")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                BRUDisplay(block.programName, size: .large)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(missing)
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("DRAFT block: \(block.programName)")
+            .accessibilityValue(missing)
+
+            BRUButton("Continue block ▸", kind: .primary, size: .lg, action: onContinue)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.bruPaper)
+        .overlay { Rectangle().strokeBorder(Color.bruInk, lineWidth: BRUMetrics.Border.structural) }
+        .padding(16)
+    }
+}
+
 // MARK: - BlockStatusCard
 
-/// Card displaying a single Block in the BLOCKS section.
-/// Fileprivate so ProgramChipFlow and ProgramScreenTokens remain accessible.
+/// A block under PLANNED: its outlined status chip and name, then
+/// "6 weeks · 3 phases · Push Pull Legs", then when a ready block was
+/// created or what a draft still lacks. Opens Block overview.
 fileprivate struct BlockStatusCard: View {
 
     let block: Block
     let onTap: () -> Void
 
-    // Capture today at construction — mirrors BlockOverviewScreen init pattern.
-    private let today = Date.now
-
-    private var derivedStatus: BlockStatus { block.derivedStatus }
-
-    private var activeWeek: (line: String, spoken: String) {
-        BlockPosition.label(block, on: today)
-    }
-
     var body: some View {
+        let status = block.derivedStatus
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 4) {
-                statusChip
-
-                // Block name
-                Text(block.name.isEmpty ? "Untitled Block" : block.name)
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruInk)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                // Active progress line, the row's one mention of its phase.
-                // It wraps between words at accessibility sizes.
-                if derivedStatus == .active {
-                    Text(activeWeek.line)
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruMuted)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    BRUChip(status.word)
+                    Text(block.programName)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
                         .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    ProgramRowChevron()
+                }
+                if let summary {
+                    subline(summary, color: .bruInk)
+                }
+                if let detail {
+                    subline(detail, color: .bruMuted)
                 }
             }
             .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
             .padding(.vertical, 12)
-            .frame(minHeight: 44)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.bruRow)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityLabelText)
+        .accessibilityLabel("\(status.word.uppercased()) block: \(block.programName)")
+        .accessibilityValue([summary, detail].compactMap { $0 }.joined(separator: ", "))
     }
 
-    private var statusChip: some View {
-        switch derivedStatus {
-        case .active:
-            return BRUChip("ACTIVE", color: .bruSignal, fill: true)
-        case .ready:
-            return BRUChip("READY", color: .bruSignal)
-        case .draft:
-            return BRUChip("DRAFT")
-        case .completed:
-            return BRUChip("DONE")
+    /// Its weeks, phases and routine, or nil while it has no phases.
+    private var summary: String? {
+        (block.phases ?? []).isEmpty ? nil : ReadyBlockCard.summary(of: block)
+    }
+
+    /// "Created Oct 3" for a ready block, or what a draft still lacks.
+    private var detail: String? {
+        switch block.derivedStatus {
+        case .ready: ReadyBlockCard.created(block)
+        case .draft: block.missingPiece?.draftLine
+        case .active, .completed: nil
         }
     }
 
-    private var accessibilityLabelText: String {
-        let name = block.name.isEmpty ? "Untitled Block" : block.name
-        switch derivedStatus {
-        case .active:
-            return "ACTIVE block: \(name). \(activeWeek.spoken)."
-        case .ready:
-            return "READY block: \(name)"
-        case .draft:
-            return "DRAFT block: \(name)"
-        case .completed:
-            return "DONE block: \(name)"
-        }
+    private func subline(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(color)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -882,8 +1012,6 @@ fileprivate enum ProgramScreenTokens {
     static let lightRowDividerThickness: CGFloat = 1
     static let horizontalPagePadding: CGFloat = 16
 
-    static let topHeaderHeight: CGFloat = 34
-    static let topHeaderRowHeight: CGFloat = 30
     static let headerLabelFontSize: CGFloat = 11
     static let headerLetterSpacing: CGFloat = 1.2
     static let newPopoverTopGap: CGFloat = 4
@@ -933,71 +1061,6 @@ fileprivate enum ProgramScreenTokens {
 fileprivate enum ProgramTypography {
     static let chromeLabel: Font = .bru(.grotesk, size: ProgramScreenTokens.headerLabelFontSize)
     static let templateMeta: Font = .bru(.grotesk, size: ProgramScreenTokens.templateMetaFontSize)
-}
-
-// MARK: - ProgramChromeHeader
-
-fileprivate struct ProgramChromeHeader: View {
-    /// The height at default text. Larger text grows the row, so ProgramView
-    /// opens + NEW's popover under the header's measured height.
-    static let totalHeight: CGFloat = ProgramScreenTokens.topHeaderHeight
-    /// How far + NEW's 44pt target hangs below the header at default text.
-    private static let newTargetOverhang: CGFloat = BRUMetrics.touchTarget - totalHeight
-
-    let onNew: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            rule
-
-            HStack(alignment: .center) {
-                Text("PROGRAM")
-                    .font(ProgramTypography.chromeLabel)
-                    .tracking(ProgramScreenTokens.headerLetterSpacing)
-                    .foregroundStyle(Color.bruInk)
-
-                Spacer()
-
-                Button {
-                    onNew()
-                } label: {
-                    Text("+ NEW")
-                        .font(ProgramTypography.chromeLabel)
-                        .tracking(ProgramScreenTokens.headerLetterSpacing)
-                        .foregroundStyle(Color.bruInk)
-                        // Lifts the text inside its 44pt target, so the target
-                        // starts at the header's top edge and hangs below the
-                        // header, never into the status bar, which takes no taps.
-                        .padding(.bottom, Self.newTargetOverhang)
-                        .frame(minWidth: BRUMetrics.touchTarget, minHeight: BRUMetrics.touchTarget, alignment: .trailing)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                // The target takes no height in the row, whose height comes
-                // from PROGRAM in the same font, and keeps its text level
-                // with PROGRAM.
-                .padding(.top, -(BRUMetrics.touchTarget - Self.newTargetOverhang) / 2)
-                .padding(.bottom, -(BRUMetrics.touchTarget + Self.newTargetOverhang) / 2)
-            }
-            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-            .padding(.vertical, 4)
-            .frame(minHeight: ProgramScreenTokens.topHeaderRowHeight)
-            .frame(maxWidth: .infinity)
-            .background(Color.bruPaper)
-
-            rule
-        }
-        .background(Color.bruPaper)
-    }
-
-    /// A 2pt rule. It takes no taps, so + NEW's target takes them where it
-    /// hangs over the bottom rule.
-    private var rule: some View {
-        Rectangle()
-            .fill(Color.bruInk)
-            .frame(height: ProgramScreenTokens.blackDividerThickness)
-            .allowsHitTesting(false)
-    }
 }
 
 // MARK: - Program Dividers
