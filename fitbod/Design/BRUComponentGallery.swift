@@ -36,9 +36,13 @@ struct BRUComponentGallery: View {
                         BRUButton("Signal action ▸", kind: .signal, size: .lg) { didTap("Signal button") }
                         BRUButton("Secondary action", kind: .ghost) { didTap("Ghost button") }
                         BRUButton("Compact action", kind: .ghost, size: .sm) { didTap("Compact button") }
-                        BRUButton("Ghost on a slab", kind: .ghostOnSlab, size: .sm) { didTap("Slab ghost button") }
-                            .padding(12)
-                            .background(Color.bruSlab)
+                        HStack(spacing: 8) {
+                            BRUButton("Signal ▸", kind: .signal, size: .lg) { didTap("Slab signal button") }
+                            BRUButton("Ghost", kind: .ghost, size: .sm) { didTap("Slab ghost button") }
+                        }
+                        .bruButtonsShareHeight()
+                        .padding(12)
+                        .bruSlabBackground()
                         BRUButton("Unavailable", kind: .signal) {}.disabled(true)
                         BRUPillButton("Start workout ▸") { didTap("Full-width CTA") }
                         BRUDashedSlot(label: "Add exercise", hint: "From library") { didTap("Add exercise slot") }

@@ -67,7 +67,7 @@ public struct ResumeWorkoutBanner: View {
                 }
                 .accessibilityIdentifier("resumeBanner.resume")
 
-                DiscardWorkoutButton(session: session, kind: .ghost)
+                DiscardWorkoutButton(session: session)
                     .accessibilityIdentifier("resumeBanner.discard")
             }
             .bruButtonsShareHeight()

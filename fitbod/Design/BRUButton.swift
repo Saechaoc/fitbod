@@ -1,8 +1,10 @@
 // BRUButton.swift
 // fitbod
 //
-// BRU button primitive: a sharp-cornered brutalist button in four kind variants
-// (primary, signal, ghost, ghostOnSlab) and three size variants (sm, md, lg).
+// BRU button primitive: a sharp-cornered brutalist button in three kind variants
+// (primary, signal, ghost) and three size variants (sm, md, lg). On a dark
+// slab painted by `bruSlabBackground()`, the signal drops its outline and the
+// ghost draws in bruOnSlab.
 //
 // Source of truth: UI-SPEC v2 § Component Inventory, line 514.
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
@@ -19,11 +21,13 @@ import SwiftUI
 
 /// A brutalist full-width button with no rounded corners and no Apple HIG chrome.
 ///
-/// Four `Kind` variants control the fill + text + border treatment:
+/// Three `Kind` variants control the fill + text + border treatment:
 /// - `.primary` — ink fill, paper text (solid ink slab)
 /// - `.signal`  — signal fill, constant ink text (strong CTA)
 /// - `.ghost`   — transparent fill, ink text, 1.5pt ink outline
-/// - `.ghostOnSlab`: `.ghost` on a dark `bruSlab`, with bruOnSlab text and outline
+///
+/// On a dark slab (`bruSlabBackground()`) the signal draws no outline and the
+/// ghost takes bruOnSlab text and outline.
 ///
 /// Three `Size` variants provide at least BRU's 44pt touch-target floor.
 ///
@@ -41,16 +45,12 @@ public struct BRUButton: View {
         case signal
         /// Transparent fill with ink text and a 1.5pt ink outline — secondary / destructive-neutral.
         case ghost
-        /// `ghost` on a dark `bruSlab` slab, which stays dark in dark mode:
-        /// constant `bruOnSlab` text and 1.5pt outline. The slab's secondary
-        /// action, such as DISCARD on Today's resume slab.
-        case ghostOnSlab
 
         fileprivate var fillColor: Color {
             switch self {
             case .primary: return .bruInk
             case .signal:  return .bruSignal
-            case .ghost, .ghostOnSlab: return .clear
+            case .ghost:   return .clear
             }
         }
 
@@ -59,7 +59,6 @@ public struct BRUButton: View {
             case .primary: return .bruPaper
             case .signal:  return .bruOnSignal
             case .ghost:   return .bruInk
-            case .ghostOnSlab: return .bruOnSlab
             }
         }
 
@@ -68,14 +67,13 @@ public struct BRUButton: View {
             case .primary: return .bruInk
             case .signal:  return .bruInk
             case .ghost:   return .bruInk
-            case .ghostOnSlab: return .bruOnSlab
             }
         }
 
         fileprivate var showBorder: Bool {
             switch self {
             case .primary: return false
-            case .signal, .ghost, .ghostOnSlab: return true
+            case .signal, .ghost: return true
             }
         }
     }
@@ -147,9 +145,9 @@ public struct BRUButton: View {
 /// Renders a `BRUButton` in its three interaction states.
 ///
 /// - Normal: the kind's fill, text and border.
-/// - Pressed: fills darken to `bruInk` (ghost inverts to an ink slab, and a
-///   ghost on a slab to `bruOnSlab`) so the press reads on every kind
-///   without animation.
+/// - Pressed: fills darken to `bruInk` (ghost inverts to an ink slab) so the
+///   press reads on every kind without animation. On a dark slab, where ink
+///   would vanish, the press fills `bruOnSlab` with `bruSlab` text.
 /// - Disabled: `bruFaint` fill, `bruMuted` text, `bruHair` border. Text stays
 ///   legible (contrast ≥ 4.5:1) instead of fading the whole control.
 ///
@@ -168,6 +166,7 @@ public struct BRUButtonStyle: ButtonStyle {
 
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.bruButtonFillsRowHeight) private var fillsRowHeight
+    @Environment(\.bruButtonOnSlab) private var onSlab
 
     public func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
@@ -189,26 +188,31 @@ public struct BRUButtonStyle: ButtonStyle {
     }
 
     private var showBorder: Bool {
-        kind.showBorder || !isEnabled
+        guard isEnabled else { return true }
+        // On a slab the signal's ink outline only insets its fill in light
+        // mode and rings it in off-white in dark mode, so the fill runs to the edge.
+        return kind.showBorder && !(onSlab && kind == .signal)
     }
 
     private var borderColor: Color {
-        isEnabled ? kind.borderColor : .bruHair
+        guard isEnabled else { return .bruHair }
+        return onSlab ? .bruOnSlab : kind.borderColor
     }
 
     private func fillColor(pressed: Bool) -> Color {
         guard isEnabled else { return .bruFaint }
         guard pressed else { return fill ?? kind.fillColor }
+        if onSlab { return .bruOnSlab }
         switch kind {
         case .ghost: return .bruInk
-        case .ghostOnSlab: return .bruOnSlab
         case .primary, .signal: return .bruInk.opacity(0.85)
         }
     }
 
     private func textColor(pressed: Bool) -> Color {
         guard isEnabled else { return .bruMuted }
-        if pressed { return kind == .ghostOnSlab ? .bruSlab : .bruPaper }
+        if pressed { return onSlab ? .bruSlab : .bruPaper }
+        if onSlab, kind == .ghost { return .bruOnSlab }
         return fill?.bruLabelOnFill ?? kind.textColor
     }
 }
@@ -216,9 +220,18 @@ public struct BRUButtonStyle: ButtonStyle {
 extension EnvironmentValues {
     /// Set by `bruButtonsShareHeight()`: BRU buttons fill their row's height.
     @Entry var bruButtonFillsRowHeight = false
+    /// Set by `bruSlabBackground()`: BRU buttons sit on a dark `bruSlab`.
+    @Entry var bruButtonOnSlab = false
 }
 
 extension View {
+    /// Paints the dark `bruSlab` behind a slab and tells the BRU buttons on
+    /// it, so every slab's buttons draw for the slab. Paint slabs only this way.
+    func bruSlabBackground() -> some View {
+        environment(\.bruButtonOnSlab, true)
+            .background(Color.bruSlab)
+    }
+
     /// Gives a row of BRU buttons one height, its tallest button's, as
     /// RESUME ▸ (`.lg`) and DISCARD (`.sm`) share on the resume slab and
     /// banner. Each keeps its own label font. Stacked, at accessibility

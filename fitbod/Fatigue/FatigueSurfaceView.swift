@@ -207,7 +207,7 @@ public struct FatigueSurfaceView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.bruSlab)
+        .bruSlabBackground()
     }
 
     // MARK: - (2) Legend strip

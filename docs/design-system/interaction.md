@@ -15,7 +15,7 @@ How BRU controls respond to touch, and the rules that keep set logging fast with
 | State | How it looks | Where |
 | --- | --- | --- |
 | Default | The kind's fill, text and border | All controls |
-| Pressed | Fill turns ink; a ghost button inverts to an ink slab. No animation needed. | `BRUButtonStyle` |
+| Pressed | Fill turns ink; a ghost button inverts to an ink slab. On a dark slab, where ink would vanish, the fill turns `bruOnSlab` with `bruSlab` text. No animation needed. | `BRUButtonStyle` |
 | Disabled | `bruFaint` fill, `bruMuted` text, `bruHair` border. Text stays readable instead of the whole control fading. | `BRUButtonStyle`, `BRUStepper` step buttons |
 | Selected | Ink fill with paper text, plus the VoiceOver selected trait | `BRUSegmentedControl`, `BRUTabBar` |
 | On / off | Off: paper track, ink knob. On: signal track, constant ink knob. | `BRUToggleStyle` |

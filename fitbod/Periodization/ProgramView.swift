@@ -482,7 +482,7 @@ fileprivate struct ActiveBlockSlab: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.bruSlab)
+            .bruSlabBackground()
         }
         .buttonStyle(.bruRow)
         .accessibilityLabel("ACTIVE block: \(block.programName). \(position.spoken).")

@@ -144,7 +144,7 @@ public struct BlackSlabCTA: View {
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)
-        .background(Color.bruSlab)
+        .bruSlabBackground()
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 

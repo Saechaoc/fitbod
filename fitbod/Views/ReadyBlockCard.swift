@@ -15,7 +15,7 @@ struct ReadyBlockCard: View {
     let onStart: () -> Void
     let onOpen: () -> Void
     /// START BLOCK ▸ in signal, the page's one action. On Program a workout
-    /// in progress holds the signal, so it draws as the slab's ghost (RM-012).
+    /// in progress holds the signal, so it draws as the ghost (RM-012).
     var isSignal = true
 
     var body: some View {
@@ -38,7 +38,7 @@ struct ReadyBlockCard: View {
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruOnSlab.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
-            BRUButton("Start block ▸", kind: isSignal ? .signal : .ghostOnSlab, size: .lg, action: onStart)
+            BRUButton("Start block ▸", kind: isSignal ? .signal : .ghost, size: .lg, action: onStart)
                 .accessibilityIdentifier("today.startBlock")
             Button(action: onOpen) {
                 Text("Open ›")
@@ -54,7 +54,7 @@ struct ReadyBlockCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.bruSlab)
+        .bruSlabBackground()
     }
 
     /// "Created Oct 3": `startDate` is the creation date until the block starts (O-14).

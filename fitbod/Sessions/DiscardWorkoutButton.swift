@@ -5,7 +5,8 @@
 // Program's resume banner so both follow one rule (RM-012,
 // docs/design-system/interaction.md#confirmation): with sets or bouts
 // logged it asks "Discard workout?" and names them; with nothing logged
-// nothing is lost, so it discards at once.
+// nothing is lost, so it discards at once. It is the ghost, which draws in
+// bruOnSlab on Today's dark slab (`bruSlabBackground()`).
 //
 // The delete is one throwing save that rolls back when it fails
 // (SessionSetActions.deleteWorkout), so a failed discard keeps the workout,
@@ -20,8 +21,6 @@ import SwiftData
 
 struct DiscardWorkoutButton: View {
     let session: Session
-    /// `.ghostOnSlab` on Today's dark slab, `.ghost` on Program's paper banner.
-    let kind: BRUButton.Kind
 
     @Environment(\.modelContext) private var context
     @State private var confirming = false
@@ -32,7 +31,7 @@ struct DiscardWorkoutButton: View {
     #endif
 
     var body: some View {
-        BRUButton("Discard", kind: kind, size: .sm) {
+        BRUButton("Discard", kind: .ghost, size: .sm) {
             if session.loggedSetCount > 0 {
                 confirming = true
             } else {

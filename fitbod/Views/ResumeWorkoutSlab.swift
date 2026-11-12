@@ -35,8 +35,9 @@ import SwiftData
 /// At accessibility sizes RESUME ▸ spans the slab with DISCARD under it,
 /// since half the slab is too narrow to keep "RESUME ▸" on one line.
 ///
-/// DISCARD is `DiscardWorkoutButton` in BRUButton's `.ghostOnSlab` kind:
-/// bruOnSlab text and outline, since the plain ghost draws ink for paper.
+/// The slab paints through `bruSlabBackground()`, so RESUME ▸'s orange runs
+/// to its frame edge with no outline and DISCARD, `DiscardWorkoutButton`'s
+/// ghost, draws in bruOnSlab.
 public struct ResumeWorkoutSlab: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -108,17 +109,16 @@ public struct ResumeWorkoutSlab: View {
                     .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("resumeSlab.resume")
 
-                // Secondary: the ghost on the dark slab, bruOnSlab text and
-                // outline. It asks first only when sets are logged, as
-                // Program's banner does, and deletes in one save.
-                DiscardWorkoutButton(session: session, kind: .ghostOnSlab)
+                // Secondary: the ghost. It asks first only when sets are
+                // logged, as Program's banner does, and deletes in one save.
+                DiscardWorkoutButton(session: session)
                     .accessibilityIdentifier("resumeSlab.discard")
             }
             .bruButtonsShareHeight()
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)
-        .background(Color.bruSlab)
+        .bruSlabBackground()
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
