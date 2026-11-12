@@ -359,10 +359,13 @@ Open: a look on the phone; accessibility sizes were not inspected.
 Today's slab and the banner share `DiscardWorkoutButton`, which asks "Discard workout?" and names the logged sets and bouts only when something is logged, and discards at once otherwise, the exception now in the [confirmation rule](design-system/interaction.md#confirmation).
 It deletes through `SessionSetActions.deleteWorkout`, whose failed save rolls the delete back, so the workout stays open with its sets and "Couldn't discard workout" says so; the rest timer and its Live Activity are cleared only after the delete saves, on Today as well.
 While a workout is open, RESUME ▸ is Program's one orange action: START BLOCK ▸ on the ready slab draws in BRUButton's new `.ghostOnSlab` kind, which Today's slab DISCARD now uses too, and + NEW ROUTINE and the + NEW BLOCK and + NEW ROUTINE links draw in ink.
+On the banner and on Today's slab, RESUME ▸ and DISCARD share RESUME's 52pt height through `bruButtonsShareHeight()`, and DISCARD keeps its smaller label; stacked at accessibility sizes, each keeps its own height.
 The whole unit target passed 1,273 of 1,276, with 2 skipped and 1 expected failure (`fast-20261112-140105`), including a new `SessionSetActionsTests` case whose save fails on a read-only store and keeps the workout, its sets and nothing pending.
 `WorkoutLoggerJourneyUITests`, `TodayStateRoutesUITests`, `SkipWarmupsUITests`, `WorkoutExitUITests` and `BlockLifecycleEntryPointsUITests` passed 19/19 (`fast-20261112-141304`), including a new Program test that logs a set, fails the first discard's save with `-fitbod-fail-discard-once`, sees the workout and its set kept, then discards it for good across a relaunch.
 Light and dark 390pt captures of P-EMPTY, P-ROUTINE, P-PLANNED (ready, and drafts only), P-ACTIVE and P-PAST with a workout open, the ready slab without one, and Today's T-RESUME and T-READY were inspected.
-Open: the P-RESUME wireframe's one line "WORKOUT IN PROGRESS · PUSH A · 4 SETS" drops the time, so the banner keeps its three lines until the user decides; a look on the phone; accessibility sizes were not inspected.
+After the shared height, `WorkoutLoggerJourneyUITests` and `TodayStateRoutesUITests` passed 12/12 (`fast-20261112-142441`), and the banner and slab rows were captured again in light and dark.
+Open for the user: whether the banner drops its time for the P-RESUME wireframe's one line "WORKOUT IN PROGRESS · PUSH A · 4 SETS"; it keeps its RESUME, name and time · sets lines until then.
+Also open: a look on the phone; accessibility sizes were not inspected.
 **References:** D-56/D-57/D-126, redesign R-12; [banner](../fitbod/Sessions/ResumeWorkoutBanner.swift), [discard](../fitbod/Sessions/DiscardWorkoutButton.swift), [confirmation rule](design-system/interaction.md#confirmation).
 
 ### <a id="rm-013"></a>RM-013 — Redesign 2.1: opt-in review notice

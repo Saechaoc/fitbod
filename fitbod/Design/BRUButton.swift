@@ -167,6 +167,7 @@ public struct BRUButtonStyle: ButtonStyle {
     }
 
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.bruButtonFillsRowHeight) private var fillsRowHeight
 
     public func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
@@ -176,7 +177,7 @@ public struct BRUButtonStyle: ButtonStyle {
             .foregroundStyle(textColor(pressed: pressed))
             .padding(.horizontal, BRUMetrics.Spacing.group)
             .padding(.vertical, 6)
-            .frame(maxWidth: .infinity, minHeight: size.minHeight)
+            .frame(maxWidth: .infinity, minHeight: size.minHeight, maxHeight: fillsRowHeight ? .infinity : nil)
             // A color background ignores the safe area by default, so a button
             // on the home indicator area would paint into it. Stop at the frame.
             .background(fillColor(pressed: pressed), ignoresSafeAreaEdges: [])
@@ -209,6 +210,22 @@ public struct BRUButtonStyle: ButtonStyle {
         guard isEnabled else { return .bruMuted }
         if pressed { return kind == .ghostOnSlab ? .bruSlab : .bruPaper }
         return fill?.bruLabelOnFill ?? kind.textColor
+    }
+}
+
+extension EnvironmentValues {
+    /// Set by `bruButtonsShareHeight()`: BRU buttons fill their row's height.
+    @Entry var bruButtonFillsRowHeight = false
+}
+
+extension View {
+    /// Gives a row of BRU buttons one height, its tallest button's, as
+    /// RESUME ▸ (`.lg`) and DISCARD (`.sm`) share on the resume slab and
+    /// banner. Each keeps its own label font. Stacked, at accessibility
+    /// sizes, each button keeps its own height.
+    func bruButtonsShareHeight() -> some View {
+        environment(\.bruButtonFillsRowHeight, true)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 

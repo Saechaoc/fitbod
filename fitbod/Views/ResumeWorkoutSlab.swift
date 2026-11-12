@@ -114,6 +114,7 @@ public struct ResumeWorkoutSlab: View {
                 DiscardWorkoutButton(session: session, kind: .ghostOnSlab)
                     .accessibilityIdentifier("resumeSlab.discard")
             }
+            .bruButtonsShareHeight()
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)

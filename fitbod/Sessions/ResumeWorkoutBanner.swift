@@ -70,6 +70,7 @@ public struct ResumeWorkoutBanner: View {
                 DiscardWorkoutButton(session: session, kind: .ghost)
                     .accessibilityIdentifier("resumeBanner.discard")
             }
+            .bruButtonsShareHeight()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
