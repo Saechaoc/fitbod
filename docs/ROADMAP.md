@@ -687,10 +687,12 @@ Unsaved duplication, the second delivery (2026-11-12): Duplicate session copies 
 With unsaved changes it first asks "Duplicate with your changes?" and offers Duplicate session or Keep editing; a draft without a name or an exercise shows Save's errors instead.
 The copy's lifts, per-set overrides and superset groups are new rows, so each superset's lifts stay together in a group of the copy's own; a failed copy rolls the store back and keeps the draft for a retry, and logged workouts are untouched.
 A lift's warm-up setting now carries into the copy, which the old copy of the stored rows dropped; fields the editor does not show, such as a lift's stored notes, start at their defaults.
+Duplicate exercise now keeps the lift's warm-up setting and per-set targets too, and a copy of a paired lift still goes after its superset, in none; both duplicates copy a lift through `RoutineExerciseDraft.copy()`.
 The session menu shows a plain Keep editing, since iOS 26 hides its cancel-role Cancel (D-63).
 `RoutineDuplicationTests` passed 10/10 (`fast-20261112-143825`), and the unit target passed 1,276 of 1,279 with 2 skipped and 1 expected failure (`fast-20261112-144251`).
 `SlottedSessionDeleteUITests` passed 3/3, with a new journey in which an unsaved rename asks first, goes into the copy and leaves the session as saved through a relaunch, and `NewRoutineFlowUITests` passed 2/2, on iPhone 17/iOS 26.5 (`fast-20261112-150400`).
 The journey passed again on the iPhone 17e (`fast-20261112-150614`), and its 390pt light captures of the menu and the question were inspected: the question matches the shipped Discard changes? dialog, and both differ from the BRU dialog mock-up as every system dialog does until [RM-035](#rm-035).
+After the shared lift copy, `RoutineDuplicationTests` passed 10/10 and `SupersetDraftPersistenceTests` 14/14 with a new check that a copied lift keeps its warm-up setting and per-set targets in no superset (`fast-20261112-151814`), and `SlottedSessionDeleteUITests` passed 3/3 (`fast-20261112-151941`); no UI test duplicates an exercise.
 Not built: a choice that also saves the changes to the session being edited.
 No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
