@@ -44,7 +44,7 @@ Authoring, catalog, logging and calculator deliveries use their actual condition
 ## Needs input or device verification
 
 Only the named observation/decision is unavailable; this section does not pause unrelated work.
-Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `fe05c084` (2026-11-12), whose store is on seed 10.
+Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `a2fc9ca7` (2026-11-12), whose store is on seed 10; `fe05c084`, which the RM-011 and RM-026 rows need, installs when the phone is next reachable.
 
 | Owner | Missing input or proof | What depends on it |
 |---|---|---|
