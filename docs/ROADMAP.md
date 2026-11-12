@@ -378,11 +378,22 @@ A dismissed week hides the ring as well as the notice, as before `5aa93d05`; whe
 
 ### <a id="rm-019"></a>RM-019 — Stalled exercises outside a workout
 
-**P2 · Planned.** Build the approved [stalls mockup](design-map/mockups/stalled-exercises.html).
+**P2 · Done (2026-11-12).** Built the approved [stalls mockup](design-map/mockups/stalled-exercises.html).
+Progress has a Stalled row under Trends that counts the stalled exercises and opens the [stalls screen](../fitbod/Progress/StalledExercisesView.swift): one section per intent, each row with its flat-workout count, newest top set and the workout card's suggestion.
+A row opens the exercise's chart, which shades each stall's flat workouts and names them in the legend.
 **Done when:** Progress lists stalls with intent, stalled-workout count, last top set and suggested action; rows open charts that also mark stalls. Add-volume/drop-intensity suggestions lead somewhere useful or explain their limitation instead of silent no-ops.
 **Scope / sequence:** Reuse plateau results → stall list/chart routes → useful suggestion routes or explained limits. Advice stays non-mutating; broader trends excluded.
 **Requires:** Existing plateau math; preserve advisory-only behavior.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** Branch `swarm/C1` (`54310884`, `bb0542d9`, `81df8c0b`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5.
+`StalledExercises.find` runs the workout card's `PlateauDetector.evaluateWindow` and `suggestedAction` for each finished exercise, intent and machine, so the list, the chart and the card read one check.
+ADD VOLUME opens the primary muscle's detail, TRY VARIATION the similar exercises (a pick opens its chart, the library button the library), CONSIDER DELOAD the fatigue signals, and DROP INTENSITY an alert that says how to apply it in a workout and that it changes nothing here.
+No suggestion writes a set, a workout or a routine.
+The plateau, chip and copy-rule suites passed 70/70 (`fast-20261112-114122`), including 8 `StalledExercisesTests` for intent, flat-workout count, newest top set, suggestion, machine and intent streams, a workout in progress, the window override, order and the flat-line axis.
+`EmptyWorkoutCountsUITests`, `PRListAndSeriesUITests` and `WorkoutSwapJourneyUITests` passed 10/10 (`fast-20261112-114244`).
+390pt captures in light and dark were inspected: Progress, the list, the chart, the screens ADD VOLUME and TRY VARIATION open, and the DROP INTENSITY alert.
+The list matches the mockup except ‹ BACK for its bare chevron (the app's pushed-screen rule) and a unit after the top-set load.
+DROP INTENSITY was reached with an uncommitted seed change; no seed reaches CONSIDER DELOAD, which opens the existing fatigue signals sheet.
+Not measured: how long Progress takes to list stalls on a long history on the phone.
 **References:** D-21/PROG-06; [Progress workflow](design-map/workflows/check-progress.md), phase-5 deferred chip routes.
 
 ### <a id="rm-020"></a>RM-020 — Reopen past weekly recaps
