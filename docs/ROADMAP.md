@@ -464,14 +464,27 @@ After the speed fix and a rebase onto `e322f70f`, `UICopyRulesTests`, `StalledEx
 
 ### <a id="rm-020"></a>RM-020 — Reopen past weekly recaps
 
-**P2 · Planned.** Build the approved [recaps mockup](design-map/mockups/all-recaps.html). Deferred out of this redesign, not cancelled.
+**P2 · Done (2026-11-12).** Built the approved [recaps mockup](design-map/mockups/all-recaps.html).
+Progress has a Weekly recaps row under Workouts, and the recap Today shows once a week has ALL RECAPS; both open the [week list](../fitbod/Progress/WeeklyRecapsView.swift): a stat strip, the last eight weeks' tonnage and every past week with a workout that counts, newest first.
+A row reopens that week's recap with ‹ BACK and no Start button, and the automatic sheet still shows on its own once a week.
 **Done when:** Progress/recap open a week list with tonnage, working sets and records; rows reopen that week's recap; corrected history updates it. Keep automatic once-weekly sheet per O-4.
 **Scope / sequence:** Week-list queries → selected recap → correction refresh and automatic-sheet coexistence. No new review acknowledgement rule.
 **Requires:** Existing recap math, counted-week rules and correction invalidation.
 **Scheduled after:** [RM-019](#rm-019) in the analytics stream; planning is independent.
 **Verify when:** Week selection/correction at implementation; with [RM-013](#rm-013) when presentation coordination changes.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
-**References:** D-27/all-recaps/VOL-07; [recap](../fitbod/Fatigue/WeeklyRecapSheet.swift).
+**Evidence:** On `swarm/C2` (`02630339`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5.
+A row and the recap it reopens read one `WeeklyRecaps.recap`, so they agree; WORKING SETS counts the sets logged ([RM-038](#rm-038)), and the records are History's count from one replay in `SessionSummary`.
+Both read in a context of their own off the main actor, keyed on the workouts and `HistoryEdits.version`, so a saved correction refreshes the week it touches.
+Against a planned target the headline now weighs the sessions first, because a first week's first logs set every record ([RM-036](#rm-036)): one session of four with 19 records reads Light week.
+On a four-year history (832 workouts, 208 weeks, 14,976 working sets) the main-actor reads took 1.8 to 2.1 s cold and 0.5 s warm for the list, and 1.6 to 1.8 s cold and 0.3 s warm for last week's recap.
+Off the main actor the main thread spends under 1 ms; on the simulator the list fills in 0.9 to 1.1 s and a recap in 0.5 to 0.9 s, with the same numbers as the main-context reads.
+The unit target passed 1,261 of 1,264 (`fast-20261112-140007`, 2 skipped, 1 expected failure); after the PR chip fix the recap and copy-rule suites passed 42/42 (`fast-20261112-142653`).
+`WeeklyRecapsTests` covers the week list, rows against their recaps and History's counts, a correction and a moved workout, the exercise's own unit, ISO week numbers, the eight-week strip and the off-main reads.
+`WeeklyTonnageUITests`, `SessionHistoryBRUUITests`, `EmptyWorkoutCountsUITests` and `PRRowOpensWorkoutUITests` passed (`fast-20261112-141521`), and `WeeklyRecapUITests` passed 4/4 (`fast-20261112-150110`), including ALL RECAPS and Progress → Weekly recaps reopening last week.
+390pt captures in light and dark were inspected: Progress, the week list, a reopened week, and the automatic recap with its list.
+The list matches the mockup except ‹ BACK for its bare chevron (the app's pushed-screen rule); a row's middle lines shrink up to 10% beside a two-digit PR chip.
+Limits: a reopened older week still reads "Last week you logged…" and the empty states say "last week"; the times on the phone are not measured.
+**References:** D-27/all-recaps/VOL-07; [recap](../fitbod/Fatigue/WeeklyRecapSheet.swift), [week list](../fitbod/Progress/WeeklyRecapsView.swift), [reads](../fitbod/Progress/WeeklyRecaps.swift), [tests](../fitbodTests/WeeklyRecapsTests.swift).
 
 ### <a id="rm-021"></a>RM-021 — Load provenance before explicit conversion
 
