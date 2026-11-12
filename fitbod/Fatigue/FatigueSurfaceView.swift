@@ -22,8 +22,8 @@
 //  render simultaneously via twin BodySilhouetteView instances.
 //
 //  Data layer PRESERVED: @Query<MuscleGroup> + @Query<MuscleVolumeTarget> +
-//  inline FatigueModel calls + transient RPVolumeLandmarks fallback +
-//  isAdvisoryActive @State + DeloadAdvisor refresh task.
+//  inline FatigueModel calls + transient RPVolumeLandmarks fallback.
+//  VolumeScreen evaluates DeloadAdvisor on appear and passes isAdvisoryActive.
 //
 //  BRU contract: no system accent or system colors, no rounded or capsule
 //  shapes, no SF Symbols, no segmented Front/Back picker, and no system

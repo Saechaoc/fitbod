@@ -272,7 +272,7 @@ Unit provenance and catalog retain their existing P1 priority alongside the appr
 
 ### <a id="rm-010"></a>RM-010 — Redesign 1.4: Today week board, full volume behind it
 
-**P1 · Active: Volume deload advice is the last slice.** The week board, Volume one tap from Today, the three-exercise preview and the first-visit empty start are on `main` (`5aa93d05`) and on the phone.
+**P1 · Implemented; verification pending: a look at the board on the phone with real history.** The week board, Volume one tap from Today, the three-exercise preview and the first-visit empty start are on `main` (`5aa93d05`) and on the phone; Volume's deload advice, the last slice, was built on 2026-11-12.
 Progress → Volume, muscle routes, neck detail, bar chevrons and map caption shipped early for FT-17/18 (`d89992fb`).
 **Decision (2026-11-11, user, Lavish review):** Today is a quick snapshot. The per-muscle MEV/MAV/MRV surface leaves Today; a week board replaces the planned VOLUME THIS WEEK row. It shows seven day tiles (each day's counted workout name and working sets; today outlined; REST on a rest day, LIVE with an open workout) and the week's totals, and opens Volume. In a block it sits under the plan line; without one it heads itself "This week · Nov 9–15". The exercise list previews three with a Show all row. First visit offers Start workout (an empty workout) first and "Plan a routine or block" second, reversing RM-006's removal of the empty start for that state only. Kept: the BRU header bar. Left out: a Recovery tab and recovery-generated workouts (no generator or exercise templates exist; a new tab needs its own roadmap decision).
 **Done when:** The board counts finished counted workouts and their `countsAsWork` sets in the user's calendar week, excludes open/empty workouts and refreshes on finished-workout changes, History corrections, activation and day change. Volume is one tap from Today and Progress on each tab's own stack. Volume evaluates advice on appear; shared evaluator gates `deloadAlertEnabled` for both tabs. Tests cover counts/calendar/alerts-off.
@@ -285,6 +285,15 @@ Progress → Volume, muscle routes, neck detail, bar chevrons and map caption sh
 Before it, Today's embedded surface passed `currentAdvisory != nil`, which `TodayView.refreshAdvisory()` sets only while `deloadAlertEnabled` is on; Progress → Volume never passed it.
 Today still shows the deload banner, but the volume bars' amber advisory ring now shows nowhere.
 The remaining slice is the Done-when's own: Volume evaluates advice on appear through one evaluator that honors `deloadAlertEnabled` on both tabs, with an alerts-off test.
+**Evidence (2026-11-12, Volume advice):** The finding above is fixed: `DeloadAdvisor.evaluate` returns nothing while `deloadAlertEnabled` is off, and `VolumeScreen` asks it on appear, so Today's notice and Volume's bar ring share one gate from both tabs.
+`DeloadAdvisorTests` passed 14 of 14 (`fast-20261112-103908`), with a new alerts-off case that fails when the gate is removed.
+The unit target passed: 1,245 tests, 1,242 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261112-105141`, iPhone 17 iOS 26.5).
+`PerMuscleDetailUITests` and `TodayStateRoutesUITests` passed 7 of 7 (`fast-20261112-105251`).
+The missing ring was reproduced first at 390pt on main's Volume code, with Today's notice reading 2 signals.
+390pt light and dark captures were inspected for Volume from Today, from Progress and back from a muscle's detail: every bar is ringed while the notice shows, and with alerts off Today shows no notice and Volume no ring.
+The Show all row was checked with a throwaway tour that added two exercises to a two-exercise session: Today previews three under "Show all 4 exercises", which expands to four and reads "Show fewer exercises".
+That row ends in "›", which the [glyph table](design-system/iconography.md) keeps for opening a screen, though it expands in place, where "▾" and "▴" belong; it is not changed here.
+A dismissed week hides the ring as well as the notice, as before `5aa93d05`; whether the ring should outlast a dismissal is open for the user.
 **References:** [Today layouts](design-map/redesign/today-layouts.md), D-131, redesign R-7/R-21; [board](../fitbod/Views/TodayWeekBoard.swift), [week](../fitbod/Views/TodayWeek.swift), [Progress](../fitbod/Progress/ProgressHomeView.swift), [advisor](../fitbod/Fatigue/DeloadAdvisor.swift).
 
 ### <a id="rm-011"></a>RM-011 — Redesign 1.5: Program explains Now, Planned and Past

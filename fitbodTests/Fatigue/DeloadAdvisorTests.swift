@@ -318,6 +318,26 @@ struct DeloadAdvisorTests {
         #expect(advisory != nil)
     }
 
+    // MARK: - 8b. The deload alert setting turns the advice off
+
+    /// Today's notice and Volume's bar ring both come from `evaluate`
+    /// (RM-010), so alerts off leaves neither anything to show.
+    @Test("Alerts off gives no advice to Today's notice or Volume's ring")
+    func alertsOffGivesNoAdvice() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        let ex = try makeBench(ctx)
+        let monday = mondayOfThisWeek()
+        try insertSessions(ctx, ex: ex, weekStart: monday, weightsReps: [
+            (94, 8), (94, 8), (94, 8),
+            (100, 8), (100, 8), (100, 8),
+        ])
+        let settings = defaultSettings(ctx)
+        #expect(DeloadAdvisor.evaluate(weekStart: monday, in: ctx, settings: settings) != nil)
+        settings.deloadAlertEnabled = false
+        try ctx.save()
+        #expect(DeloadAdvisor.evaluate(weekStart: monday, in: ctx, settings: settings) == nil)
+    }
+
     // MARK: - 9. Canonicality (type-level)
 
     @Test("DeloadAdvisor.evaluate type signature is DeloadAdvisory? — compile-time canonicality pin")

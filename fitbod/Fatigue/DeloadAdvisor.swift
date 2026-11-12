@@ -84,10 +84,12 @@ public enum DeloadAdvisor {
 
     // MARK: - evaluate
 
-    /// Returns a non-nil advisory when ANY of the 3 signals fire AND
-    /// the user has not already dismissed for this week. Returns nil
-    /// otherwise. Caller passes `weekStart` as the current Monday at
-    /// midnight (use `Date.mondayAtMidnight(weekStartsMonday:)`).
+    /// Returns a non-nil advisory when the deload alert setting is on,
+    /// ANY of the 3 signals fire AND the user has not already dismissed
+    /// for this week. Returns nil otherwise. Today's notice and Volume's
+    /// bar ring both ask here, so the setting turns both off (RM-010).
+    /// Caller passes `weekStart` as the current Monday at midnight (use
+    /// `Date.mondayAtMidnightForToday(weekStartsMonday:)`).
     @MainActor
     public static func evaluate(
         weekStart: Date,
@@ -95,6 +97,7 @@ public enum DeloadAdvisor {
         settings: UserSettings,
         now: Date = .now
     ) -> DeloadAdvisory? {
+        guard settings.deloadAlertEnabled else { return nil }
         // D-17: short-circuit if the user already dismissed for this week.
         if let dismissed = settings.deloadAdvisoryDismissedWeekStart,
            Calendar.current.isDate(dismissed, equalTo: weekStart, toGranularity: .day) {

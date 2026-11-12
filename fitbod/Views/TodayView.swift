@@ -658,7 +658,7 @@ public struct TodayView: View {
 
     @MainActor
     private func refreshAdvisory() {
-        guard let settings = settingsList.first, settings.deloadAlertEnabled else {
+        guard let settings = settingsList.first else {
             currentAdvisory = nil
             return
         }

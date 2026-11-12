@@ -69,6 +69,10 @@ public enum ProgressHomeRoute: Hashable, Sendable {
 struct VolumeScreen: View {
     @Binding var path: NavigationPath
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var ctx
+    @Query private var settingsList: [UserSettings]
+    /// Rings the volume bars while the advice behind Today's deload notice stands (RM-010).
+    @State private var isAdvisoryActive = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -77,11 +81,16 @@ struct VolumeScreen: View {
                 center: "Volume"
             )
             ScrollView {
-                FatigueSurfaceView(navigationPath: $path)
+                FatigueSurfaceView(isAdvisoryActive: isAdvisoryActive, navigationPath: $path)
             }
         }
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
+        .onAppear {
+            guard let settings = settingsList.first else { return }
+            let weekStart = Date.now.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
+            isAdvisoryActive = DeloadAdvisor.evaluate(weekStart: weekStart, in: ctx, settings: settings) != nil
+        }
     }
 }
 
