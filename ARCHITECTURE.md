@@ -180,6 +180,10 @@ Progression also requires completed non-warmup positive reps/weight; records add
 Progression kind is not a comparability key.
 Do not widen one reader alone.
 
+Stalls outside a workout ([RM-019](docs/ROADMAP.md#rm-019)) are the exercise card's plateau check, run on each finished exercise/intent/machine stream: `StalledExercises.find` reads `PlateauDetector.evaluateWindow` and `suggestedAction`, never a second rule.
+Progress and the exercise chart find them in a `.task(id:)` keyed on the finished workouts and `HistoryEdits.version`, never per render.
+Their suggestions only open a screen or explain; none writes a set, a workout or a routine.
+
 A logged exercise may name the machine it was done on (`SessionExercise.machine`, [RM-066](docs/ROADMAP.md#rm-066)); a maker or model is never an exercise of its own, and a pick changes only that workout's log.
 Last time, the prescription, in-workout offers, records, the stall check and Compare read only sets on the same machine, and sets with no machine form their own group.
 With none on that machine, the card names the latest matching workout on another machine (or with none) and Last time shows its sets for reference; no load, progression or offer carries over.

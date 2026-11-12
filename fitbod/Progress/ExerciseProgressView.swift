@@ -56,6 +56,9 @@
 //    PR RuleMark → foregroundStyle(Color.bruSignal) lineStyle(dash [4, 2])
 //    PR label → chart overlay, just above the rule at the plot's
 //               trailing edge, kept inside the plot
+//    Stall band → RectangleMark bruFaint behind the lines, over each
+//               stall's flat workouts (RM-019); the legend keys it as
+//               STALLED · <INTENT> · N WORKOUTS on every chip
 //    Y grid → bruHair dashed [2, 3]
 //    Axes   → BRUFont.labelSmall bruMuted
 //    Background → Color.bruBg
@@ -271,10 +274,16 @@ private func wholeWeight(_ value: Double) -> Int {
 
 private struct ProgressChartHost: View {
     @Query private var sessionExercises: [SessionExercise]
+    @Query private var settingsList: [UserSettings]
+    @Environment(\.modelContext) private var ctx
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
     @Environment(\.weightUnit) private var defaultUnit
     let exercise: Exercise
     @Binding var metric: ProgressChartMetric
     let reduceMotion: Bool
+    /// The exercise's stalls, shaded on the chart (RM-019): the ones the
+    /// Stalled list and the workout's STALLED badge show.
+    @State private var stalls: [ExerciseStall] = []
 
     init(
         exercise: Exercise,
@@ -334,6 +343,18 @@ private struct ProgressChartHost: View {
             }
         }
         .background(Color.bruBg)
+        // Found again when its workouts or a History correction change,
+        // never per render (one plateau check per intent and machine).
+        .task(id: StallsKey(logs: sessionExercises.map(\.persistentModelID), edits: historyEdits?.version)) {
+            stalls = settingsList.first.map {
+                StalledExercises.find(in: ctx, settings: $0, exerciseID: exercise.id)
+            } ?? []
+        }
+    }
+
+    private struct StallsKey: Equatable {
+        let logs: [PersistentIdentifier]
+        let edits: Int?
     }
 
     // MARK: - Series for the selected chip
@@ -474,6 +495,20 @@ private struct ProgressChartHost: View {
 
         VStack(alignment: .leading, spacing: 8) {
             Chart {
+                // Stall bands, behind the lines: each stall's flat workouts,
+                // half a day past the first and last so their points sit
+                // inside. The legend names them, so VoiceOver skips them.
+                ForEach(stalls) { stall in
+                    if let newest = stall.workouts.first?.startedAt, let oldest = stall.workouts.last?.startedAt {
+                        RectangleMark(
+                            xStart: .value("Date", oldest.addingTimeInterval(-43_200)),
+                            xEnd: .value("Date", newest.addingTimeInterval(43_200))
+                        )
+                        .foregroundStyle(Color.bruFaint)
+                        .accessibilityHidden(true)
+                    }
+                }
+
                 // PR RuleMark — dashed bruSignal; its label is a chart
                 // overlay, and VoiceOver reads the PR once, by that label
                 if prValue > 0 {
@@ -659,15 +694,31 @@ private struct ProgressChartHost: View {
             ForEach(legendKeys(points: points)) { key in
                 HStack(spacing: 4) {
                     legendSwatch(key.style)
-                    Text(key.label)
-                        .font(BRUFont.labelMicro)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruInk)
+                    legendLabel(key.label)
+                }
+            }
+            // The stall bands: STALLED · HYPERTROPHY · 4 WORKOUTS.
+            ForEach(stalls) { stall in
+                HStack(spacing: 4) {
+                    Rectangle()
+                        .fill(Color.bruFaint)
+                        .frame(width: 16, height: 10)
+                    legendLabel(
+                        (["Stalled", stall.intent.rawValue] + [stall.machine?.displayName].compactMap { $0 }
+                            + [BRUCountLabel.text(stall.workouts.count, "workout")]).joined(separator: " · ")
+                    )
                 }
             }
         }
         .padding(.top, 4)
+    }
+
+    private func legendLabel(_ text: String) -> some View {
+        Text(text)
+            .font(BRUFont.labelMicro)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruInk)
     }
 
     /// A stretch of the line in `style`: a bar for a solid line, a Canvas

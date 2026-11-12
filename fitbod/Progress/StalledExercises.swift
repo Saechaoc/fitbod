@@ -50,6 +50,10 @@ enum StalledExercises {
 
     /// Every stalled exercise in finished workouts, the most recently
     /// trained first; with `exerciseID`, only that exercise's stalls.
+    ///
+    /// One plateau check per stream, each with its own fetch, on the main
+    /// actor: call it from a `.task(id:)` keyed on the finished workouts and
+    /// `HistoryEdits.version`, never from a render.
     @MainActor
     static func find(
         in context: ModelContext,
@@ -98,6 +102,12 @@ enum StalledExercises {
             let (left, right) = (lhs.workouts.first?.startedAt ?? .distantPast, rhs.workouts.first?.startedAt ?? .distantPast)
             return left != right ? left > right : lhs.id < rhs.id
         }
+    }
+
+    /// How many exercises have stalled. One exercise stalled in two intents,
+    /// or on two machines, is two rows but one exercise.
+    static func exerciseCount(_ stalls: [ExerciseStall]) -> Int {
+        Set(stalls.map(\.exercise.id)).count
     }
 
     /// The stalls by intent, in the order the chart's legend keys intents

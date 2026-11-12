@@ -12,7 +12,8 @@
 //  Section 1 — Recent: per-exercise cards sorted by most-recently-trained;
 //  tap pushes ExerciseProgressView(exercise:).
 //
-//  Section 2 — Trends: "Weekly Tonnage" row + "Personal Records" row.
+//  Section 2 — Trends: "Weekly Tonnage", "Personal Records" and "Stalled"
+//  rows; Stalled counts the stalled exercises (RM-019).
 //
 //  Section 3 — Compare: "This week vs last week" row anchored on the
 //  latest workout that counts as a session; locked until two count.
@@ -24,6 +25,7 @@
 //                   .prs(Exercise)      → ExercisePRsView(.forExercise(...))
 //    ProgressRoute: .weeklyTonnage       → WeeklyTonnageView
 //                   .allPRs              → ExercisePRsView(.allExercises)
+//                   .stalled             → StalledExercisesView
 //                   .sessionComparison(Session) → SessionComparisonView
 //
 //  `.sessionHistoryDestinations()` registers SessionHistoryRoute: the
@@ -61,6 +63,7 @@ public enum ProgressHomeRoute: Hashable, Sendable {
     case volume
     case weeklyTonnage
     case allPRs
+    case stalled
     case sessionComparison(UUID)
 }
 
@@ -114,6 +117,10 @@ public struct ProgressHomeView: View {
     /// render. Until then Recent counts every finished workout.
     @State private var emptyWorkoutIDs: Set<PersistentIdentifier> = []
     @State private var emptyWorkoutsKey: [PersistentIdentifier]?
+    /// The stalled exercises the Stalled row counts and opens (RM-019),
+    /// found when the finished workouts or a History correction change,
+    /// never per render. Nil until first found.
+    @State private var stalls: [ExerciseStall]?
 
     public init(path: Binding<NavigationPath>) {
         self._path = path
@@ -187,6 +194,16 @@ public struct ProgressHomeView: View {
             emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(among: completedSessions, known: nil, in: ctx)
             emptyWorkoutsKey = finishedIDs
         }
+        .task(id: StallsKey(finished: finishedIDs, edits: historyEdits?.version)) {
+            stalls = userSettingsList.first.map { StalledExercises.find(in: ctx, settings: $0) } ?? []
+        }
+    }
+
+    /// What the stalls are found again on: the finished workouts and the
+    /// History corrections, as Today's week board is counted.
+    private struct StallsKey: Equatable {
+        let finished: [PersistentIdentifier]
+        let edits: Int?
     }
 
     // MARK: - Sections
@@ -244,7 +261,7 @@ public struct ProgressHomeView: View {
         BRUDivider(.ink)
     }
 
-    /// Trends — Weekly Tonnage + Personal Records rows. Always renders.
+    /// Trends — Weekly Tonnage, Personal Records and Stalled rows. Always renders.
     @ViewBuilder
     private func trendsSection(_ stats: [UUID: RecentStat]) -> some View {
         BRUSectionHead("Trends")
@@ -257,6 +274,12 @@ public struct ProgressHomeView: View {
 
         progressRow(title: "Personal Records", subtitle: allPRsSubLabel(trained: stats.count)) {
             path.append(ProgressHomeRoute.allPRs)
+        }
+
+        BRUDivider(.hair)
+
+        progressRow(title: "Stalled", subtitle: stalledSubLabel, identifier: "progress.stalled") {
+            path.append(ProgressHomeRoute.stalled)
         }
 
         BRUDivider(.ink)
@@ -309,6 +332,8 @@ public struct ProgressHomeView: View {
             WeeklyTonnageView()
         case .allPRs:
             ExercisePRsView(scope: .allExercises)
+        case .stalled:
+            StalledExercisesView(stalls: stalls ?? [], path: $path)
         case .sessionComparison(let id):
             if let session = completedSessions.first(where: { $0.id == id }) {
                 SessionComparisonView(anchorSession: session)
@@ -490,5 +515,12 @@ public struct ProgressHomeView: View {
 
     private var compareSubLabel: String {
         "Compare to a routine you've logged twice."
+    }
+
+    /// How many exercises have stalled, as the Stalled screen's band counts.
+    private var stalledSubLabel: String {
+        guard let stalls else { return "Exercises with a flat top set" }
+        let count = StalledExercises.exerciseCount(stalls)
+        return count == 0 ? "No stalled exercises" : "\(BRUCountLabel.text(count, "exercise")) stalled"
     }
 }
