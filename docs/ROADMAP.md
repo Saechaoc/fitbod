@@ -619,10 +619,12 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 **Evidence:** Supersets, the first delivery (2026-11-12): a long press offers Make superset…, or Edit superset… and Remove from superset once paired, in a new session too, so the Save Routine First alert is gone (D-61, D-140).
 One sheet names the long-pressed lift, says what a superset does and lists the session's lifts to check, two to four, each with its current superset; PAIR n LIFTS ▸ pairs them in one trip (D-152).
 Changes stay in the draft until Save: Discard writes nothing, a superset left with one lift ends, and Save deletes the session's groups that no lift uses in the same transaction.
-The editor draws one bracket per superset, so two adjacent supersets no longer read as one.
-`SupersetDraftPersistenceTests` passed 8/8; the unit target passed 1,248 of 1,252 with 2 skipped and 1 expected failure, and its one failure, `UICopyRulesTests.countsUseThePluralHelper`, fails the same on `main` (`fast-20261112-120610`).
-`SessionEditorRowsUITests` passed 2/2 on iPhone 17/iOS 26.5 (`fast-20261112-123355`): a new session pairs two lifts in one trip, saves them, keeps them after a relaunch, and keeps them after Discard.
-Captures of the flow at 390pt in light mode were compared with `phase-2--modal-superset.png`.
+A superset's lifts always sit together: pairing gathers the checked lifts at the first one's place, in list order, and a copy of a paired lift goes after its superset, in none.
+Move swaps a lift with a partner and passes another superset whole; a lift moved out of its superset leaves it.
+The editor draws one bracket per superset in the rows' leading gutter, so two adjacent supersets read as two and a superset row's SS and name line up with a plain row's number and name.
+`SupersetDraftPersistenceTests` passed 13/13, all in the draft before Save (`fast-20261112-125027`); before the gathering rule, the unit target passed 1,248 of 1,252 with 2 skipped and 1 expected failure, and its one failure, `UICopyRulesTests.countsUseThePluralHelper`, failed the same on `main` (`fast-20261112-120610`).
+`SessionEditorRowsUITests` passed 2/2 and `MilestoneOneJourneyUITests` 1/1 on iPhone 17/iOS 26.5 (`fast-20261112-131236`): a new session pairs two lifts in one trip, saves them, keeps them after a relaunch and after Discard, and Move up and Move down still reorder plain lifts.
+Captures of the sheet were compared with `phase-2--modal-superset.png`; editor captures at 390pt in light mode (`fast-20261112-131547`) show lifts 1 and 3 gathered, two adjacent supersets, four paired, a move out that leaves and a plain lift passing a superset whole.
 Not built: the mock-up's rest behavior and CLUSTER chip, which need stored fields.
 Its line "Sets alternate between members. Rest belongs to the last lift in the cluster." describes a workout the logger does not run, so the sheet says each lift keeps its own sets and rest until the user decides.
 No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
