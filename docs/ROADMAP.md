@@ -548,7 +548,8 @@ The discard warnings name bouts apart from sets ("1 logged set and 1 bout will b
 Unit: `CardioPlanTests` (9) adds each surface with nothing logged, the bout alone, the bout and two sets, and sets alone; the unit target ran 1,245: 1,242 passed, 2 skipped, 1 expected failure.
 UI: `TimedSetUITests`, `EmptyWorkoutCountsUITests`, `SkipWarmupsUITests` and `WorkoutLoggerJourneyUITests.testDiscardWithLoggedSetsAsksFirst` passed (11 tests).
 Inspected at 390pt, light mode (iPhone 17e), with the bout alone and with a bench set too: Today's slab and its discard alert, Program's banner, the Finish sheet, the logger's discard dialog and the remove alert.
-Known limit: a cardio exercise's history page in Library still counts its bouts as sets ("1 set", "1 set across 1 workout"), read from `ExerciseHistoryView` and not changed here.
+In Library a cardio exercise's page and history call its entries bouts ("1 bout", "Best bout", "1 bout across 1 workout", "No logged bouts yet"), and lifts keep sets.
+`CardioPlanTests` (10) checks both pages' counts, the eight history and cardio suites passed (60 tests), and both pages were inspected at 390pt, light mode, for a logged Stair Climber and a never-logged Elliptical.
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 

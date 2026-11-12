@@ -8,7 +8,7 @@
 //  Top line: date displayMedium 18pt + intent BRUChip + optional '★ PR' BRUChip(.signal, fill:true)
 //            right-aligned: 'e1RM {value}' displayMedium 18pt
 //  Machine:  the machine the sets were done on, labelSmall bruMuted, when one was named (RM-066)
-//  Sub-line: 'TOP {weight × reps @ RPE}' BRUMono 11pt bruMuted + '· {N} sets'
+//  Sub-line: 'TOP {weight × reps @ RPE}' BRUMono 11pt bruMuted + '· {N} sets' ('· {N} bouts' for cardio)
 //  Bottom: wrap-flow row of mono set chips — 1pt bruHair outlined Rectangles
 //          (NOT capsules) holding BRUMono 11pt numerics
 //
@@ -72,7 +72,7 @@ public struct ExerciseHistoryRow: View {
                 Text(entry.topSetLabel)
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruInk)
-                Text(" · \(BRUCountLabel.text(entry.setCount, "set"))")
+                Text(" · \(entry.countLabel)")
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
             }
@@ -160,10 +160,15 @@ public struct HistoryEntry: Identifiable {
     public let e1RMLabel: String?
     public let topSetLabel: String     // e.g. "205×8 @9"
     public let setCount: Int
+    /// What `setCount` counts: "set", or "bout" for cardio (RM-062).
+    public let countNoun: String
     public let setChips: [String]      // e.g. ["95×8 @4", "135×6 @5", ...]
     /// The machines the sets were done on, in log order, or nil when none
     /// was named (RM-066).
     public let machineLabel: String?
+
+    /// "3 sets", or "1 bout" for cardio.
+    public var countLabel: String { BRUCountLabel.text(setCount, countNoun) }
 
     public init(
         id: UUID = UUID(),
@@ -173,6 +178,7 @@ public struct HistoryEntry: Identifiable {
         e1RMLabel: String?,
         topSetLabel: String,
         setCount: Int,
+        countNoun: String = "set",
         setChips: [String],
         machineLabel: String? = nil
     ) {
@@ -183,6 +189,7 @@ public struct HistoryEntry: Identifiable {
         self.e1RMLabel = e1RMLabel
         self.topSetLabel = topSetLabel
         self.setCount = setCount
+        self.countNoun = countNoun
         self.setChips = setChips
         self.machineLabel = machineLabel
     }

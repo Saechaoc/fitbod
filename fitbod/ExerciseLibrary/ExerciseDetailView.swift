@@ -619,10 +619,13 @@ private struct ProgressEntryRow: View {
 /// performance" a lifter checks before choosing today's load.
 struct RecentPerformanceList: View {
     let unit: WeightUnit
+    /// Cardio logs bouts, not sets (RM-062).
+    let isCardio: Bool
     @Query private var logged: [SessionExercise]
 
     init(exercise: Exercise, unit: WeightUnit) {
         self.unit = unit
+        self.isCardio = exercise.isCardio
         let targetID: UUID? = exercise.id
         // Single-level optional chain only; deeper chains crash #Predicate.
         _logged = Query(filter: #Predicate<SessionExercise> { $0.exercise?.id == targetID })
@@ -633,6 +636,12 @@ struct RecentPerformanceList: View {
         let date: Date
         let best: SetEntry
         let workingSets: Int
+
+        /// "3 working sets", or "1 bout" for cardio, which set counts
+        /// leave out (RM-062).
+        var countLabel: String {
+            BRUCountLabel.text(workingSets, best.sessionExercise?.exercise?.isCardio == true ? "bout" : "working set")
+        }
     }
 
     /// One entry per finished workout, newest first, at most five. An
@@ -672,9 +681,9 @@ struct RecentPerformanceList: View {
 
     var body: some View {
         let entries = Self.entries(from: logged)
-        BRUSectionHead("Recent performance", right: entries.isEmpty ? nil : "Best set")
+        BRUSectionHead("Recent performance", right: entries.isEmpty ? nil : isCardio ? "Best bout" : "Best set")
         if entries.isEmpty {
-            Text("Not logged yet. Your best set from each workout will show here.")
+            Text("Not logged yet. Your best \(isCardio ? "bout" : "set") from each workout will show here.")
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -686,7 +695,7 @@ struct RecentPerformanceList: View {
                         Text(entry.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
-                        Text(entry.workingSets == 1 ? "1 working set" : "\(entry.workingSets) working sets")
+                        Text(entry.countLabel)
                             .font(BRUFont.labelSmall)
                             .tracking(1.0)
                             .textCase(.uppercase)

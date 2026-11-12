@@ -15,7 +15,8 @@
 //      list and History count its time and no sets;
 //    - a finished workout's set totals leave its bouts out;
 //    - so do a workout in progress's resume banner and slab and its Finish
-//      sheet, and the discard and remove warnings name a bout as a bout.
+//      sheet, and the discard and remove warnings name a bout as a bout;
+//    - a cardio exercise's history and recent performance count bouts.
 //
 
 import Foundation
@@ -308,6 +309,35 @@ struct CardioPlanTests {
             of: liftsOnly, count: 1, banner: "5:00 · 1 set", slab: "1 set logged", finish: "1 set logged · 5:00",
             discard: "1 logged set will be deleted."
         )
+    }
+
+    @Test("a cardio exercise's history and recent performance count bouts; a lift's count sets")
+    func exerciseHistoryCountsBouts() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let climber = cardio("Stair Climber", tracking: .durationStepSpeed, in: ctx)
+        let bench = LoggerFixtures.exercise("Bench", in: ctx)
+        let climb = try LoggerFixtures.session(
+            exercise: climber, startedAt: now, completedAt: now.addingTimeInterval(1_500), sets: [(0, 0, true)], in: ctx
+        )
+        let bout = try #require(climb.exercises?.first?.sets?.first)
+        bout.durationSeconds = 1_200
+        bout.level = 8
+        let lift = try LoggerFixtures.session(
+            exercise: bench, startedAt: now, completedAt: now.addingTimeInterval(1_500),
+            sets: [(100, 5, true), (100, 5, true)], in: ctx
+        )
+        func historyRows(_ workout: Session) -> [String] {
+            let shown = ExerciseHistoryView.completedSets(from: workout.exercises ?? [], intent: nil)
+            return ExerciseHistoryView.rows(from: shown, prSetIDs: []).map(\.countLabel)
+        }
+
+        #expect(ExerciseHistoryView.countLine(1, across: 1, of: climber) == "1 bout across 1 workout")
+        #expect(historyRows(climb) == ["1 bout"])
+        #expect(RecentPerformanceList.entries(from: climb.exercises ?? []).map(\.countLabel) == ["1 bout"])
+        // Lifts read as before.
+        #expect(ExerciseHistoryView.countLine(2, across: 1, of: bench) == "2 sets across 1 workout")
+        #expect(historyRows(lift) == ["2 sets"])
+        #expect(RecentPerformanceList.entries(from: lift.exercises ?? []).map(\.countLabel) == ["2 working sets"])
     }
 
     @Test("the routine editor's draft reads the plan from its row")

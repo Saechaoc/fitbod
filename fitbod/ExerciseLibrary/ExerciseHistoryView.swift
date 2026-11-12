@@ -12,13 +12,13 @@
 //   BRUDivider(.ink)
 //   IntentFilterChipRow full-bleed strip (2pt rules drawn internally)
 //   MachineFilterChipRow, when the exercise was done on more than one machine (RM-066)
-//   set-count summary row
+//   set-count summary row (bouts for cardio, RM-062)
 //   BRUDivider(.hair)
 //   one ExerciseHistoryRow per workout, newest first; the row carries the date
 //   and opens that workout's summary, where it can be corrected
 //   PRStripFooter at bottom
 //
-// ## Empty states (UI-SPEC verbatim)
+// ## Empty states (UI-SPEC verbatim; "bouts" for cardio, RM-062)
 //   All filter + no sets: "No logged sets yet" / "Log this exercise in a workout to see history."
 //   Filtered + no match: "No {INTENT} sets" / "Try a different intent filter." + "SHOW ALL" BRUButton
 //
@@ -192,7 +192,7 @@ private struct FilteredHistoryContent: View {
 
         // Set-count summary row: the sets and the workouts the list shows
         HStack {
-            Text("\(BRUCountLabel.text(totalCount, "set")) across \(BRUCountLabel.text(rows.count, "workout"))")
+            Text(ExerciseHistoryView.countLine(totalCount, across: rows.count, of: exercise))
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
@@ -326,7 +326,7 @@ private struct FilteredHistoryContent: View {
         VStack(spacing: 16) {
             Spacer().frame(height: 48)
             if intentFilter == nil {
-                Text("No logged sets yet")              // UI-SPEC verbatim
+                Text(exercise.isCardio ? "No logged bouts yet" : "No logged sets yet") // UI-SPEC verbatim; cardio logs bouts (RM-062)
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                 Text("Log this exercise in a workout to see history.")  // UI-SPEC verbatim
@@ -334,7 +334,7 @@ private struct FilteredHistoryContent: View {
                     .foregroundStyle(Color.bruMuted)
                     .multilineTextAlignment(.center)
             } else {
-                Text("No \(intentFilter!.rawValue.capitalized) sets")   // UI-SPEC verbatim format
+                Text("No \(intentFilter!.rawValue.capitalized) \(exercise.isCardio ? "bouts" : "sets")") // UI-SPEC verbatim format
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                 Text("Try a different intent filter.")                   // UI-SPEC verbatim
@@ -564,9 +564,16 @@ extension ExerciseHistoryView {
             e1RMLabel: e1RMLabel,
             topSetLabel: topSet.map { setLabel($0, unit: unit) } ?? "—",
             setCount: sets.count,
+            countNoun: pairs.first?.sessionExercise.exercise?.isCardio == true ? "bout" : "set",
             setChips: sets.map { setLabel($0, unit: unit) },
             machineLabel: machines.isEmpty ? nil : machines.joined(separator: " · ")
         )
+    }
+
+    /// The line over the rows, "3 sets across 2 workouts", or "1 bout
+    /// across 1 workout" for a cardio exercise, which logs bouts (RM-062).
+    static func countLine(_ count: Int, across workouts: Int, of exercise: Exercise) -> String {
+        "\(BRUCountLabel.text(count, exercise.isCardio ? "bout" : "set")) across \(BRUCountLabel.text(workouts, "workout"))"
     }
 
     /// How a set ranks when no set has an e1RM: by volume, then by time.
