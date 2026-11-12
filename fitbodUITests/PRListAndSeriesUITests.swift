@@ -105,7 +105,7 @@ final class PRListAndSeriesUITests: XCTestCase {
         var readout = chartReadout(in: app)
         XCTAssertFalse(readout.isEmpty, "The chart reads nothing before any chip is tapped")
         var readouts: [String: String] = [:]
-        let intents = ["HYPERTROPHY · 2 SESSIONS", "STRENGTH · 2 SESSIONS"]
+        let intents = ["HYPERTROPHY · 2 WORKOUTS", "STRENGTH · 2 WORKOUTS"]
         let chips: [(chip: String, legend: [String])] = [
             ("TOP SET", ["TOP SET"]),
             ("e1RM", ["TOP SET", "ALL-SET AVG"]),
@@ -134,7 +134,7 @@ final class PRListAndSeriesUITests: XCTestCase {
     /// The legend's keys under the chart, left to right, uppercased.
     @MainActor
     private func legendKeys(in app: XCUIApplication) -> [String] {
-        let key = /(top set|all-set avg|hypertrophy · \d+ sessions|strength · \d+ sessions)/.ignoresCase()
+        let key = /(top set|all-set avg|hypertrophy · \d+ workouts|strength · \d+ workouts)/.ignoresCase()
         return app.staticTexts.allElementsBoundByIndex
             .filter { (try? key.wholeMatch(in: $0.label)) != nil }
             .sorted { $0.frame.minX < $1.frame.minX }

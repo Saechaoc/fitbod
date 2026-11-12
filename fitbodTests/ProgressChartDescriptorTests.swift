@@ -15,7 +15,7 @@
 //  Ticket T129, finding F297. VOLUME and AVG RPE draw a line per intent,
 //  but the legend named only HYPERTROPHY and STRENGTH, and a power line
 //  was drawn like strength's. The legend now names every intent drawn,
-//  as in POWER · 1 SESSION, in the order the audio graph reads them.
+//  as in POWER · 1 WORKOUT, in the order the audio graph reads them.
 //
 
 import Accessibility
@@ -63,7 +63,7 @@ struct ProgressChartDescriptorTests {
         ]
         let descriptor = ProgressChartDescriptor(metric: .volume, points: points, unit: .lb).makeChartDescriptor()
 
-        #expect(descriptor.series.map(\.name) == ["HYPERTROPHY · 1 SESSION", "STRENGTH · 2 SESSIONS"])
+        #expect(descriptor.series.map(\.name) == ["HYPERTROPHY · 1 WORKOUT", "STRENGTH · 2 WORKOUTS"])
         #expect(descriptor.series.map(\.dataPoints.count) == [1, 2])
         let xAxis = try #require(descriptor.xAxis as? AXNumericDataAxisDescriptor)
         #expect(
@@ -143,7 +143,7 @@ struct ProgressChartDescriptorTests {
         attachScreen(of: window, named: "T129-chart-volume")
 
         let legend = intentKeys(under: window)
-        #expect(legend == ["HYPERTROPHY · 2 SESSIONS", "STRENGTH · 3 SESSIONS", "POWER · 4 SESSIONS"])
+        #expect(legend == ["HYPERTROPHY · 2 WORKOUTS", "STRENGTH · 3 WORKOUTS", "POWER · 4 WORKOUTS"])
         #expect(
             chartDescriptor(under: window)?.series.compactMap(\.name) == legend,
             "The audio graph must name each line as the legend does, in its order"
@@ -249,7 +249,7 @@ struct ProgressChartDescriptorTests {
     }
 
     /// The legend's keys for intents under `root`, in the order VoiceOver
-    /// reads them, such as HYPERTROPHY · 2 SESSIONS.
+    /// reads them, such as HYPERTROPHY · 2 WORKOUTS.
     @MainActor
     private func intentKeys(under root: NSObject) -> [String] {
         let names = Intent.allCases.map { "\($0.rawValue.uppercased()) · " }

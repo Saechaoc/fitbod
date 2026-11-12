@@ -39,10 +39,9 @@
 //  line drawn, named as the legend names it. The PR rule and the
 //  above-10-reps caption are e1RM only. The legend names the lines
 //  drawn, each beside a stretch of its line: TOP SET and ALL-SET AVG on
-//  e1RM, TOP SET alone on TOP SET; on VOLUME and AVG RPE,
-//  HYPERTROPHY · N SESSIONS and STRENGTH · N SESSIONS, then POWER,
-//  ENDURANCE and TECHNIQUE · N SESSIONS for each of those drawn. Keys
-//  that run out of width wrap onto the next row.
+//  e1RM, TOP SET alone on TOP SET; on VOLUME and AVG RPE, each intent
+//  drawn, as in HYPERTROPHY · N WORKOUTS. Keys that run out of width
+//  wrap onto the next row.
 //
 //  ## Chart styling (BRU contract)
 //
@@ -220,9 +219,9 @@ enum ChartLineStyle: Int, Comparable {
 
 private extension Intent {
     /// This intent's line on VOLUME and AVG RPE, named in the legend and
-    /// the audio graph by the workouts it plots: HYPERTROPHY · 2 SESSIONS.
-    func lineName(sessions: Int) -> String {
-        "\(rawValue.uppercased()) · \(BRUCountLabel.text(sessions, "SESSION"))"
+    /// the audio graph by the workouts it plots: HYPERTROPHY · 2 WORKOUTS.
+    func lineName(workouts: Int) -> String {
+        "\(rawValue.uppercased()) · \(BRUCountLabel.text(workouts, "WORKOUT"))"
     }
 }
 
@@ -356,9 +355,13 @@ private struct ProgressChartHost: View {
             }
         }
         .background(Color.bruBg)
-        // Found again when its workouts or a History correction change,
-        // never per render (one plateau check per intent and machine).
-        .task(id: StallsKey(logs: sessionExercises.map(\.persistentModelID), edits: historyEdits?.version)) {
+        // Found again when a workout with it finishes or goes, or History is
+        // corrected, never per render (one plateau check per intent and
+        // machine). Finishing changes no log ID, so the key holds finished ones.
+        .task(id: StallsKey(
+            logs: sessionExercises.filter { $0.session?.completedAt != nil }.map(\.persistentModelID),
+            edits: historyEdits?.version
+        )) {
             stalls = settingsList.first.map {
                 StalledExercises.find(in: ctx, settings: $0, exerciseID: exercise.id)
             } ?? []
@@ -442,11 +445,14 @@ private struct ProgressChartHost: View {
         let unitLabel = unit.rawValue.uppercased()
         let latest = wholeWeight(hero.latest)
         let earliest = wholeWeight(hero.earliest)
-        // The change is the value minus the FROM number, as both are shown.
+        // The change is the value minus the FROM number, as both are shown;
+        // no change has no sign and reads neutral.
         let delta = latest - earliest
-        let deltaSigned = delta >= 0
-            ? "+ \(delta) \(unitLabel)"
-            : "- \(abs(delta)) \(unitLabel)"
+        let deltaText = switch delta {
+        case 1...: "+ \(delta) \(unitLabel)"
+        case ..<0: "- \(abs(delta)) \(unitLabel)"
+        default: "0 \(unitLabel)"
+        }
         let weeksLabel = "\(hero.weeks) WEEK\(hero.weeks == 1 ? "" : "S")"
 
         HStack(alignment: .lastTextBaseline) {
@@ -465,7 +471,7 @@ private struct ProgressChartHost: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
-                BRUChip(deltaSigned, color: .bruSignal, fill: true, textCase: nil)
+                BRUChip(deltaText, color: delta == 0 ? .bruMuted : .bruSignal, fill: delta != 0, textCase: nil)
                 Text(verbatim: "FROM \(earliest) \(unitLabel)")
                     .font(BRUFont.labelMicro)
                     .tracking(1.2)
@@ -676,8 +682,7 @@ private struct ProgressChartHost: View {
     }
 
     /// The e1RM chips draw the top set and the all-set average. VOLUME and
-    /// AVG RPE draw one line per intent: HYPERTROPHY and STRENGTH always
-    /// have a key, and the other intents have one when their line is drawn.
+    /// AVG RPE draw one line per intent, and only a drawn line has a key.
     private func legendKeys(points: [ChartPoint]) -> [LegendKey] {
         switch metric {
         case .e1RM:
@@ -690,10 +695,10 @@ private struct ProgressChartHost: View {
         case .volume, .averageRPE:
             let drawn = Set(points.map(\.intent))
             return Intent.allCases
-                .filter { $0 == .hypertrophy || $0 == .strength || drawn.contains($0) }
+                .filter(drawn.contains)
                 .map { intent in
-                    let sessions = Set(points.filter { $0.intent == intent }.map(\.date)).count
-                    return LegendKey(label: intent.lineName(sessions: sessions), style: ChartLineStyle(intent: intent))
+                    let workouts = Set(points.filter { $0.intent == intent }.map(\.date)).count
+                    return LegendKey(label: intent.lineName(workouts: workouts), style: ChartLineStyle(intent: intent))
                 }
                 .sorted { $0.style < $1.style }
         }
@@ -827,9 +832,9 @@ struct ProgressChartDescriptor: AXChartDescriptorRepresentable {
 
     /// The legend's name for a line: TOP SET or ALL-SET AVG on the e1RM
     /// chips; on VOLUME and AVG RPE, its intent and how many workouts it
-    /// plots, as in HYPERTROPHY · 2 SESSIONS.
+    /// plots, as in HYPERTROPHY · 2 WORKOUTS.
     private func legendName(of line: [ChartPoint]) -> String {
         guard !metric.plotsE1RM else { return line[0].series.uppercased() }
-        return line[0].intent.lineName(sessions: Set(line.map(\.date)).count)
+        return line[0].intent.lineName(workouts: Set(line.map(\.date)).count)
     }
 }

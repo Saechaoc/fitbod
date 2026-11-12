@@ -390,6 +390,8 @@ ADD VOLUME opens the primary muscle's detail, TRY VARIATION the similar exercise
 No suggestion writes a set, a workout or a routine.
 The plateau, chip and copy-rule suites passed 70/70 (`fast-20261112-114122`), including 8 `StalledExercisesTests` for intent, flat-workout count, newest top set, suggestion, machine and intent streams, a workout in progress, the window override, order and the flat-line axis.
 `EmptyWorkoutCountsUITests`, `PRListAndSeriesUITests` and `WorkoutSwapJourneyUITests` passed 10/10 (`fast-20261112-114244`).
+After review, the chart finds stalls again when a workout with the exercise finishes, a zero change in its e1RM header reads neutral (0 LB in a muted outline, no sign), and VOLUME and AVG RPE key only the intents they draw, counted in workouts (HYPERTROPHY · 2 WORKOUTS).
+Then `StalledExercisesTests`, `ProgressChartDescriptorTests` and `UICopyRulesTests` passed 18/18 (`fast-20261112-115122`), `PRListAndSeriesUITests` passed 2/2 (`fast-20261112-115228`), and light 390pt captures of the stalled chart and AVG RPE were inspected.
 390pt captures in light and dark were inspected: Progress, the list, the chart, the screens ADD VOLUME and TRY VARIATION open, and the DROP INTENSITY alert.
 The list matches the mockup except ‹ BACK for its bare chevron (the app's pushed-screen rule) and a unit after the top-set load.
 DROP INTENSITY was reached with an uncommitted seed change; no seed reaches CONSIDER DELOAD, which opens the existing fatigue signals sheet.
