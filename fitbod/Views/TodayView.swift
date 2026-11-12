@@ -178,7 +178,7 @@ public struct TodayView: View {
             // The block overview (CONTEXT D-11), whose EDIT opens the builder,
             // and the routine the .emptySplit fix-it opens on Today's own
             // stack (Phase 09 Plan 03).
-            .blockDestinations { pendingBlockBuilder = .edit($0) }
+            .blockDestinations(origin: .today) { pendingBlockBuilder = .edit($0) }
             // The name step "+ New routine" opens; its SAVE swaps it for the
             // routine's SplitDetailView.
             .newRoutineDestination(path: $navigationPath)

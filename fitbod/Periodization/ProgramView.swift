@@ -137,7 +137,7 @@ public struct ProgramView: View {
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
             // T-09-04 mitigation: register BlockOverviewRoute BEFORE any BLOCKS taps.
-            .blockDestinations { pendingBlockBuilder = .edit($0) }
+            .blockDestinations(origin: .program) { pendingBlockBuilder = .edit($0) }
             .navigationDestination(for: ArchivedRoutinesRoute.self) { _ in
                 ArchivedRoutinesView()
             }
@@ -468,13 +468,14 @@ fileprivate struct ActiveBlockSlab: View {
         }
         .buttonStyle(.bruRow)
         .accessibilityLabel("ACTIVE block: \(block.programName). \(position.spoken).")
-        .accessibilityValue(routineLine.replacingOccurrences(of: " · ", with: ", "))
+        .accessibilityValue(routineLine.replacingOccurrences(of: "\u{00A0}· ", with: ", "))
     }
 
-    /// The routine's name, "· Rotation" on a rotation block.
+    /// The routine's name, "· Rotation" on a rotation block. A no-break
+    /// space keeps the dot off the start of a wrapped line.
     private var routineLine: String {
         guard let routine = block.split else { return "No routine" }
-        return block.schedulingMode == .rotation ? "\(routine.name) · Rotation" : routine.name
+        return block.schedulingMode == .rotation ? "\(routine.name)\u{00A0}· Rotation" : routine.name
     }
 
     private func slabLabel(_ text: String, muted: Bool) -> some View {

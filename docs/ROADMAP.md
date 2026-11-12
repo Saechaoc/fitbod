@@ -302,13 +302,31 @@ A dismissed week hides the ring as well as the notice, as before `5aa93d05`; whe
 
 ### <a id="rm-011"></a>RM-011 — Redesign 1.5: Program explains Now, Planned and Past
 
-**P1 · Planned.** Follow [Program layouts](design-map/redesign/program-layouts.md).
+**P1 · Done (2026-11-12).** Follow [Program layouts](design-map/redesign/program-layouts.md); built in three commits on `swarm/A2`.
 **Done when:** active block first in a four-line Now slab without cells; ink + New/44pt header preserves popover geometry/z-order. Ready lead uses oldest-created/name/ID, date/count and start errors; drafts-only leads with newest draft/CONTINUE BLOCK. Planned cards use outlined chips/missing pieces; routines use sublines; Past blocks show year across years. Empty Program is routine-first with archive access. Preserve block labels/CREATE BLOCK sheets, move DONE-card tests to Past blocks, pass origin to overview, inspect long names and re-tally budget (P-ACTIVE eight elements above fold).
 **Scope / sequence:** Now/ready/draft ordering → Planned/Routines/Past → origins/long names/budget. This week actions and resume/discard remain RM-015/RM-012.
 **Requires:** Existing block lifecycle/origin routes and approved Program layouts.
 **Scheduled after:** [RM-010](#rm-010).
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
-**References:** D-125–D-127/D-299–D-304, redesign R-9/R-11/R-23; [Program](../fitbod/Periodization/ProgramView.swift), [budget](design-map/redesign/screen_budget.py).
+**Verify when:** Program states at 390pt light and dark at implementation; accessibility sizes and the phone at stability.
+**Evidence (2026-11-12, swarm/A2):** Program leads with the active block as a four-line ink slab without week cells, else the oldest created ready block with START BLOCK ▸ and the "Couldn't start block" retry, else the newest draft with CONTINUE BLOCK ▸.
+Today's T-READY and Program share `ProgramBlocks.readyOrder`.
+The header is `BRUHeaderBar` with + New in ink, and its popover still opens under the measured header, in front of the page.
+Planned cards carry outlined READY and DRAFT chips, weeks, phases and routine, then "Created Nov 10" or the missing piece; routine rows read "3 sessions · used by Spring Block".
+Finished blocks moved to one PAST BLOCKS · n › row, whose list reads "6 weeks · Sep 1 - Oct 13 · 3 workouts", with the year when a block ended in an earlier year; each row opens Block overview.
+A fresh store starts with a routine, with Archived routines under it when one exists; the template cards, NO PROGRAM and `BlockBuilderRoute.template` are gone, and presets stay in + New block › Use Preset (O-8).
+Block overview takes `origin` from the stack that pushed it, `.today` or `.program`, for RM-013's review sheet.
+`ProgramStatesSeed` adds `-fitbod-seed-program-drafts`, `-past`, `-long-names` and `-archived`, and `ProgramStatesSeedTests` checks each.
+`ProgramViewFidelityTests` covers the lead and Planned order, routine sublines and past lines across years.
+The unit target passed: 1,255 tests, 1,252 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261112-115916`, iPhone 17 iOS 26.5).
+The 18 UI classes that go through Program or Block overview passed 48 of 48 (`fast-20261112-122511`): BlockLifecycleEntryPoints, BlockOverviewStates, ArchiveRoutine, NewBlockSaves, BlockDraftKeeps, BlockAndRoutineTextFit, BlockReviewAfterEnd, NewRoutineFlow, SwipeBack, BlockWeekCounts, TodayStateRoutes, BackupRestoreRoutines, EditorSwipeDismiss, NumberEntry, SessionEditorRows, SlottedSessionDelete, TimedSet and WorkoutExit.
+The DONE-card checks in `BlockLifecycleEntryPointsUITests`, `BlockOverviewStatesUITests`, `ArchiveRoutineUITests` and `BlockReviewAfterEndUITests` now open the block from Past blocks.
+390pt light and dark captures were inspected for active, ready only, drafts only, empty with an archived routine, past blocks across two years, long names and the open + New popover, which still sits under the header in front of the page; a long routine name no longer starts a slab line with "·".
+The `screen_budget.py` re-tally keeps P-ACTIVE at 8 elements above the fold with no signal (header, Now slab, Planned head, chip, cards, Routines head, rows, Past blocks row) until This week (RM-015) lands.
+D-125, D-127, D-299, D-300, D-301, D-303 and D-304 are fixed by the layout, and D-126 stays with RM-012.
+D-302 is fixed in part: Program's "ACCUM · INTNS" rows are gone, but New Block's chart keeps the "ACCUM." and "INTENS." that the [color tokens](design-system/color.md) name, beside Block overview's "ACCUM 3 · INTNS 2".
+The Program-screen rows of RM-028 (D-22, D-123, D-124, D-150, D-151) sit in CREATE BLOCK and CHOOSE PRESET, which keep their copy, so they stay in RM-028.
+Open: a look on the phone; accessibility sizes were not inspected.
+**References:** D-125–D-127/D-299–D-304, redesign R-9/R-11/R-23; [Program](../fitbod/Periodization/ProgramView.swift), [Past blocks](../fitbod/Periodization/PastBlocksView.swift), [seed](../fitbod/App/ProgramStatesSeed.swift), [budget](design-map/redesign/screen_budget.py).
 
 ### <a id="rm-012"></a>RM-012 — Redesign 1.6: visible Program resume/discard
 

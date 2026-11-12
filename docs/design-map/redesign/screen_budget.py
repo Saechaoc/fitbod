@@ -31,6 +31,8 @@ STATES = {
     "Today T-READY (review pending)":   (13, 3, 4,  7, 1, 1),
     "Today T-PICK (no block)":          (13, 3, 4,  7, 1, 0),
     "Today T-FIRST (fresh store)":      (13, 2, 4,  4, 1, 2),
+    # proposed, re-tallied from RM-011's build until This week (RM-015) lands: header, Now slab,
+    # Planned head, chip, cards, Routines head, rows, Past blocks row
     "Program P-ACTIVE":                 (12, 2, 0,  8, 0, 0),
     "Program P-PLANNED":                (10, 2, 0,  8, 1, 0),
     # current: the same card list; proposed: header, draft slab, Planned head, cards, Routines head, rows

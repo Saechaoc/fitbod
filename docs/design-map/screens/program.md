@@ -2,7 +2,7 @@
 id: program
 kind: screen
 title: Program
-view: fitbod/Periodization/ProgramView.swift:86
+view: fitbod/Periodization/ProgramView.swift
 tab: program
 presents_from: []
 closes_with: none

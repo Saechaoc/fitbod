@@ -2,7 +2,7 @@
 id: start-choice
 kind: sheet
 title: Create block
-view: fitbod/Periodization/ProgramView.swift:750
+view: fitbod/Periodization/ProgramView.swift
 tab: program
 presents_from: [dialog-program-new, program]
 closes_with: none

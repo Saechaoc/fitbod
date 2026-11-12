@@ -189,6 +189,9 @@ public struct BlockOverviewScreen: View {
     // MARK: - Stored properties
 
     private let block: Block
+    /// The tab whose stack pushed the overview: `.today` or `.program`.
+    /// The review's next-block builder is to name it (RM-013).
+    let origin: BlockBuilderView.Origin
     private let onEdit: @MainActor () -> Void
     /// Runs once DELETE BLOCK has deleted the block, so the screen leaves
     /// before anything reads it again.
@@ -226,12 +229,14 @@ public struct BlockOverviewScreen: View {
 
     // MARK: - Init
 
-    public init(
+    init(
         block: Block,
+        origin: BlockBuilderView.Origin,
         onEdit: @escaping @MainActor () -> Void = {},
         onDeleted: @escaping @MainActor () -> Void = {}
     ) {
         self.block = block
+        self.origin = origin
         self.onEdit = onEdit
         self.onDeleted = onDeleted
 
@@ -731,7 +736,7 @@ public struct BlockOverviewScreen: View {
         return ("STARTS WHEN YOU START IT", "starts when you start it")
     }
 
-    /// The weeks and the phases as Program's template rows write them,
+    /// The weeks and the phases in their short labels,
     /// "4 WEEKS · ACCUM 3 · DELOAD 1", or nil without phases.
     private var phasePlan: (text: String, spoken: String)? {
         let phases = (block.phases ?? []).sorted { $0.orderIndex < $1.orderIndex }
@@ -1676,7 +1681,7 @@ private extension Array {
 
     try? ctx.save()
 
-    return BlockOverviewScreen(block: block, onEdit: {})
+    return BlockOverviewScreen(block: block, origin: .program, onEdit: {})
         .modelContainer(container)
 }
 #endif

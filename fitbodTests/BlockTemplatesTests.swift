@@ -64,16 +64,6 @@ struct BlockTemplatesTests {
         ])
     }
 
-    @Test("a template's phase summary uses the short phase labels")
-    func phaseSummaryUsesShortLabels() {
-        #expect(BlockTemplates.hypertrophy.phaseSummary == "ACCUM 5 · INTNS 2 · DELOAD 1")
-        #expect(BlockTemplates.generic.phaseSummary == "ACCUM 4 · INTNS 2 · REAL 1 · DELOAD 1")
-        #expect(BlockTemplates.powerliftingPeak.phaseSummary == "ACCUM 3 · INTNS 3 · REAL 1 · DELOAD 1")
-        #expect(BlockTemplates.fiveThreeOne.phaseSummary == "ACCUM 1 · INTNS 1 · REAL 1 · DELOAD 1")
-        #expect(BlockTemplates.blank.phaseSummary.isEmpty)
-        #expect(BlockPhaseKind.peak.shortLabel == "PEAK")
-    }
-
     @Test(
         "template for phase kind mapping is deterministic",
         arguments: [

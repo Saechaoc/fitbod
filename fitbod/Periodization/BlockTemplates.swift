@@ -5,9 +5,9 @@
 //  Static stock block templates for Phase 4. The values are Swift
 //  literals, not bundled JSON, so changes remain easy to inspect in diff.
 //
-//  `BlockTemplates.catalog` is the one template catalog: Program's
-//  template rows and New Block's preset pickers are built from it, in its
-//  order, and show only the facts a template holds.
+//  `BlockTemplates.catalog` is the one template catalog: New Block's
+//  preset pickers are built from it, in its order, and show only the
+//  facts a template holds.
 //
 
 import Foundation
@@ -34,15 +34,11 @@ extension BlockTemplate {
     public var totalWeeks: Int {
         phases.reduce(0) { $0 + $1.weeks }
     }
-
-    /// The phases as Program's rows write them: "ACCUM 5 · INTNS 2 · DELOAD 1".
-    public var phaseSummary: String {
-        phases.map { "\($0.kind.shortLabel) \($0.weeks)" }.joined(separator: " · ")
-    }
 }
 
 extension BlockPhaseKind {
-    /// The short label Program's template rows give a phase, such as "ACCUM".
+    /// A phase's short label, such as "ACCUM", for Block overview's plan
+    /// line and New Block's chart when its abbreviations do not fit.
     public var shortLabel: String {
         switch self {
         case .accumulation:    return "ACCUM"

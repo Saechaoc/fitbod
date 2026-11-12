@@ -2,7 +2,7 @@
 id: dialog-program-new
 kind: dialog
 title: New
-view: fitbod/Periodization/ProgramView.swift:284
+view: fitbod/Periodization/ProgramView.swift
 tab: program
 presents_from: [program]
 closes_with: cancel

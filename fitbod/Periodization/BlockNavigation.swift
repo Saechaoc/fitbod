@@ -39,13 +39,14 @@ enum BlockBuilderRoute: Identifiable {
 
 extension View {
     /// Registers the `BlockOverviewRoute` and `SplitDetailRoute`
-    /// destinations on the enclosing NavigationStack. EDIT on the block
-    /// overview calls `onEdit`.
-    func blockDestinations(onEdit: @escaping (Block) -> Void) -> some View {
+    /// destinations on the enclosing NavigationStack. `origin` names the tab
+    /// whose stack pushes the overview. EDIT on the block overview calls
+    /// `onEdit`.
+    func blockDestinations(origin: BlockBuilderView.Origin, onEdit: @escaping (Block) -> Void) -> some View {
         navigationDestination(for: BlockOverviewRoute.self) { route in
             switch route {
             case .summary(let blockID):
-                BlockOverviewDestination(blockID: blockID, onEdit: onEdit)
+                BlockOverviewDestination(blockID: blockID, origin: origin, onEdit: onEdit)
             }
         }
         .navigationDestination(for: SplitDetailRoute.self) { route in
@@ -64,12 +65,14 @@ extension View {
 private struct BlockOverviewDestination: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var matches: [Block]
+    let origin: BlockBuilderView.Origin
     let onEdit: (Block) -> Void
     /// Set by DELETE BLOCK, before anything reads the deleted block.
     @State private var deleted = false
 
-    init(blockID: UUID, onEdit: @escaping (Block) -> Void) {
+    init(blockID: UUID, origin: BlockBuilderView.Origin, onEdit: @escaping (Block) -> Void) {
         _matches = Query(filter: #Predicate<Block> { $0.id == blockID })
+        self.origin = origin
         self.onEdit = onEdit
     }
 
@@ -80,7 +83,7 @@ private struct BlockOverviewDestination: View {
                 .navigationBarHidden(true)
                 .onAppear { dismiss() }
         } else if let block = matches.first {
-            BlockOverviewScreen(block: block, onEdit: { onEdit(block) }, onDeleted: { deleted = true })
+            BlockOverviewScreen(block: block, origin: origin, onEdit: { onEdit(block) }, onDeleted: { deleted = true })
         } else {
             Text("Block not found")
                 .font(BRUFont.bodyDefault)

@@ -2,7 +2,7 @@
 id: preset-picker
 kind: sheet
 title: Choose preset
-view: fitbod/Periodization/ProgramView.swift:866
+view: fitbod/Periodization/ProgramView.swift
 tab: program
 presents_from: [start-choice]
 closes_with: none

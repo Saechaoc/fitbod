@@ -241,6 +241,7 @@ arguments are restricted to DEBUG builds.
 Every Today state opens from one DEBUG launch argument on an empty store.
 `fitbod/App/TodayStatesSeed.swift` lists `-fitbod-seed-today-ready`, `-empty`, `-done`, `-rest`, `-attach` and `-pick`.
 The scheduled session is `-fitbod-seed-block-states`, the open workout is `-fitbod-seed-demo-workout`, and the first-run state needs no seed.
+`fitbod/App/ProgramStatesSeed.swift` adds the Program states no other seed reaches: `-fitbod-seed-program-drafts`, `-past`, `-long-names` and `-archived`.
 
 ## Evidence
 

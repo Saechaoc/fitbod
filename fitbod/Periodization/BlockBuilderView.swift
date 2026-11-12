@@ -1242,7 +1242,7 @@ fileprivate struct NewBlockProgressionChart: View {
     }
 
     /// One label per contiguous span: today's abbreviations ("ACCUM."), or
-    /// Program's short labels ("ACCUM") when those do not fit their bands,
+    /// the short labels ("ACCUM") when those do not fit their bands,
     /// or none when even those do not; the bands' colors and the phase cards
     /// below still name the phases (T25).
     private var phaseLabels: some View {

@@ -63,9 +63,9 @@ enum TodayStatesSeed {
 
     /// (session name, catalog IDs), so a renamed catalog row is still found.
     typealias SessionPlan = (name: String, exerciseIDs: [String])
-    private static let push: SessionPlan = ("Push A", ["Barbell_Bench_Press_-_Medium_Grip", "Seated_Barbell_Military_Press"])
-    private static let pull: SessionPlan = ("Pull A", ["Bent_Over_Barbell_Row", "Wide-Grip_Lat_Pulldown"])
-    private static let legs: SessionPlan = ("Legs A", ["Barbell_Squat", "Romanian_Deadlift"])
+    static let push: SessionPlan = ("Push A", ["Barbell_Bench_Press_-_Medium_Grip", "Seated_Barbell_Military_Press"])
+    static let pull: SessionPlan = ("Pull A", ["Bent_Over_Barbell_Row", "Wide-Grip_Lat_Pulldown"])
+    static let legs: SessionPlan = ("Legs A", ["Barbell_Squat", "Romanian_Deadlift"])
     private static let arms: SessionPlan = (standaloneSessionName, ["Barbell_Curl", "Triceps_Pushdown"])
     /// Every catalog exercise the seeds use, by ID; a test store needs these rows first.
     static var catalogIDs: [String] { [push, pull, legs, arms].flatMap(\.exerciseIDs) }
@@ -146,7 +146,7 @@ enum TodayStatesSeed {
     }
 
     @MainActor
-    private static func makeSession(_ plan: SessionPlan, catalog: [Exercise], in context: ModelContext) -> SessionTemplate {
+    static func makeSession(_ plan: SessionPlan, catalog: [Exercise], in context: ModelContext) -> SessionTemplate {
         let template = SessionTemplate()
         context.insert(template)
         template.name = plan.name
@@ -176,7 +176,7 @@ enum TodayStatesSeed {
 
     /// Starts the slot's session as the app does, logs every set and finishes the workout.
     @MainActor
-    private static func finish(
+    static func finish(
         _ slot: SplitSessionSlot, block: Block?, startedAt: Date, duration: TimeInterval, in context: ModelContext
     ) {
         guard let template = slot.sessionTemplate,
