@@ -138,7 +138,7 @@ struct WeeklyRecapsView: View {
             ),
             BRUReadout(
                 label: "Tonnage · \(weightUnit.rawValue)",
-                value: SessionHistoryFormat.compactTonnage(recent.reduce(0) { $0 + $1.tonnage }),
+                value: WeeklyRecapSheet.tonnageText(recent.reduce(0) { $0 + $1.tonnage }),
                 valueColor: .bruSignal,
                 caption: "8 weeks",
                 accessibilityLabel: "Tonnage in the last 8 weeks, \(unitName)"
@@ -269,12 +269,11 @@ struct WeeklyRecapRow: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 if week.records > 0 {
-                    BRUChip(WeeklyRecapSheet.prChipLabel(records: week.records))
+                    BRUChip(WeeklyRecapSheet.prChipLabel(records: week.records), textCase: nil)
                 } else {
                     Text("No PRs")
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
-                        .textCase(.uppercase)
                         .foregroundStyle(Color.bruMuted)
                 }
             }

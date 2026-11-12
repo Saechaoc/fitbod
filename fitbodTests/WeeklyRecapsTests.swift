@@ -163,6 +163,21 @@ struct WeeklyRecapsTests {
         #expect(content.muscles == 2)
     }
 
+    // MARK: - An older week's words
+
+    @Test("A reopened older week says that week where last week's recap says last week")
+    func olderWeekSaysThatWeek() {
+        let sessions = "Last week you logged 2 sessions."
+        #expect(WeeklyRecapSheet.copy(sessions, lastWeek: true) == sessions)
+        #expect(WeeklyRecapSheet.copy(sessions, lastWeek: false) == "That week you logged 2 sessions.")
+        #expect(WeeklyRecapSheet.copy(WeeklyRecapSheet.EmptyStateCopy.musclesHit, lastWeek: false)
+            == "No muscles met the frequency threshold that week.")
+        #expect(WeeklyRecapSheet.copy(WeeklyRecapSheet.EmptyStateCopy.underTrained, lastWeek: false)
+            == "All trained muscles reached MEV that week.")
+        #expect(WeeklyRecapSheet.copy(WeeklyRecapSheet.EmptyStateCopy.progressFootnote, lastWeek: false)
+            == "Top 5 exercises by working-set count that week. e1RM vs same exercise week prior.")
+    }
+
     // MARK: - Units
 
     @Test("A Progress row's e1RM change reads in the exercise's own unit")

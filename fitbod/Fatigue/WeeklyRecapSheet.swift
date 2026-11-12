@@ -94,6 +94,15 @@ public struct WeeklyRecapSheet: View {
         public static let progressFootnote: String = "Top 5 exercises by working-set count last week. e1RM vs same exercise week prior."
     }
 
+    /// The recap's copy as written, which names its week "last week", or with
+    /// "that week" for an older week reopened from the week list (RM-020).
+    nonisolated static func copy(_ text: String, lastWeek: Bool) -> String {
+        guard !lastWeek else { return text }
+        return text
+            .replacingOccurrences(of: "Last week", with: "That week")
+            .replacingOccurrences(of: "last week", with: "that week")
+    }
+
     /// BRU palette-mapped delta color function (replaces systemGreen/systemRed/.secondary).
     /// Positive → bruGreen, Negative → bruSignal, Zero (|δ| < 0.1) → bruMuted.
     public nonisolated static func deltaColor(for delta: Double) -> Color {
@@ -153,6 +162,14 @@ public struct WeeklyRecapSheet: View {
 
     /// Units label ("lb" or "kg").
     private var unitLabel: String { weightUnit.rawValue }
+
+    /// The recap covers last week: Today's always does, and a reopened one
+    /// when its week is the one before this.
+    private var coversLastWeek: Bool {
+        !isReopened || weekStart == Date.now.mondayAtMidnightForToday(
+            weekStartsMonday: settingsList.first?.weekStartsMonday ?? true
+        )
+    }
 
     /// What the recap's content depends on besides its week.
     private struct ContentKey: Equatable {
@@ -493,7 +510,7 @@ public struct WeeklyRecapSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead(SectionLabels.sessions)
             VStack(alignment: .leading, spacing: 6) {
-                Text("Last week you logged \(count) \(sessionWord).")
+                Text(Self.copy("Last week you logged \(count) \(sessionWord).", lastWeek: coversLastWeek))
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruInk)
                 if routineCount > 1 {
@@ -515,7 +532,7 @@ public struct WeeklyRecapSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead(SectionLabels.musclesHit)
             if hits.isEmpty {
-                Text(EmptyStateCopy.musclesHit)
+                Text(Self.copy(EmptyStateCopy.musclesHit, lastWeek: coversLastWeek))
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
                     .padding(.horizontal, 16)
@@ -593,7 +610,7 @@ public struct WeeklyRecapSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead(SectionLabels.underTrained)
             if underTrained.isEmpty {
-                Text(EmptyStateCopy.underTrained)
+                Text(Self.copy(EmptyStateCopy.underTrained, lastWeek: coversLastWeek))
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
                     .padding(.horizontal, 16)
@@ -656,7 +673,7 @@ public struct WeeklyRecapSheet: View {
                 }
             }
             // Footnote verbatim
-            Text(EmptyStateCopy.progressFootnote)
+            Text(Self.copy(EmptyStateCopy.progressFootnote, lastWeek: coversLastWeek))
                 .font(BRUFont.labelMicro)
                 .tracking(0.5)
                 .foregroundStyle(Color.bruMuted)

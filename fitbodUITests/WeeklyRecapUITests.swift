@@ -169,6 +169,8 @@ final class WeeklyRecapUITests: XCTestCase {
                            "The reopened recap must count the row's records", file: file, line: line)
         }
         XCTAssertTrue(recapTitle(in: app).exists, "The reopened recap must name its week", file: file, line: line)
+        XCTAssertTrue(app.staticTexts["Last week you logged 1 session."].exists,
+                      "Last week's recap, reopened, still says last week", file: file, line: line)
         // START W{N} alone: Today's "Start workout ▸" stays under the sheet, and
         // the recap under the list keeps its button until the push ends.
         let start = app.buttons.matching(NSPredicate(format: "label MATCHES[c] %@", #"Start W\d+.*"#)).firstMatch
