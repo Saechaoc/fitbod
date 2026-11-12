@@ -16,7 +16,8 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-010](#rm-010)'s last slice, Volume deload advice (its week board is on `main` at `5aa93d05` and on the phone), and [RM-062](#rm-062)'s set counts that leave bouts out.
+In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow; and [RM-062](#rm-062)'s set counts that leave bouts out.
+[RM-010](#rm-010)'s last slice, Volume deload advice, is on `main`; only its phone look stays open.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
@@ -28,10 +29,7 @@ Ready work in independent streams may continue while another feature awaits inpu
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 1 | [RM-010](#rm-010) last slice: Volume evaluates deload advice on appear, gated by the deload-alert setting, from Today and Progress | Lane A; closes RM-010's implementation. |
-| 2 | [RM-011](#rm-011) redesign 1.5: Program explains Now, Planned and Past | Lane A after RM-010; the approved order below continues. |
-| 3 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
-| 4 | [RM-019](#rm-019) stalled exercises outside a workout | Analytics stream; [RM-020](#rm-020) past recaps follows, then [RM-023](#rm-023). |
+| 1 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
 
 Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set, [RM-026](#rm-026) authoring without detours and [RM-027](#rm-027) Library/custom results.
 **Decision (user, 2026-11-12):** [RM-029](#rm-029) is deprioritized and leaves this queue.
@@ -50,7 +48,7 @@ Every phone row except RM-007's disposable-install reproduction can be checked i
 |---|---|---|
 | [RM-007](#rm-007), FT-19 | Exact repeated prompt text/owner on phone, then allow/deny/Focus reproduction | Identifying/fixing that prompt and its release acceptance. |
 | [RM-008](#rm-008), FT-20 | Lock Screen/Island rendering, rest adjustment/expiry/end on installed build | Closing widget rendering/lifecycle acceptance; implementation plan is archived. |
-| [RM-010](#rm-010) | On the phone: the week board with this week's real workouts | Closing RM-010 once its Volume advice slice lands. |
+| [RM-010](#rm-010) | On the phone: the week board with this week's real workouts. The user's call: whether Volume's amber ring outlasts a dismissed week, and whether Volume needs words for the ring | Closing RM-010; the ring keeps today's rules until the user decides. |
 | [RM-022](#rm-022) | On the phone: Bench Press folds into one line, History keeps logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds Lateral Raise (Dumbbell) | Closing the families and grouped-list slices; slices 7–8 can proceed. |
 | [RM-045](#rm-045), FT-16 | Calf taps on the 430pt phone and a small (390pt) physical phone pass; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; nothing else waits on it. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
