@@ -2,120 +2,194 @@
 //  SupersetAssignmentSheet.swift
 //  fitbod
 //
-//  Phase 2.1 Plan 05 REWRITE — replaces NavigationStack .navigationTitle / .toolbar
-//  with BRUHeaderBar("ADD TO SUPERSET") + BRU-styled rows.
+//  One trip to a lift's superset (RM-026, D-152): the sheet names the
+//  long-pressed lift and what a superset does, lists the session's lifts
+//  to check as its partners, and pairs them with PAIR n LIFTS ▸. It works
+//  in a new session too, since it writes only to the draft:
+//  RoutineDraft.persist(into:context:) saves the superset with the session,
+//  and Discard writes nothing. CANCEL and a swipe change nothing.
 //
-//  Mutation surface: writes to RoutineExerciseDraft.supersetGroupID (in-memory draft).
-//  The persisted write happens at Save time via RoutineDraft.persist(into:context:).
+//  Reference: bru-screens/Fitbod-Session/screens/phase-2--modal-superset.png.
+//  Its rest behavior and CLUSTER chip are not built.
 //
-//  Verbatim copy: "ADD TO SUPERSET" / "Cancel".
-//
-//  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule / NO RoundedRectangle
-//  NO .navigationTitle / NO .toolbar / NO accentColor
+//  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
+//  NO RoundedRectangle / NO .navigationTitle / NO .toolbar
 //
 
 import SwiftUI
-import SwiftData
 
 public struct SupersetAssignmentSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    @Bindable var draft: RoutineDraft
-    public let exerciseDraft: RoutineExerciseDraft
+    let draft: RoutineDraft
+    /// The long-pressed lift: always in the superset.
+    let exercise: RoutineExerciseDraft
 
-    @Query private var groups: [SupersetGroup]
+    /// The checked lifts, the long-pressed one and its partners.
+    @State private var checked: Set<ObjectIdentifier>
 
-    public init(routine: SessionTemplate, draft: RoutineDraft, exerciseDraft: RoutineExerciseDraft) {
+    /// A superset pairs two to four lifts.
+    static let maxLifts = 4
+
+    public init(draft: RoutineDraft, exercise: RoutineExerciseDraft) {
         self.draft = draft
-        self.exerciseDraft = exerciseDraft
-        let routineID = routine.id
-        self._groups = Query(
-            filter: #Predicate<SupersetGroup> { $0.routineID == routineID },
-            sort: \SupersetGroup.sortOrder
-        )
+        self.exercise = exercise
+        let group = exercise.supersetGroupID
+        _checked = State(initialValue: Set(draft.exercises
+            .filter { $0 === exercise || (group != nil && $0.supersetGroupID == group) }
+            .map(ObjectIdentifier.init)))
     }
 
     public var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(groups) { group in
-                            groupRow(id: group.id, order: group.sortOrder)
-                        }
-                        ForEach(Array(draft.newSupersetIDs.enumerated()), id: \.element) { index, id in
-                            groupRow(id: id, order: (groups.map(\.sortOrder).max() ?? -1) + 1 + index)
-                        }
-
-                        // "New Superset" signal action row
-                        BRUButton("+ New superset", kind: .signal, size: .md) {
-                            draft.addSuperset(for: exerciseDraft)
-                            dismiss()
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Pair 2–4 lifts to do back to back. In the workout, each keeps its own sets and rest.")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(BRUMetrics.Spacing.gutter)
+                    BRUDivider(.hair)
+                    let letters = supersetLetters
+                    ForEach(Array(draft.exercises.enumerated()), id: \.offset) { index, lift in
+                        row(lift, number: index + 1, letters: letters)
                     }
                 }
             }
-            .background(Color.bruPaper.ignoresSafeArea())
-            .navigationBarHidden(true)
-            .safeAreaInset(edge: .top) {
-                BRUHeaderBar(
-                    left: HeaderAction("Cancel") { dismiss() },
-                    center: "ADD TO SUPERSET",
-                    right: nil
-                )
-            }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) { footer }
+        .background(Color.bruPaper.ignoresSafeArea())
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
-    private func groupRow(id: UUID, order: Int) -> some View {
-        VStack(spacing: 0) {
-            Button {
-                exerciseDraft.supersetGroupID = id
-                dismiss()
-            } label: {
-                HStack {
-                    Text(label(for: id, order: order))
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruInk)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: BRUMetrics.Spacing.tight) {
+            Text("Long-pressed: \(name(of: exercise))")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+            Text("Add to superset")
+                .font(BRUFont.condensedHeading)
+                .foregroundStyle(Color.bruInk)
+                .accessibilityAddTraits(.isHeader)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, BRUMetrics.Spacing.gutter)
+        .padding(.top, BRUMetrics.Spacing.section)
+        .padding(.bottom, BRUMetrics.Spacing.group)
+        .overlay(alignment: .bottom) { BRUDivider(.ink) }
+    }
+
+    /// One lift: its number in the session, a check box, its name, and its
+    /// equipment and current superset. The long-pressed lift stays checked.
+    private func row(_ lift: RoutineExerciseDraft, number: Int, letters: [UUID: String]) -> some View {
+        let id = ObjectIdentifier(lift)
+        let isChecked = checked.contains(id)
+        let canToggle = lift !== exercise && (isChecked || checked.count < Self.maxLifts)
+        let detail = [lift.exercise?.equipment.displayName, lift.supersetGroupID.flatMap { letters[$0] }]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+        return Button {
+            if isChecked { checked.remove(id) } else { checked.insert(id) }
+        } label: {
+            HStack(spacing: BRUMetrics.Spacing.group) {
+                Text(String(format: "%02d", number))
+                    .font(BRUFont.condensedLabel)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bruInk)
+                    .accessibilityHidden(true)
+                Rectangle()
+                    .fill(isChecked ? Color.bruSignal : Color.clear)
+                    .frame(width: 24, height: 24)
+                    .overlay(Rectangle().strokeBorder(
+                        isChecked || canToggle ? Color.bruInk : Color.bruHair,
+                        lineWidth: BRUMetrics.Border.structural))
+                    .overlay {
+                        if isChecked {
+                            Text("✓").font(BRUFont.labelLarge).foregroundStyle(Color.bruOnSignal)
+                        }
+                    }
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name(of: lift))
+                        .font(BRUFont.displayMedium)
+                        .foregroundStyle(isChecked || canToggle ? Color.bruInk : Color.bruMuted)
                         .multilineTextAlignment(.leading)
-                    Spacer()
+                    if !detail.isEmpty {
+                        Text(detail)
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                    }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .frame(minHeight: BRUMetrics.touchTarget)
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
-            BRUDivider(.hair)
+            .padding(.horizontal, BRUMetrics.Spacing.gutter)
+            .padding(.vertical, BRUMetrics.Spacing.related)
+            .frame(maxWidth: .infinity, minHeight: BRUMetrics.primaryActionHeight, alignment: .leading)
+            .background(isChecked ? Color.bruSignal.opacity(0.1) : Color.clear)
+            .contentShape(Rectangle())
         }
+        // .bruRow draws a row it cannot toggle as is, readable, where .plain
+        // fades it, and a drag that starts on a row never toggles it.
+        .buttonStyle(.bruRow)
+        .disabled(!canToggle)
+        .overlay(alignment: .bottom) { BRUDivider(.hair) }
+        .accessibilityAddTraits(isChecked ? .isSelected : [])
+        .accessibilityIdentifier("superset.lift.\(number)")
     }
 
-    private func label(for id: UUID, order: Int) -> String {
-        let letter = String(UnicodeScalar(UInt8(65 + min(max(order, 0), 25))))
-        let names = draft.exercises
-            .filter { $0.supersetGroupID == id }
-            .compactMap { $0.exercise?.name }
-            .joined(separator: " + ")
-        return names.isEmpty ? "Superset \(letter)" : "Superset \(letter) (\(names))"
+    /// CANCEL and PAIR n LIFTS ▸, as the session editor's own footer.
+    private var footer: some View {
+        VStack(spacing: 0) {
+            BRUDivider(.ink)
+            HStack(spacing: 0) {
+                BRUButton("Cancel", kind: .ghost, size: .md) { dismiss() }
+                Rectangle()
+                    .fill(Color.bruInk)
+                    .frame(width: 2)
+                BRUButton(checked.count < 2 ? "Pick a partner" : "Pair \(checked.count) lifts ▸", kind: .signal, size: .md) {
+                    pair()
+                }
+                .disabled(checked.count < 2)
+                .accessibilityIdentifier("superset.pair")
+            }
+            // The separator has no height of its own; see BottomActionBar.
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .background(Color.bruPaper.ignoresSafeArea(edges: .bottom))
+    }
+
+    private func pair() {
+        let partners = draft.exercises.filter { $0 !== exercise && checked.contains(ObjectIdentifier($0)) }
+        draft.setSuperset(of: exercise, partners: partners)
+        dismiss()
+    }
+
+    /// "Superset A" for the session's first superset, B for the next.
+    private var supersetLetters: [UUID: String] {
+        var letters: [UUID: String] = [:]
+        for id in draft.exercises.compactMap(\.supersetGroupID) where letters[id] == nil {
+            letters[id] = "Superset \(String(UnicodeScalar(UInt8(65 + min(letters.count, 25)))))"
+        }
+        return letters
+    }
+
+    private func name(of lift: RoutineExerciseDraft) -> String {
+        lift.exercise?.name ?? "Exercise"
     }
 }
 
 // MARK: - Preview
 
 #if DEBUG
-#Preview("SupersetAssignmentSheet — no groups") {
-    // Preview requires a ModelContainer — use in-memory for safety
-    if let container = try? FitbodModelContainer.make(inMemory: true) {
-        let routine = SessionTemplate()
-        container.mainContext.insert(routine)
-        let draft = RoutineExerciseDraft()
-        return AnyView(
-            SupersetAssignmentSheet(routine: routine, draft: RoutineDraft(), exerciseDraft: draft)
-                .modelContainer(container)
-        )
-    } else {
-        return AnyView(Text("Preview unavailable").foregroundStyle(Color.bruMuted))
-    }
+#Preview("SupersetAssignmentSheet — three lifts") {
+    let draft = RoutineDraft()
+    for _ in 0..<3 { draft.exercises.append(RoutineExerciseDraft()) }
+    return SupersetAssignmentSheet(draft: draft, exercise: draft.exercises[0])
 }
 #endif

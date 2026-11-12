@@ -52,6 +52,10 @@ public struct RoutineExerciseCard: View {
     public let onEditWarmup: (RoutineExerciseDraft) -> Void
     public let onMoveUp: (() -> Void)?
     public let onMoveDown: (() -> Void)?
+    /// Whether the superset bracket starts and ends on this card: a card
+    /// whose neighbor is in its superset leaves that edge open.
+    public let opensSuperset: Bool
+    public let closesSuperset: Bool
 
     @State private var confirmingRemove = false
 
@@ -66,7 +70,9 @@ public struct RoutineExerciseCard: View {
         onRemove: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onEditWarmup: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onMoveUp: (() -> Void)? = nil,
-        onMoveDown: (() -> Void)? = nil
+        onMoveDown: (() -> Void)? = nil,
+        opensSuperset: Bool = true,
+        closesSuperset: Bool = true
     ) {
         self.draft = draft
         self.hasBlock = hasBlock
@@ -79,13 +85,15 @@ public struct RoutineExerciseCard: View {
         self.onEditWarmup = onEditWarmup
         self.onMoveUp = onMoveUp
         self.onMoveDown = onMoveDown
+        self.opensSuperset = opensSuperset
+        self.closesSuperset = closesSuperset
     }
 
     // MARK: Body
 
     public var body: some View {
         if draft.supersetGroupID != nil {
-            BRUSupersetBracket {
+            BRUSupersetBracket(opens: opensSuperset, closes: closesSuperset) {
                 cardBody
             }
         } else {
@@ -132,12 +140,13 @@ public struct RoutineExerciseCard: View {
             Button("Edit warm-up…") {
                 onEditWarmup(draft)
             }
+            // One sheet picks the partners, whether the superset is new or not (RM-026).
             if draft.supersetGroupID == nil {
-                Button("Move to superset…") { onAssignSuperset(draft) }
+                Button("Make superset…") { onAssignSuperset(draft) }
             } else {
+                Button("Edit superset…") { onAssignSuperset(draft) }
                 Button("Remove from superset") { onRemoveFromSuperset(draft) }
             }
-            Button("Make superset") { onAssignSuperset(draft) }
             Button("Duplicate exercise") { onDuplicate(draft) }
             if let onMoveUp { Button("Move up", action: onMoveUp) }
             if let onMoveDown { Button("Move down", action: onMoveDown) }

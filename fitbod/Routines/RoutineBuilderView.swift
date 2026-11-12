@@ -95,7 +95,6 @@ public struct RoutineBuilderView: View {
     @State private var presentingDiscardConfirm = false
     @State private var initialSnapshot: String = ""
     @State private var pendingSupersetAssignment: RoutineExerciseDraft? = nil
-    @State private var presentingSaveFirstAlert: Bool = false
     @State private var pendingWarmupSheet: RoutineExerciseDraft? = nil
     @State private var presentingLibraryPicker: Bool = false
     @State private var showingMoreMenu: Bool = false
@@ -197,15 +196,15 @@ public struct RoutineBuilderView: View {
         } message: {
             Text("Your edits will not be saved.")
         }
-        // Superset assignment sheet
+        // Superset partners, in a new session too: the sheet edits only the draft (RM-026).
         .sheet(
             isPresented: Binding(
                 get: { pendingSupersetAssignment != nil },
                 set: { if !$0 { pendingSupersetAssignment = nil } }
             )
         ) {
-            if let editing, let exDraft = pendingSupersetAssignment {
-                SupersetAssignmentSheet(routine: editing, draft: draft, exerciseDraft: exDraft)
+            if let exDraft = pendingSupersetAssignment {
+                SupersetAssignmentSheet(draft: draft, exercise: exDraft)
             }
         }
         // Warmup config sheet
@@ -229,17 +228,6 @@ public struct RoutineBuilderView: View {
                     presentingLibraryPicker = false
                 })
             }
-        }
-        // Save-routine-first gate for superset in create mode
-        .alert(
-            "Save Routine First",
-            isPresented: $presentingSaveFirstAlert
-        ) {
-            Button("OK", role: .cancel) {
-                presentingSaveFirstAlert = false
-            }
-        } message: {
-            Text("Save the routine before grouping exercises into a superset.")
         }
         // More menu (edit mode only) — Duplicate / Archive
         .confirmationDialog(
@@ -458,6 +446,11 @@ public struct RoutineBuilderView: View {
                 ForEach(rows, id: \.key) { row in
                     let i = row.index
                     let exDraft = row.exercise
+                    // Neighbors in one superset share one bracket (RM-026).
+                    let group = exDraft.supersetGroupID
+                    let joinsPrevious = group != nil && i > 0 && draft.exercises[i - 1].supersetGroupID == group
+                    let joinsNext = group != nil && i + 1 < draft.exercises.count
+                        && draft.exercises[i + 1].supersetGroupID == group
                     RoutineExerciseCard(
                         draft: exDraft,
                         hasBlock: draft.blockID != nil,
@@ -470,17 +463,27 @@ public struct RoutineBuilderView: View {
                                 else { expandedExerciseIDs.remove(key) }
                             }
                         ),
-                        onAssignSuperset: { ed in handleAssignSuperset(ed) },
-                        onRemoveFromSuperset: { ed in ed.supersetGroupID = nil },
+                        onAssignSuperset: { ed in pendingSupersetAssignment = ed },
+                        onRemoveFromSuperset: { ed in draft.leaveSuperset(ed) },
                         onDuplicate: { ed in duplicateExercise(ed) },
                         onRemove: { ed in removeExercise(ed) },
                         onEditWarmup: { ed in pendingWarmupSheet = ed },
                         onMoveUp: i > 0 ? { moveExercise(from: i, to: i - 1) } : nil,
                         onMoveDown: i + 1 < draft.exercises.count
-                            ? { moveExercise(from: i, to: i + 2) } : nil
+                            ? { moveExercise(from: i, to: i + 2) } : nil,
+                        opensSuperset: !joinsPrevious,
+                        closesSuperset: !joinsNext
                     )
 
-                    BRUDivider(.hair)
+                    if joinsNext {
+                        // The bracket's 2pt rail runs on across the divider.
+                        HStack(spacing: 0) {
+                            Rectangle().fill(Color.bruSignal).frame(width: 2, height: 1)
+                            BRUDivider(.hair).padding(.leading, 6)
+                        }
+                    } else {
+                        BRUDivider(.hair)
+                    }
                 }
 
                 // BRUDashedSlot — "+ Add exercise ↘ FROM LIBRARY". At
@@ -628,14 +631,6 @@ public struct RoutineBuilderView: View {
 
     // MARK: - Long-press menu handlers
 
-    private func handleAssignSuperset(_ exDraft: RoutineExerciseDraft) {
-        if editing == nil {
-            presentingSaveFirstAlert = true
-            return
-        }
-        pendingSupersetAssignment = exDraft
-    }
-
     private func duplicateExercise(_ exDraft: RoutineExerciseDraft) {
         guard let index = draft.exercises.firstIndex(where: { $0 === exDraft }) else { return }
         let clone = RoutineExerciseDraft()
@@ -661,6 +656,7 @@ public struct RoutineBuilderView: View {
         // An unsaved row's open state is keyed by its address, which a later
         // exercise can reuse, so every way of removing a row drops its key.
         expandedExerciseIDs.remove(stableKey(for: exDraft))
+        draft.leaveSuperset(exDraft)
         draft.exercises.removeAll { $0 === exDraft }
         for (i, ex) in draft.exercises.enumerated() { ex.orderIndex = i }
     }

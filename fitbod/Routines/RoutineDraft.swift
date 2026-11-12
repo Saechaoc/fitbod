@@ -112,6 +112,36 @@ public final class RoutineDraft {
         return id
     }
 
+    /// Makes `exercise` and `partners` one superset, in the draft only
+    /// (RM-026). The exercise keeps its group when it has one, a partner
+    /// left unchecked leaves it, and a group left with one lift ends.
+    func setSuperset(of exercise: RoutineExerciseDraft, partners: [RoutineExerciseDraft]) {
+        let members = [exercise] + partners
+        var touched = Set(members.compactMap(\.supersetGroupID))
+        let id = exercise.supersetGroupID ?? addSuperset(for: exercise)
+        touched.insert(id)
+        for other in exercises where other.supersetGroupID == id && !members.contains(where: { $0 === other }) {
+            other.supersetGroupID = nil
+        }
+        for member in members { member.supersetGroupID = id }
+        endLoneSupersets(touched)
+    }
+
+    /// Takes `exercise` out of its superset; a partner left alone leaves too.
+    func leaveSuperset(_ exercise: RoutineExerciseDraft) {
+        guard let id = exercise.supersetGroupID else { return }
+        exercise.supersetGroupID = nil
+        endLoneSupersets([id])
+    }
+
+    /// A superset needs two lifts, so a group left with one ends.
+    private func endLoneSupersets(_ ids: Set<UUID>) {
+        for id in ids {
+            let members = exercises.filter { $0.supersetGroupID == id }
+            if members.count == 1 { members[0].supersetGroupID = nil }
+        }
+    }
+
     /// Phase 3.1 PIVOT-04 — session-level training intent for THIS
     /// routine. Bound directly to the Intent header picker in
     /// `RoutineBuilderView`. Default `.strength` per D-03 in
@@ -215,7 +245,8 @@ public final class RoutineDraft {
         exercises.append(draft)
     }
 
-    /// Saves the session and its new groups together; the draft survives a failed save.
+    /// Saves the session and its new groups together, and deletes its groups
+    /// no lift uses; the draft survives a failed save.
     func persist(
         into routine: SessionTemplate, context: ModelContext,
         save: (ModelContext) throws -> Void = { try $0.save() }
@@ -227,6 +258,8 @@ public final class RoutineDraft {
                 predicate: #Predicate { $0.routineID == routineID }
             ))
             let usedIDs = Set(exercises.compactMap(\.supersetGroupID))
+            // A superset ended in the editor leaves its stored group unused (RM-026).
+            for group in groups where !usedIDs.contains(group.id) { context.delete(group) }
             var order = (groups.map(\.sortOrder).max() ?? -1) + 1
             for id in newSupersetIDs where usedIDs.contains(id) && !groups.contains(where: { $0.id == id }) {
                 let group = SupersetGroup(routineID: routineID, sortOrder: order)

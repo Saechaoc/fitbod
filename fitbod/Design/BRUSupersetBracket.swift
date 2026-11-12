@@ -44,10 +44,17 @@ public struct BRUSupersetBracket<Content: View>: View {
     // MARK: Properties
 
     private let content: Content
+    /// Whether this piece draws the top and the bottom edge. A list that
+    /// brackets each row on its own opens a superset's first row and closes
+    /// its last, so the rows between read as one bracket (RM-026).
+    private let opens: Bool
+    private let closes: Bool
 
     // MARK: Init
 
-    public init(@ViewBuilder content: () -> Content) {
+    public init(opens: Bool = true, closes: Bool = true, @ViewBuilder content: () -> Content) {
+        self.opens = opens
+        self.closes = closes
         self.content = content()
     }
 
@@ -57,14 +64,22 @@ public struct BRUSupersetBracket<Content: View>: View {
         HStack(spacing: 0) {
             // 3-edge bracket Canvas — explicit width 8pt per interfaces spec
             Canvas { ctx, size in
+                // Half the 2pt stroke in from the canvas edge, which clipped it.
+                let inset: CGFloat = 1
                 var p = Path()
-                // Top-right → top-left
-                p.move(to: CGPoint(x: size.width, y: 0))
-                p.addLine(to: CGPoint(x: 0, y: 0))
-                // Top-left → bottom-left
-                p.addLine(to: CGPoint(x: 0, y: size.height))
+                if opens {
+                    // Top-right → top-left
+                    p.move(to: CGPoint(x: size.width, y: inset))
+                    p.addLine(to: CGPoint(x: inset, y: inset))
+                } else {
+                    p.move(to: CGPoint(x: inset, y: 0))
+                }
+                // Down the left edge
+                p.addLine(to: CGPoint(x: inset, y: closes ? size.height - inset : size.height))
                 // Bottom-left → bottom-right (open right — NO right edge closing)
-                p.addLine(to: CGPoint(x: size.width, y: size.height))
+                if closes {
+                    p.addLine(to: CGPoint(x: size.width, y: size.height - inset))
+                }
 
                 ctx.stroke(p, with: .color(Color.bruSignal), lineWidth: 2)
             }

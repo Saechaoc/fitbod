@@ -7,9 +7,9 @@
 //  long-press menu, which nothing on screen shows, could remove an
 //  exercise.
 //
-//  Each test opens the active-block seed's "Live Push", which holds one
-//  bench press, the way a user does: Program, Live Routine, its session,
-//  then Edit.
+//  The REMOVE test opens the active-block seed's "Live Push", which holds
+//  one bench press, the way a user does: Program, Live Routine, its
+//  session, then Edit. The superset test builds a new session of two lifts.
 //
 
 import XCTest
@@ -56,41 +56,98 @@ final class SessionEditorRowsUITests: XCTestCase {
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "Remove must remove \(exercise)")
     }
 
+    // MARK: - Supersets (RM-002, RM-026)
+
+    /// One trip pairs two lifts in a new session, the superset saves with
+    /// the session and survives a relaunch, and Discard after an edit keeps
+    /// it as saved.
     @MainActor
-    func testSupersetDraftDiscardAndSaveSurviveRelaunch() throws {
-        let app = openEditor()
-        openSupersets(in: app)
-        UITestNavigation.hittable(app.buttons, "+ New superset", exactLabel: true).tap()
+    func testOneTripSupersetSavesWithANewSessionAndDiscardKeepsIt() throws {
+        let app = UITestNavigation.openEmptySessionBuilder()
+        UITestNavigation.type("Superset Push", into: app.textFields["Session name"])
+        addExercise("Bench Press (Incline Dumbbell)", in: app)
+        addExercise("Push-Up (Incline)", in: app)
+
+        openSuperset("Make superset…", in: app)
+        let acting = app.staticTexts.matching(NSPredicate(
+            format: "label ==[c] %@", "Long-pressed: Bench Press (Incline Dumbbell)"
+        )).firstMatch
+        XCTAssertTrue(acting.exists, "The sheet must name the long-pressed lift")
+        let pair = app.buttons["superset.pair"]
+        XCTAssertFalse(pair.isEnabled, "One lift is no superset")
+        app.buttons["superset.lift.2"].tap()
+        XCTAssertTrue(UITestNavigation.waitUntil { pair.isEnabled && pair.label == "Pair 2 lifts ▸" },
+                      "Checking a partner must offer the pair")
+        UITestNavigation.saveScreenshot("RM026", "superset-new-session")
+        pair.tap()
+        assertSuperset(true, "PAIR must group both lifts", in: app)
+        UITestNavigation.hittable(app.buttons, "Save session ▸", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(app.buttons["Save session ▸"]))
+
+        UITestNavigation.relaunch(app)
+        openEditor(in: app, routine: "Push Pull Legs", session: "Superset Push")
+        assertSuperset(true, "The superset must save with the new session", in: app)
+        pressFirstLift(in: app)
+        UITestNavigation.hittable(app.buttons, "Remove from superset", exactLabel: true).tap()
+        assertSuperset(false, "A partner left alone must leave the superset too", in: app)
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Discard changes?")))
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         XCTAssertTrue(UITestNavigation.disappears(app.buttons["Save session ▸"]))
         UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
-        openSupersets(in: app)
-        let group = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Superset A")).firstMatch
-        XCTAssertFalse(group.exists, "Discard must not leave an empty stored superset")
-        UITestNavigation.hittable(app.buttons, "+ New superset", exactLabel: true).tap()
-        UITestNavigation.hittable(app.buttons, "Save session ▸", exactLabel: true).tap()
-        UITestNavigation.relaunch(app)
-        openEditor(in: app)
-        openSupersets(in: app)
-        XCTAssertTrue(UITestNavigation.appears(group), "Saving the session must persist its group")
-        UITestNavigation.saveScreenshot("RM002", "superset-saved")
+        assertSuperset(true, "Discard must keep the saved superset", in: app)
+        openSuperset("Edit superset…", in: app)
+        XCTAssertTrue(app.buttons["superset.lift.2"].isSelected, "The sheet must check the saved partner")
+    }
+
+    /// Adds `name` from the library picker, found by search.
+    @MainActor
+    private func addExercise(_ name: String, in app: XCUIApplication) {
+        UITestNavigation.hittable(app.buttons, "Add exercise").tap()
+        let search = app.textFields["library.search.picker"]
+        XCTAssertTrue(UITestNavigation.appears(search))
+        UITestNavigation.type(name, into: search)
+        let row = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@", "exercise.pick.", name
+        )).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(row), "The picker must find \(name)")
+        row.tap()
+        XCTAssertTrue(UITestNavigation.disappears(search), "Picking must close the picker")
     }
 
     @MainActor
-    private func openSupersets(in app: XCUIApplication) {
+    private func pressFirstLift(in app: XCUIApplication) {
         let exercise = exerciseName(in: app)
         UITestNavigation.reveal(exercise, in: app)
         exercise.press(forDuration: 1.1)
-        UITestNavigation.hittable(app.buttons, "Make superset", exactLabel: true).tap()
-        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("+ New superset")))
+    }
+
+    @MainActor
+    private func openSuperset(_ action: String, in app: XCUIApplication) {
+        pressFirstLift(in: app)
+        UITestNavigation.hittable(app.buttons, action, exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["superset.pair"]), "\(action) must open the superset sheet")
+    }
+
+    /// The first two lifts' numbers read "Superset" while they are paired.
+    @MainActor
+    private func assertSuperset(
+        _ paired: Bool, _ message: String, in app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        for position in 1...2 {
+            let number = app.descendants(matching: .any)
+                .matching(identifier: "routine.exercise.number.\(position)").firstMatch
+            let expected = paired ? "Superset" : String(format: "%02d", position)
+            XCTAssertTrue(UITestNavigation.waitUntil { number.exists && number.label == expected },
+                          "\(message): lift \(position) reads \"\(number.label)\"", file: file, line: line)
+        }
     }
 
     // MARK: - Navigation
 
-    /// The session editor on the active-block seed's "Live Push", opened
-    /// from its routine on Program.
+    /// The session editor, opened from its routine on Program: by default
+    /// the active-block seed's "Live Push".
     @MainActor
     private func openEditor(textSize: UITestNavigation.TextSize? = nil) -> XCUIApplication {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock, textSize: textSize)
@@ -99,14 +156,14 @@ final class SessionEditorRowsUITests: XCTestCase {
     }
 
     @MainActor
-    private func openEditor(in app: XCUIApplication) {
+    private func openEditor(in app: XCUIApplication, routine routineName: String = "Live Routine", session sessionName: String = "Live Push") {
         UITestNavigation.selectTab("Program", in: app)
-        let routine = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Live Routine")).firstMatch
-        XCTAssertTrue(routine.exists || routine.waitForExistence(timeout: 10), "Program must list Live Routine")
+        let routine = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", routineName)).firstMatch
+        XCTAssertTrue(routine.exists || routine.waitForExistence(timeout: 10), "Program must list \(routineName)")
         UITestNavigation.reveal(routine, in: app)
         routine.tap()
-        let session = app.buttons["Session 1: Live Push"]
-        XCTAssertTrue(session.exists || session.waitForExistence(timeout: 10), "Live Routine must list Live Push")
+        let session = app.buttons["Session 1: \(sessionName)"]
+        XCTAssertTrue(session.exists || session.waitForExistence(timeout: 10), "\(routineName) must list \(sessionName)")
         UITestNavigation.reveal(session, in: app)
         session.tap()
         UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()

@@ -256,8 +256,10 @@ Exercise photos are static PNG pixels with source metadata removed and orientati
 
 Volume surfaces render immutable `RPVolumeLandmarks.Landmark` values from persisted targets or defaults. Rendering never constructs a target model or attaches one to a muscle; explicit creation saves one target and rolls back failure.
 
-Session-editor changes, including new superset IDs, stay in `RoutineDraft` until Save.
-`persist(into:context:)` writes the session and its used new groups in one save; failure rolls back the store while keeping the draft for retry. Discard writes no groups.
+Session-editor changes, including supersets, stay in `RoutineDraft` until Save, in a new session too.
+One sheet sets a lift's superset partners, two to four lifts; a superset left with one lift ends.
+`persist(into:context:)` writes the session and its used new groups in one save and deletes the session's groups that no lift uses; failure rolls back the store while keeping the draft for retry. Discard writes no groups.
+The workout does not read supersets: each lift keeps its own sets and rest.
 
 Four native tab containers preserve stacks: Today, Program, Progress, Library.
 Settings is a Today sheet; workout History opens from Progress.
