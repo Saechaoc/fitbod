@@ -88,7 +88,11 @@ final class BlockOverviewStatesUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "Back").tap()
         XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "‹ BACK must close the review")
         goBack(in: app)
-        openBlock("DONE block: Spring Block", in: app)
+        UITestNavigation.openPastBlocks(in: app)
+        let ended = app.buttons.labeled("DONE block: Spring Block")
+        XCTAssertTrue(UITestNavigation.appears(ended), "Past blocks must list the ended block")
+        ended.tap()
+        XCTAssertTrue(UITestNavigation.appears(hero(in: app)), "The ended block must open its overview")
 
         let heroLabel = hero(in: app).label
         XCTAssertTrue(heroLabel.hasPrefix("Completed block"),

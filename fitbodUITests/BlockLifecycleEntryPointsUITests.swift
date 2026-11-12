@@ -9,7 +9,7 @@ extension UITestNavigation {
 /// Ticket T67, findings F48 and F49. Ending a block and changing its
 /// routine go through BlockLifecycleService. END BLOCK, reached from
 /// Today's block band, completes the block and opens its review: Program
-/// lists it as done and Today has no active block. (BlockCard's own End Block is not in the
+/// lists it under Past blocks and Today has no active block. (BlockCard's own End Block is not in the
 /// app, so F48 was not reproduced.) A draft block still takes a routine in
 /// EDIT BLOCK.
 final class BlockLifecycleEntryPointsUITests: XCTestCase {
@@ -54,18 +54,21 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         assertNoActiveBlockOnToday(in: app)
 
         UITestNavigation.selectTab("Program", in: app)
-        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("DONE block: Live Block")),
-                      "Program must list the ended block as completed")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("No block planned.")),
+                      "With its one block ended, Program must say no block is planned")
         XCTAssertFalse(app.buttons.labeled("READY block: Live Block").exists,
                        "An ended block must not drop back to ready")
         XCTAssertFalse(activeBlockCards(in: app).firstMatch.exists, "Program must list no active block")
+        UITestNavigation.openPastBlocks(in: app)
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("DONE block: Live Block")),
+                      "Past blocks must list the ended block")
 
         // Reopened, the app reads the block back as ended, and the review,
         // already seen, stays closed.
         UITestNavigation.relaunch(app)
         XCTAssertFalse(UITestNavigation.appears(review, within: 3), "A seen review must not reopen after a relaunch")
         assertNoActiveBlockOnToday(in: app)
-        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.openPastBlocks(in: app)
         XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("DONE block: Live Block")),
                       "The ended block must stay completed after a relaunch")
     }

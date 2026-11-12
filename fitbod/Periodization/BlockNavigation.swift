@@ -9,19 +9,16 @@
 import SwiftUI
 import SwiftData
 
-/// What opens `BlockBuilderView`: a new block, from scratch or a preset;
-/// a template; or a saved block to edit.
+/// What opens `BlockBuilderView`: a new block, from scratch or a preset,
+/// or a saved block to edit.
 enum BlockBuilderRoute: Identifiable {
     case newBlock(NewBlockPreset?)
-    case template(BlockTemplate)
     case edit(Block)
 
     var id: String {
         switch self {
         case .newBlock(let preset):
             return preset.map { "new-block-preset-\($0.id)" } ?? "new-block-scratch"
-        case .template(let template):
-            return "template-\(template.name)"
         case .edit(let block):
             return "edit-\(block.id.uuidString)"
         }
@@ -34,8 +31,6 @@ enum BlockBuilderRoute: Identifiable {
         switch self {
         case .newBlock(let preset):
             BlockBuilderView(draft: BlockDraft.newBlock(), initialPreset: preset, origin: origin)
-        case .template(let template):
-            BlockBuilderView(draft: BlockDraft(template: template), origin: origin)
         case .edit(let block):
             BlockBuilderView(draft: BlockDraft(block: block), editing: block, origin: origin)
         }

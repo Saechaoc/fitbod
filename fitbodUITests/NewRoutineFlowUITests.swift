@@ -20,7 +20,7 @@ final class NewRoutineFlowUITests: XCTestCase {
     func testBackFromProgramsNewRoutineLeavesNoRoutine() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
         UITestNavigation.selectTab("Program", in: app)
-        XCTAssertTrue(app.staticTexts.labeled("NO PROGRAM").waitForExistence(timeout: 10),
+        XCTAssertTrue(app.staticTexts.labeled("Start with a routine").waitForExistence(timeout: 10),
                       "Program must start on its first-run screen")
         UITestNavigation.hittable(app.buttons, "+ NEW", exactLabel: true).tap()
         UITestNavigation.hittable(app.buttons, "+ New routine", exactLabel: true).tap()
@@ -45,7 +45,7 @@ final class NewRoutineFlowUITests: XCTestCase {
         XCTAssertTrue(programRow("Upper Lower", in: app).waitForExistence(timeout: 10),
                       "Program must list the saved routine")
         XCTAssertFalse(nameStepTitle(in: app).exists, "Back from the editor must skip the name step")
-        XCTAssertFalse(app.staticTexts.labeled("NO PROGRAM").exists,
+        XCTAssertFalse(app.staticTexts.labeled("Start with a routine").exists,
                        "A saved routine must take the first-run screen's place")
     }
 
@@ -140,8 +140,8 @@ final class NewRoutineFlowUITests: XCTestCase {
     private func assertProgramHasNoRoutine(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Program", in: app)
         var problems: [String] = []
-        if !app.staticTexts.labeled("NO PROGRAM").waitForExistence(timeout: 10) {
-            problems.append("the first-run screen (NO PROGRAM, + DEFINE BLOCK ▶ and the templates) is gone")
+        if !app.staticTexts.labeled("Start with a routine").waitForExistence(timeout: 10) {
+            problems.append("the first-run screen (Start with a routine and + NEW ROUTINE) is gone")
         }
         let untitled = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Untitled routine")).firstMatch
         if untitled.exists {

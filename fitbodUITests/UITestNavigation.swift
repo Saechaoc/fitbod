@@ -189,6 +189,17 @@ extension UITestNavigation {
         app.buttons.labeled("Save").tap()
         hittable(app.buttons, "Back", exactLabel: true, file: file, line: line).tap()
     }
+
+    /// Program › PAST BLOCKS ›, whose rows read "DONE block: <name>" and
+    /// open the block's overview. The entry closes the page, so it may need
+    /// a scroll before Program's lazy stack draws it.
+    static func openPastBlocks(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        selectTab("Program", in: app)
+        let entry = app.buttons.labeled("Past blocks")
+        reveal(entry, in: app)
+        entry.tap()
+        XCTAssertTrue(appears(app.staticTexts.labeled("Past blocks")), "Past blocks must open its list", file: file, line: line)
+    }
 }
 
 // MARK: - Screenshots

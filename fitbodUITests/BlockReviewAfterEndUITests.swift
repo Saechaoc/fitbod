@@ -57,7 +57,7 @@ final class BlockReviewAfterEndUITests: XCTestCase {
     @MainActor
     private func openEndedBlocksReview(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
         let app = UITestNavigation.launch(UITestNavigation.endedBlockWithRecap, file: file, line: line)
-        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("DONE block: Live Block"), within: 30),
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("Past blocks"), within: 30),
                       "The seed must end Live Block before Today's first visit", file: file, line: line)
         UITestNavigation.selectTab("Today", in: app)
         assertReviewOpens(in: app, "Today's first visit after the block ended must open its review", file: file, line: line)

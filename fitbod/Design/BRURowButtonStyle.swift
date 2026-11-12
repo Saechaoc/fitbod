@@ -2,7 +2,7 @@
 // fitbod
 //
 // The button style of a full-width row that opens a screen: Program's
-// template rows, History's rows, the PR rows and Library's rows (T106).
+// rows, History's rows, the PR rows and Library's rows (T106).
 // A row opens only on a tap. A plain button opens on any lift inside it,
 // so a sideways drag or an edge swipe that started on a row opened the
 // row. Here a touch that moves more than 10pt before it lifts opens

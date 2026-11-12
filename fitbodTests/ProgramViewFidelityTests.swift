@@ -3,8 +3,9 @@
 //  fitbodTests
 //
 //  Program's rules that compute something: which block leads and the
-//  order of the rest (RM-011, O-6), and the template rows. The look itself
-//  is checked on the simulator, not pinned in tests.
+//  order of the rest (RM-011, O-6), the routine sublines and the past
+//  block lines. The look itself is checked on the simulator, not pinned
+//  in tests.
 //
 
 import Foundation
@@ -101,27 +102,48 @@ struct ProgramViewFidelityTests: ProgramFixtures {
         #expect(state == .ready(ProgramBlocks(ready).lead!))
     }
 
-    // MARK: - Template rows
+    // MARK: - Routine sublines
 
-    @Test("Each template row shows only its template's weeks, name and phases")
-    func templateRowsComeFromTheirTemplates() {
-        let rows = ProgramView.templateRows
+    @Test("A routine's subline names the live blocks on it by name, and not the finished ones")
+    func routineSublineNamesItsLiveBlocks() {
+        let (routine, _) = makeRoutine(sessions: ["Push A", "Pull A", "Legs A"])
+        _ = unstarted("Summer", createdDaysAgo: 2, on: routine)
+        _ = unstarted("", createdDaysAgo: 1, on: routine)
+        ended("Winter", daysAgo: 30).split = routine
+        makeBlock(on: routine).name = "Spring"
+        let (unused, _) = makeRoutine("Upper Lower", sessions: ["Upper"])
 
-        #expect(rows.map(\.template.name) == BlockTemplates.catalog.map(\.name))
-        for row in rows {
-            let weeks = row.template.phases.reduce(0) { $0 + $1.weeks }
-            let phases = row.template.phases.map { "\($0.kind.shortLabel) \($0.weeks)" }
-            #expect(row.weeks == "\(weeks)W")
-            #expect(row.title == row.template.name)
-            #expect(row.phases == phases.joined(separator: " · "))
-        }
-        #expect(rows.map(\.weeks) == ["8W", "8W", "8W", "4W"])
-        #expect(rows.map(\.phases) == [
-            "ACCUM 5 · INTNS 2 · DELOAD 1",
-            "ACCUM 4 · INTNS 2 · REAL 1 · DELOAD 1",
-            "ACCUM 3 · INTNS 3 · REAL 1 · DELOAD 1",
-            "ACCUM 1 · INTNS 1 · REAL 1 · DELOAD 1",
-        ])
+        #expect(RoutineSplitRow.subline(for: routine) == "3 sessions · used by Spring, Summer, Untitled Block")
+        #expect(RoutineSplitRow.subline(for: unused) == "1 session")
+    }
+
+    // MARK: - Past blocks
+
+    @Test("A past block reads its plan's weeks, the dates it ran and its counted workouts")
+    func pastLineCountsItsWorkouts() throws {
+        let block = try past("Summer", from: (2023, 9, 23), to: (2023, 11, 4), weeks: 6)
+        makeWorkout(in: nil, daysAgo: 20, block: block)
+        makeWorkout(in: nil, daysAgo: 13, block: block)
+        makeWorkout(in: nil, daysAgo: 12, block: block, logged: false)
+
+        let line = PastBlocksView.line(of: block, now: now, calendar: calendar)
+
+        #expect(line.line == "6 weeks · Sep 23 - Nov 4 · 2 workouts")
+        #expect(line.spoken == "6 weeks, Sep 23 to Nov 4, 2 workouts")
+    }
+
+    @Test("A block that ended in an earlier year carries its year, and its start's when that differs (D-127)")
+    func pastLineShowsTheYearAcrossYears() throws {
+        let lastYear = try past("Winter", from: (2022, 11, 4), to: (2022, 12, 1), weeks: 4)
+        let acrossNewYear = try past("Winter", from: (2021, 12, 2), to: (2022, 1, 13), weeks: 6)
+        let intoThisYear = try past("Winter", from: (2022, 12, 5), to: (2023, 1, 16), weeks: 6)
+
+        #expect(PastBlocksView.line(of: lastYear, now: now, calendar: calendar).line
+            == "4 weeks · Nov 4 - Dec 1, 2022 · 0 workouts")
+        #expect(PastBlocksView.line(of: acrossNewYear, now: now, calendar: calendar).line
+            == "6 weeks · Dec 2, 2021 - Jan 13, 2022 · 0 workouts")
+        #expect(PastBlocksView.line(of: intoThisYear, now: now, calendar: calendar).line
+            == "6 weeks · Dec 5 - Jan 16 · 0 workouts")
     }
 
     // MARK: - Fixtures
@@ -146,6 +168,22 @@ struct ProgramViewFidelityTests: ProgramFixtures {
         block.endDate = now.addingTimeInterval(-daysAgo * day)
         block.startDate = block.endDate!.addingTimeInterval(-42 * day)
         addPhase(weeks: 6, to: block)
+        return block
+    }
+
+    /// A completed block that ran from noon UTC on `start` to noon UTC on `end`.
+    private func past(
+        _ name: String, from start: (Int, Int, Int), to end: (Int, Int, Int), weeks: Int
+    ) throws -> Block {
+        func noon(_ date: (Int, Int, Int)) throws -> Date {
+            try #require(calendar.date(from: DateComponents(year: date.0, month: date.1, day: date.2, hour: 12)))
+        }
+        let block = Block()
+        ctx.insert(block)
+        block.name = name
+        block.startDate = try noon(start)
+        block.endDate = try noon(end)
+        addPhase(weeks: weeks, to: block)
         return block
     }
 

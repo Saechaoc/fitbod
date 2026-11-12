@@ -121,7 +121,7 @@ final class ArchiveRoutineUITests: XCTestCase {
     // MARK: - A block that uses an archived routine
 
     /// Once Live Block ends, its routine can be archived. The ended block
-    /// keeps working: Program still lists it and its overview opens. The
+    /// keeps working: Past blocks still lists it and its overview opens. The
     /// routine waits on ARCHIVED ROUTINES and stays out of New Block's
     /// routine picker.
     @MainActor
@@ -138,11 +138,13 @@ final class ArchiveRoutineUITests: XCTestCase {
                       "A routine only an ended block uses must archive")
         XCTAssertFalse(programRow("Live Routine", in: app).exists, "Program must not list Live Routine")
 
+        UITestNavigation.openPastBlocks(in: app)
         let ended = app.buttons.labeled("DONE block: Live Block")
-        XCTAssertTrue(UITestNavigation.appears(ended), "Program must still list the ended block")
+        XCTAssertTrue(UITestNavigation.appears(ended), "Past blocks must still list the ended block")
         ended.tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Block · Live Block")),
                       "The ended block's overview must still open")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
         UITestNavigation.hittable(app.buttons, "Back").tap()
 
         let entry = archivedEntry(in: app)
