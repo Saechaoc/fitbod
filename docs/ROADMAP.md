@@ -16,8 +16,9 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; and [RM-026](#rm-026)'s first delivery, superset partners in one trip.
+In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; [RM-020](#rm-020) past weekly recaps; and the first nightly run's two failures, [RM-001](#rm-001)'s store test, which reopens RM-001, and a large-iPhone PR list test ([RM-053](#rm-053)).
 Done on 2026-11-12: [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow in the analytics stream.
+Delivered on 2026-11-12: [RM-026](#rm-026)'s first delivery, superset partners in one trip; its second, unsaved duplication, follows.
 On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
@@ -31,9 +32,8 @@ Ready work in independent streams may continue while another feature awaits inpu
 | Order | Ready outcome | Boundary |
 |---|---|---|
 | 1 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
-| 2 | [RM-020](#rm-020) past weekly recaps | Analytics stream; scheduled after RM-019, which is done. |
 
-Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set and [RM-027](#rm-027) Library/custom results; [RM-026](#rm-026)'s later deliveries follow its first.
+Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set, [RM-027](#rm-027) Library/custom results and [RM-026](#rm-026)'s second delivery, unsaved duplication.
 **Decision (user, 2026-11-12):** [RM-029](#rm-029) is deprioritized and leaves this queue.
 A schema change that SwiftData migrates in place, as in [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066), needs the store rehearsal (`scripts/rehearse-store.sh` on a fresh copy of the phone's store) before and after it, and the user's go-ahead.
 RM-029's populated restore proof returns before a schema change SwiftData cannot migrate in place, and at release readiness.
@@ -44,7 +44,7 @@ Authoring, catalog, logging and calculator deliveries use their actual condition
 ## Needs input or device verification
 
 Only the named observation/decision is unavailable; this section does not pause unrelated work.
-Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `a2fc9ca7` (2026-11-12), whose store is on seed 10.
+Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `db6ff930` (2026-11-12), whose store is on seed 10.
 
 | Owner | Missing input or proof | What depends on it |
 |---|---|---|
@@ -52,11 +52,12 @@ Every phone row except RM-007's disposable-install reproduction can be checked i
 | [RM-008](#rm-008), FT-20 | Lock Screen/Island rendering, rest adjustment/expiry/end on installed build | Closing widget rendering/lifecycle acceptance; implementation plan is archived. |
 | [RM-010](#rm-010) | On the phone: the week board with this week's real workouts. The user's call: whether Volume's amber ring outlasts a dismissed week, and whether Volume needs words for the ring | Closing RM-010; the ring keeps today's rules until the user decides. |
 | [RM-019](#rm-019) | The user's call: whether DROP INTENSITY should open the next workout instead of explaining with an alert | Only DROP INTENSITY's route; the Stalled list and the charts are done. |
+| [RM-026](#rm-026) | The user's call: whether a superset's sets alternate between its lifts in the workout, and whether to build the mock-up's REST BEHAVIOR and CLUSTER chip; each needs new stored fields | Only those pieces; the superset sheet says each lift keeps its own sets and rest until then. |
 | [RM-022](#rm-022) | On the phone: Bench Press folds into one line, History keeps logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds Lateral Raise (Dumbbell) | Closing the families and grouped-list slices; slices 7–8 can proceed. |
 | [RM-045](#rm-045), FT-16 | Calf taps on the 430pt phone and a small (390pt) physical phone pass; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; nothing else waits on it. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
 | [RM-062](#rm-062) | On the phone: a Plank set's time in History, Library finding Stair Climber, a second bench set's time and the exercise time in History, and a Stair Climber planned at 20:00 and speed 8 that finishes untouched with no rest and reads "speed 8" in History. The user's call: the warnings' bout wording ("1 logged set and 1 bout will be deleted.", "1 logged bout will be removed with it.") | Closing RM-062; nothing else waits on it. |
-| [RM-053](#rm-053) | A scheduled run that starts on its own (next due 11:17 UTC on 2026-11-13) and finishes inside 120 minutes; if none starts, the user's choice of a nightly fallback | Closing RM-053; CI gates nothing, so no delivery waits on it. |
+| [RM-053](#rm-053) | The first scheduled run started on its own, about 7 h 40 min after its 11:17 UTC time, and finished in 94 minutes; one that starts near its time (next due 11:17 UTC on 2026-11-13) shows the schedule holds | Closing RM-053; CI gates nothing, so no delivery waits on it. |
 | [RM-063](#rm-063) | The first MetricKit report, due on the phone since about 2026-11-11, shared from Settings → Diagnostics | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 | [RM-066](#rm-066) | On the phone: a machine picked for Hack Squat (Machine) is still there after a relaunch; the store already opens in place with this build | Closing RM-066; nothing else waits on it. |
 | [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, remaining aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
@@ -90,7 +91,6 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-004](#rm-004) | P1 · Done | Photo metadata removed at pick/save/upgrade/export/restore; original-preserving failures and pre-delete validation verified. Evidence in RM-004. | Static photos, full pixel dimensions within decode bounds; no schema change. |
 | [RM-003](#rm-003) | P1 · Done | Both volume screens render missing targets without model writes; explicit creation rolls back and retries. Hosted before/after, units and 390pt route evidence in RM-003. | Unblocks RM-010; no schema or fatigue-math change. |
 | [RM-002](#rm-002) | P1 · Done | Failed slot additions/resets roll back and explain retry; superset drafts save with the session and Discard writes nothing. Unit/failure/relaunch evidence in RM-002. | Schema unchanged. |
-| [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. | No schema change; populated recovery proof remains RM-029. |
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
@@ -116,7 +116,7 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 
 ### <a id="rm-001"></a>RM-001 — Preserve a good store when opening fails
 
-**P1 · Done (2026-11-10).** `FitbodModelContainer.make` used to treat every failed on-disk open as incompatibility, move the store aside and start an empty one.
+**P1 · Active: reopened 2026-11-12 (done 2026-11-10).** `FitbodModelContainer.make` used to treat every failed on-disk open as incompatibility, move the store aside and start an empty one.
 It now moves a store aside only when Core Data reports that it cannot infer a migration (NSCocoaErrorDomain 134140).
 Every other failed open leaves the store files in place and shows the [retry screen](../fitbod/App/StoreOpenFailedView.swift), whose Try again button opens the same store.
 **Done when:** distinguish incompatibility from transient access/I/O failures; a good store stays in place on transient failure, a recoverable error explains retry, and retry preserves workouts. Keep incompatible-store recovery, SQLite siblings, seed stamps and partial move failures covered by disk-backed tests.
@@ -133,6 +133,7 @@ So does a store whose migration Core Data can infer but SwiftData cannot apply; 
 Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implementation on `e1393913`. The unit target passed 1,301 tests with one expected failure, including all disk recovery cases; `ReseedRelaunchUITests` and `MilestoneOneJourneyUITests` passed 2/2 (`fast-20261110-075944`, iPhone 17/iOS 26.5). Reproduced a real `chmod 000` failure at 390pt/default text, inspected light/dark retry captures, restored permissions and relaunched into the same seeded workout; nothing moved aside. GitNexus change scope matches bootstrap/container/tests/docs. The retry button itself still has manual rather than committed UI-test evidence; no physical-phone failure injection was attempted.
 Recheck (2026-11-12): an abstraction run's full unit pass on `a7bffbb7`, with two extra characterization tests, failed `pendingMigrationOnAReadOnlyStoreKeepsTheStore` once on 2026-11-11 because the store bytes changed after the failed read-only open; the suite then passed 8/8 alone.
 The clean unit target on `c3eb8161` passed it with every other test (1,244 run, 0 failed, `fast-20261112-102948`), so the failure is not reproduced; a recurrence reopens this entry.
+Recheck (2026-11-12, CI): the first nightly run, 43285313904 on `3d20891c`, failed `nonSchemaFailureKeepsTheStore` for one of its four `Damage` cases with "The failed open must not change the store file", the recurrence named above, so this entry is open again until the cause is known; triage on the runner is in flight.
 **References:** [container](../fitbod/Persistence/FitbodModelContainer.swift), [recovery tests](../fitbodTests/Persistence/IncompatibleStoreRecoveryTests.swift); step-1.2 run `full-20261107-074201`, SQLite error 4618, in the retired `261106-he2` summary.
 
 ### <a id="rm-002"></a>RM-002 — Failed writes preserve work and explain retry
@@ -627,6 +628,7 @@ The editor draws one bracket per superset in the rows' leading gutter, so two ad
 Captures of the sheet were compared with `phase-2--modal-superset.png`; editor captures at 390pt in light mode (`fast-20261112-131547`) show lifts 1 and 3 gathered, two adjacent supersets, four paired, a move out that leaves and a plain lift passing a superset whole.
 Not built: the mock-up's rest behavior and CLUSTER chip, which need stored fields.
 Its line "Sets alternate between members. Rest belongs to the last lift in the cluster." describes a workout the logger does not run, so the sheet says each lift keeps its own sets and rest until the user decides.
+After the rebase onto `deb36238`, `SupersetDraftPersistenceTests`, `UICopyRulesTests`, `SessionEditorRowsUITests` and `MilestoneOneJourneyUITests` passed 19/19 (`fast-20261112-132019`); the plural-helper failure above was `main`'s own and is fixed there (`e322f70f`).
 No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
 
@@ -951,7 +953,7 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
 **P3 · Implemented; verification pending: a nightly run must start on its own and finish inside the 120-minute limit; if none starts, the user chooses a fallback (2026-11-12).**
-Push and manual runs work, but GitHub has created no scheduled run for this repository: none at 11:00 UTC on 2026-11-11 and none at 11:17 UTC on 2026-11-12.
+Push and manual runs work. GitHub created no scheduled run at 11:00 UTC on 2026-11-11, and the 11:17 UTC run of 2026-11-12, 43285313904 on `3d20891c`, started on its own only at 18:58 UTC; it finished in 94 minutes with one unit and one large-iPhone UI failure, which are triaged under [RM-001](#rm-001) and here.
 Local checks stay the delivery policy, and CI gates nothing.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
 For the 2026-11-10 triggers: one push run on `main` is green, one manual run with the UI suite finishes inside the 120-minute limit, and one nightly run starts on its own and finishes inside it.
