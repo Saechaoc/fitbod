@@ -897,7 +897,7 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
-**P3 · Planned: the nightly trigger has never fired (2026-11-12).**
+**P3 · Implemented; verification pending: a nightly run must start on its own and finish inside the 120-minute limit; if none starts, the user chooses a fallback (2026-11-12).**
 Push and manual runs work, but GitHub has created no scheduled run for this repository: none at 11:00 UTC on 2026-11-11 and none at 11:17 UTC on 2026-11-12.
 Local checks stay the delivery policy, and CI gates nothing.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
@@ -937,10 +937,24 @@ Nightly run (2026-11-11): the first one, due at 11:00 UTC, never started, though
 GitHub can drop scheduled runs at the top of an hour, so the cron moved to 11:17 UTC.
 The CI summary now names the small phone only when its UI suite ran; before, it named a phone no step used.
 Nightly run (2026-11-12): none started at 11:17 UTC either.
-The Actions API lists no `schedule` run for this repository at all, while `ios.yml` is active on the default branch `main` and the repository is public; the cause is not investigated.
+The Actions API lists no `schedule` run for this repository at all.
 Push run on `0dbc3c7c` (2026-11-11, [run 43093906725](https://github.com/Saechaoc/fitbod/actions/runs/43093906725)): marked failed only because Upload results could not create its artifact in five attempts, GitHub's artifact service answering with an HTML page.
 Its unit target passed: 1,229 run, 1,226 passed, 2 skipped, 1 expected failure, none failed.
-The upload step has no `continue-on-error`, so an artifact-service outage turns a passing run red.
+The upload step had no `continue-on-error`, so an artifact-service outage turned a passing run red.
+Upload fix (2026-11-12, `fd56e9f2`): Upload results now has `continue-on-error: true`.
+The Summary step still fails the run when the build, unit or UI step fails, because it reads each step's outcome from before `continue-on-error`.
+Two runs show it: [run 43075447699](https://github.com/Saechaoc/fitbod/actions/runs/43075447699) printed `unit=failure` and [run 42986732910](https://github.com/Saechaoc/fitbod/actions/runs/42986732910) printed `ui_large=failure`, and both failed although their test steps read success.
+A failed upload retries for about 10 minutes, so a 90-minute nightly run still finishes inside the limit.
+Schedule investigation (2026-11-12): every condition GitHub documents for scheduled runs holds.
+The workflow with its `schedule` is on `main`, the default branch; the repository is public, active and not a fork; Actions allow all actions; the workflow is `active`; and the cron is valid and off the hour.
+The commits that set the cron are linked to the visible, active account `Saechaoc`, which becomes the scheduled run's actor.
+GitHub's status history lists no incident at either missed time.
+A GitHub answer in [#185355](https://github.com/orgs/community/discussions/185355) says a push to the default branch resyncs schedules, yet the many pushes to `main` since the schedule was added, and the cron change, registered none.
+The cause is not found; community reports from 2026 describe the same symptom, no scheduled run ever while manual runs work, with no fix from GitHub ([#185355](https://github.com/orgs/community/discussions/185355), [#202602](https://github.com/orgs/community/discussions/202602)).
+Not tried, because it changes repository state: disabling and re-enabling the workflow, which some reports say re-registers a schedule.
+Fallback, proposed and not created, for the user to decide: run `gh workflow run ios.yml --ref main` nightly from a launchd job on the Mac or from a scheduled Claude routine.
+A manual run already runs the UI suite, so either gives the coverage of a scheduled run.
+The launchd job uses the Mac's `gh` login and fires on wake when the Mac slept through the hour, but not when it was off; the routine needs no Mac but needs GitHub access that can start workflows.
 **Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
 `check_map.py` and `git diff --check` passed; the checker reported five existing
 unreferenced screenshots. Documentation only; no app tests rerun.
