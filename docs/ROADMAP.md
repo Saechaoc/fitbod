@@ -667,7 +667,7 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 
 ### <a id="rm-026"></a>RM-026 — Session/routine authoring without detours
 
-**P2 · Planned.** Supersets are delivered (2026-11-12); unsaved duplication, multi-exercise selection, block/hybrid progression and archived inspection remain.
+**P2 · Planned.** Supersets and unsaved duplication are delivered (2026-11-12); multi-exercise selection, block/hybrid progression and archived inspection remain.
 **Done when:** name supersets' acting exercise/partners/effect in one trip, including unsaved sessions; duplication preserves/confirms unsaved edits; multi-select adds the stated count in order. Progression eligibility reads active graph, not deprecated template.block. Inspect archived routines before restore. Preserve drafts/rollback/snapshots.
 **Scope / sequence:** Deliver supersets (partners/effect/unsaved rollback), then unsaved duplication, then ordered multi-select, then graph-based progression eligibility and archived inspection. Each is a bounded authoring delivery; applied per-set targets stay RM-040.
 **Requires:** [RM-002](#rm-002) for affected superset/editor writes; [RM-040](#rm-040) only before exposing applied per-set targets.
@@ -683,6 +683,15 @@ Captures of the sheet were compared with `phase-2--modal-superset.png`; editor c
 Not built: the mock-up's rest behavior and CLUSTER chip, which need stored fields.
 Its line "Sets alternate between members. Rest belongs to the last lift in the cluster." describes a workout the logger does not run, so the sheet says each lift keeps its own sets and rest until the user decides.
 After the rebase onto `deb36238`, `SupersetDraftPersistenceTests`, `UICopyRulesTests`, `SessionEditorRowsUITests` and `MilestoneOneJourneyUITests` passed 19/19 (`fast-20261112-132019`); the plural-helper failure above was `main`'s own and is fixed there (`e322f70f`).
+Unsaved duplication, the second delivery (2026-11-12): Duplicate session copies what the editor shows, unsaved changes included, into a new session named "{name} (Copy)", and the session being edited keeps what it last saved (D-09).
+With unsaved changes it first asks "Duplicate with your changes?" and offers Duplicate session or Keep editing; a draft without a name or an exercise shows Save's errors instead.
+The copy's lifts, per-set overrides and superset groups are new rows, so each superset's lifts stay together in a group of the copy's own; a failed copy rolls the store back and keeps the draft for a retry, and logged workouts are untouched.
+A lift's warm-up setting now carries into the copy, which the old copy of the stored rows dropped; fields the editor does not show, such as a lift's stored notes, start at their defaults.
+The session menu shows a plain Keep editing, since iOS 26 hides its cancel-role Cancel (D-63).
+`RoutineDuplicationTests` passed 10/10 (`fast-20261112-143825`), and the unit target passed 1,276 of 1,279 with 2 skipped and 1 expected failure (`fast-20261112-144251`).
+`SlottedSessionDeleteUITests` passed 3/3, with a new journey in which an unsaved rename asks first, goes into the copy and leaves the session as saved through a relaunch, and `NewRoutineFlowUITests` passed 2/2, on iPhone 17/iOS 26.5 (`fast-20261112-150400`).
+The journey passed again on the iPhone 17e (`fast-20261112-150614`), and its 390pt light captures of the menu and the question were inspected: the question matches the shipped Discard changes? dialog, and both differ from the BRU dialog mock-up as every system dialog does until [RM-035](#rm-035).
+Not built: a choice that also saves the changes to the session being edited.
 No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
 
