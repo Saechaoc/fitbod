@@ -167,7 +167,7 @@ public struct SessionLoggerView: View {
         }) {
             FinishConfirmSheet(
                 loggedSetCount: session.loggedSetCount,
-                elapsedLabel: elapsedLabel,
+                caption: Self.finishCaption(for: session, elapsed: elapsedLabel),
                 onChoose: { choice in
                     finishChoice = choice
                     presentingFinishConfirm = false
@@ -177,7 +177,8 @@ public struct SessionLoggerView: View {
         }
         // Discard workout confirmation. A dialog like Finish, not an alert:
         // an alert adds its own visible Cancel beside Keep logging. With
-        // sets logged it says how many go; empty, that nothing is saved.
+        // sets or bouts logged it says how many go; empty, that nothing is
+        // saved.
         .confirmationDialog(
             "Discard workout?",                                                  // UI-SPEC verbatim
             isPresented: $presentingDiscardConfirm,
@@ -188,11 +189,7 @@ public struct SessionLoggerView: View {
                 presentingDiscardConfirm = false
             }
         } message: {
-            if session.loggedSetCount > 0 {
-                Text("\(BRUCountLabel.text(session.loggedSetCount, "logged set")) will be deleted.")
-            } else {
-                Text("No data will be saved.")                                   // UI-SPEC verbatim
-            }
+            Text(SessionHistoryFormat.discardWarning(for: session) ?? "No data will be saved.") // UI-SPEC verbatim
         }
         // Swap-exercise sheet
         .sheet(item: $pendingSwap) { se in
@@ -224,11 +221,7 @@ public struct SessionLoggerView: View {
                 pendingRemove = nil
             }
         } message: { se in
-            // Names what goes with it (FT-03): its logged working sets.
-            let logged = (se.sets ?? []).filter { $0.isComplete && !$0.isWarmup }.count
-            Text(logged > 0
-                 ? "\(BRUCountLabel.text(logged, "logged set")) will be removed with it."
-                 : "Nothing is logged for it yet.")
+            Text(Self.removeWarning(for: se))
         }
         // A finish, discard or remove whose save failed: nothing changed.
         .alert(
@@ -321,6 +314,22 @@ public struct SessionLoggerView: View {
     /// "M:SS" elapsed label — computed off Date.now (matches PITFALLS-doc #4).
     private var elapsedLabel: String {
         NumberText.minutesSeconds(max(0, Int(Date.now.timeIntervalSince(elapsedStart))))
+    }
+
+    /// The Finish sheet's line, "3 sets logged · 12:34", or the time alone
+    /// once only cardio bouts are logged (RM-062).
+    static func finishCaption(for session: Session, elapsed: String) -> String {
+        guard let sets = SessionHistoryFormat.inProgressSetCount(of: session) else { return elapsed }
+        return "\(BRUCountLabel.text(sets, "set")) logged · \(elapsed)"
+    }
+
+    /// What goes with a removed exercise (FT-03): its logged working sets,
+    /// or a cardio row's bout (RM-062).
+    static func removeWarning(for exercise: SessionExercise) -> String {
+        let logged = (exercise.sets ?? []).filter { $0.isComplete && !$0.isWarmup }.count
+        guard logged > 0 else { return "Nothing is logged for it yet." }
+        let noun = exercise.exercise?.isCardio == true ? "logged bout" : "logged set"
+        return "\(BRUCountLabel.text(logged, noun)) will be removed with it."
     }
 
     // MARK: - Mutating commands
@@ -427,8 +436,10 @@ private enum FinishChoice {
 /// time, then Finish, or Discard workout when nothing is logged, over Keep
 /// logging. The sheet is as tall as its content.
 private struct FinishConfirmSheet: View {
+    /// Bouts included: whether there is anything to finish.
     let loggedSetCount: Int
-    let elapsedLabel: String
+    /// `SessionLoggerView.finishCaption`.
+    let caption: String
     let onChoose: (FinishChoice) -> Void
     let onKeepLogging: () -> Void
     @State private var height: CGFloat = 0
@@ -440,7 +451,7 @@ private struct FinishConfirmSheet: View {
                 .foregroundStyle(Color.bruInk)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("\(BRUCountLabel.text(loggedSetCount, "set")) logged · \(elapsedLabel)") // UI-SPEC format
+            Text(caption) // UI-SPEC format
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruInk)
                 .frame(maxWidth: .infinity, alignment: .leading)

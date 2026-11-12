@@ -29,6 +29,9 @@ import SwiftData
 /// └──────────────────────────────────────────────┘
 /// ```
 ///
+/// Once only cardio bouts are logged, the meta strip shows the time alone,
+/// since set counts leave bouts out (RM-062).
+///
 /// At accessibility sizes RESUME ▸ spans the slab with DISCARD under it,
 /// since half the slab is too narrow to keep "RESUME ▸" on one line.
 ///
@@ -87,15 +90,17 @@ public struct ResumeWorkoutSlab: View {
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruOnSlab.opacity(0.6))
 
-                Text("  ·  ")
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruOnSlab.opacity(0.3))
+                if let logged = Self.loggedCaption(for: session) {
+                    Text("  ·  ")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruOnSlab.opacity(0.3))
 
-                Text("\(BRUCountLabel.text(session.loggedSetCount, "set")) logged")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
+                    Text(logged)
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruOnSlab.opacity(0.6))
+                }
             }
             }
 
@@ -145,8 +150,14 @@ public struct ResumeWorkoutSlab: View {
             Button("Discard", role: .destructive) { discard() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("\(BRUCountLabel.text(session.loggedSetCount, "logged set")) will be deleted.")
+            Text(SessionHistoryFormat.discardWarning(for: session) ?? "No data will be saved.")
         }
+    }
+
+    /// "3 sets logged"; nil once only cardio bouts are logged, which show
+    /// no set count (RM-062).
+    static func loggedCaption(for session: Session) -> String? {
+        SessionHistoryFormat.inProgressSetCount(of: session).map { "\(BRUCountLabel.text($0, "set")) logged" }
     }
 
     /// Clears any persisted rest timer (and its alert + Live Activity)

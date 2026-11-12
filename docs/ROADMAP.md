@@ -538,10 +538,17 @@ The UI tests include `TimedSetUITests`' new planned Stair Climber, which finishe
 Inspected at 390pt, light mode (iPhone 17e): the routine editor's empty and typed plans for both machines, the session page, the logger before and after Done for both, the summary, Today's week board and Done card, the History row and detail, and Edit workout.
 Store rehearsal on a copy of the phone's store pulled 2026-11-11 15:01: on `main` (`d3b2ae3b`) and again on this build the copy opened in place with 838 exercises, 5 workouts, 22 logged exercises, 48 routine rows and 67 sets and survived a backup round trip, and the backup the `main` run wrote (format 4) restored into this build to equal data.
 Fixed on the way: a cardio card kept an empty band above its closing rule once its Add set row was gone, the plan's Time field showed a grey 20:00 that read as a plan, and CSV export crashed on a whole number past `Int`'s range, which only a hand-edited backup can restore (it now prints it, and `CSVExporterTests` checks it).
-Known limits: the resume banner, the Finish sheet and the delete warnings still count a finished bout as a logged set; VoiceOver, larger text and dark mode are unchecked.
+Known limits: VoiceOver, larger text and dark mode are unchecked.
 Installed on the phone on 2026-11-11 (`39ce98b5`) and launched from the Mac.
 The store pulled back after the real upgrade passed its integrity check with the same 838 exercises, 5 workouts, 22 logged exercises, 48 routine rows and 67 sets, every new column empty, the four machines seed 10 retags tagged, and nothing moved aside.
 Verify on the phone: plan the Stair Climber at 20:00 and speed 8 in a routine, start it, tap Done without typing, and confirm no rest starts and History reads "speed 8".
+Bouts out of the counts of a workout in progress (2026-11-12): Program's resume banner, Today's resume slab and the Finish sheet count only sets, and show the workout's time alone once only bouts are logged.
+The discard warnings name bouts apart from sets ("1 logged set and 1 bout will be deleted.", "1 logged bout will be deleted."), and removing a cardio exercise says its logged bout goes with it.
+`Session.loggedSetCount` still counts the bout, so a workout of one bout offers Finish, not Discard workout, and discarding it asks first.
+Unit: `CardioPlanTests` (9) adds each surface with nothing logged, the bout alone, the bout and two sets, and sets alone; the unit target ran 1,245: 1,242 passed, 2 skipped, 1 expected failure.
+UI: `TimedSetUITests`, `EmptyWorkoutCountsUITests`, `SkipWarmupsUITests` and `WorkoutLoggerJourneyUITests.testDiscardWithLoggedSetsAsksFirst` passed (11 tests).
+Inspected at 390pt, light mode (iPhone 17e), with the bout alone and with a bench set too: Today's slab and its discard alert, Program's banner, the Finish sheet, the logger's discard dialog and the remove alert.
+Known limit: a cardio exercise's history page in Library still counts its bouts as sets ("1 set", "1 set across 1 workout"), read from `ExerciseHistoryView` and not changed here.
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 

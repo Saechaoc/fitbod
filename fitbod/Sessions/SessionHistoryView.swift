@@ -193,15 +193,37 @@ enum SessionHistoryFormat {
         return rounded.formatted(.number.grouping(.automatic).locale(locale))
     }
 
-    /// A finished workout's completed, non-warm-up sets. Cardio logs bouts,
-    /// which set totals leave out (RM-062); `Session.loggedSetCount` counts
-    /// them, since it decides whether a workout logged anything.
+    /// A workout's completed, non-warm-up sets. Cardio logs bouts, which
+    /// set totals leave out (RM-062); `Session.loggedSetCount` counts them,
+    /// since it decides whether a workout logged anything.
     static func setCount(of session: Session) -> Int {
         (session.exercises ?? [])
             .filter { $0.exercise?.isCardio != true }
             .flatMap { $0.sets ?? [] }
             .filter { $0.isComplete && !$0.isWarmup }
             .count
+    }
+
+    /// The set count a workout in progress shows beside its time, on the
+    /// resume banner and slab and the Finish sheet: nil once it has logged
+    /// bouts and no set, since cardio alone shows no set count, as Today
+    /// and History do (RM-062). With nothing logged it is 0.
+    static func inProgressSetCount(of session: Session) -> Int? {
+        let sets = setCount(of: session)
+        return sets == 0 && session.loggedSetCount > 0 ? nil : sets
+    }
+
+    /// What discarding a workout in progress deletes, naming its bouts
+    /// apart from its sets: "3 logged sets and 1 bout will be deleted.".
+    /// Nil when nothing is logged.
+    static func discardWarning(for session: Session) -> String? {
+        let sets = setCount(of: session)
+        let bouts = session.loggedSetCount - sets
+        let lost = [
+            sets > 0 ? BRUCountLabel.text(sets, "logged set") : nil,
+            bouts > 0 ? BRUCountLabel.text(bouts, sets > 0 ? "bout" : "logged bout") : nil,
+        ].compactMap { $0 }
+        return lost.isEmpty ? nil : "\(lost.joined(separator: " and ")) will be deleted."
     }
 
     /// A workout's tonnage: the sum of `SetEntry.tonnage`.

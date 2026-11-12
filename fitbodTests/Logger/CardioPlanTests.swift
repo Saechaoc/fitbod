@@ -13,7 +13,9 @@
 //      and a stair machine's level reads as its speed;
 //    - a plan reads in one line, and a session's estimate, Today's session
 //      list and History count its time and no sets;
-//    - a finished workout's set totals leave its bouts out.
+//    - a finished workout's set totals leave its bouts out;
+//    - so do a workout in progress's resume banner and slab and its Finish
+//      sheet, and the discard and remove warnings name a bout as a bout.
 //
 
 import Foundation
@@ -245,6 +247,67 @@ struct CardioPlanTests {
         cardioDay.totalDurationSeconds = 1_500
         #expect(DoneTodaySlab.caption(for: cardioDay, prCount: 0) == "25M")
         #expect(cardioDay.loggedSetCount == 1, "A workout of one bout is not empty")
+    }
+
+    @Test("a workout in progress counts its sets and no bouts on each surface; warnings name the bout")
+    func inProgressCountsLeaveOutBouts() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let climber = cardio("Stair Climber", tracking: .durationStepSpeed, in: ctx)
+        let bench = LoggerFixtures.exercise("Bench", in: ctx)
+        let template = try LoggerFixtures.template("Mixed", exercises: [climber, bench], sets: 3, in: ctx)
+        let workout = try SessionFactory.start(template: template, on: now, context: ctx)
+        let boutLog = try #require(workout.exercises?.first { $0.exercise?.id == climber.id })
+        let liftLog = try #require(workout.exercises?.first { $0.exercise?.id == bench.id })
+        func expectSurfaces(
+            of session: Session, count: Int?, banner: String, slab: String?, finish: String, discard: String?,
+            sourceLocation: SourceLocation = #_sourceLocation
+        ) {
+            #expect(SessionHistoryFormat.inProgressSetCount(of: session) == count, sourceLocation: sourceLocation)
+            #expect(ResumeWorkoutBanner.caption(for: session, elapsed: "5:00") == banner, sourceLocation: sourceLocation)
+            #expect(ResumeWorkoutSlab.loggedCaption(for: session) == slab, sourceLocation: sourceLocation)
+            #expect(SessionLoggerView.finishCaption(for: session, elapsed: "5:00") == finish, sourceLocation: sourceLocation)
+            #expect(SessionHistoryFormat.discardWarning(for: session) == discard, sourceLocation: sourceLocation)
+        }
+
+        // Nothing logged: "0 sets" says why Finish offers Discard workout.
+        expectSurfaces(
+            of: workout, count: 0, banner: "5:00 · 0 sets", slab: "0 sets logged", finish: "0 sets logged · 5:00",
+            discard: nil
+        )
+
+        // The bout alone shows no set count, yet the workout logged something.
+        let bout = try #require(SessionSetActions.ordered(boutLog).first)
+        bout.durationSeconds = 1_200
+        bout.level = 8
+        bout.isComplete = true
+        expectSurfaces(
+            of: workout, count: nil, banner: "5:00", slab: nil, finish: "5:00",
+            discard: "1 logged bout will be deleted."
+        )
+        #expect(workout.loggedSetCount == 1, "Finish, not Discard workout, and a discard asks first")
+        #expect(SessionLoggerView.removeWarning(for: boutLog) == "1 logged bout will be removed with it.")
+        #expect(SessionLoggerView.removeWarning(for: liftLog) == "Nothing is logged for it yet.")
+
+        // Two bench sets as well: the counts are the sets, and the warning names both.
+        for set in SessionSetActions.ordered(liftLog).filter({ !$0.isWarmup }).prefix(2) {
+            set.weight = 100
+            set.reps = 5
+            set.isComplete = true
+        }
+        expectSurfaces(
+            of: workout, count: 2, banner: "5:00 · 2 sets", slab: "2 sets logged", finish: "2 sets logged · 5:00",
+            discard: "2 logged sets and 1 bout will be deleted."
+        )
+        #expect(SessionLoggerView.removeWarning(for: liftLog) == "2 logged sets will be removed with it.")
+
+        // Lifts alone read as before.
+        let liftsOnly = try LoggerFixtures.session(
+            exercise: bench, startedAt: now, completedAt: nil, sets: [(100, 5, true), (0, 0, false)], in: ctx
+        )
+        expectSurfaces(
+            of: liftsOnly, count: 1, banner: "5:00 · 1 set", slab: "1 set logged", finish: "1 set logged · 5:00",
+            discard: "1 logged set will be deleted."
+        )
     }
 
     @Test("the routine editor's draft reads the plan from its row")

@@ -4,8 +4,9 @@
 //
 //  Review item 2, decision 5: "logged sets" means completed working sets.
 //  Warm-ups never count, whether completed or skipped. `Session.loggedSetCount`
-//  drives the logger header, the Finish check, the Today resume slab and the
-//  Program resume banner.
+//  decides whether a workout logged anything: the Finish check and whether a
+//  discard asks first. The counts people read leave cardio bouts out
+//  (RM-062, `CardioPlanTests`).
 //
 
 import Foundation

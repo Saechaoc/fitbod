@@ -85,9 +85,11 @@ extension Session {
         return "Workout"
     }
 
-    /// Completed working sets. Warm-ups never count, done or skipped. The
-    /// one count behind the logger header, its Finish check and both resume
-    /// surfaces.
+    /// Completed working sets, cardio bouts included. Warm-ups never count,
+    /// done or skipped. It decides whether a workout logged anything: Finish
+    /// or Discard workout, whether a discard asks first, and the empty-
+    /// workout rule. The counts people read leave bouts out
+    /// (`SessionHistoryFormat.setCount(of:)`, RM-062).
     public var loggedSetCount: Int {
         (exercises ?? []).reduce(0) { total, exercise in
             total + (exercise.sets ?? []).filter { $0.isComplete && !$0.isWarmup }.count

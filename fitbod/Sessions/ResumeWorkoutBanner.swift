@@ -13,7 +13,8 @@
 // UI-SPEC verbatim copy:
 //   Leading label:  "RESUME"              (labelSmall bruMuted)
 //   Routine name:   routineSnapshotName   (bodyEmphasis bruInk)
-//   Meta:           "{elapsed} · 1 set" / "{elapsed} · {n} sets" (labelSmall bruMuted)
+//   Meta:           "{elapsed} · 1 set" / "{elapsed} · {n} sets" (labelSmall bruMuted);
+//                   "{elapsed}" alone once only cardio bouts are logged (RM-062)
 //   CTA:            BRUPillButton("Resume ▸")
 //
 // Style: 2pt bruInk-bordered Rectangle slim band per UI-SPEC line 583.
@@ -77,7 +78,7 @@ public struct ResumeWorkoutBanner: View {
                     .foregroundStyle(Color.bruInk)
 
                 TimelineView(.periodic(from: active.startedAt, by: 1)) { _ in
-                    Text("\(elapsedLabel(for: active)) · \(BRUCountLabel.text(active.loggedSetCount, "set"))")
+                    Text(Self.caption(for: active, elapsed: elapsedLabel(for: active)))
                         .font(BRUFont.labelSmall)
                         .tracking(0.5)
                         .foregroundStyle(Color.bruMuted)
@@ -135,6 +136,13 @@ public struct ResumeWorkoutBanner: View {
     /// an hour on.
     private func elapsedLabel(for session: Session) -> String {
         NumberText.elapsed(max(0, Int(Date().timeIntervalSince(session.startedAt))))
+    }
+
+    /// "12:34 · 3 sets", or the time alone once only cardio bouts are
+    /// logged (RM-062).
+    static func caption(for session: Session, elapsed: String) -> String {
+        guard let sets = SessionHistoryFormat.inProgressSetCount(of: session) else { return elapsed }
+        return "\(elapsed) · \(BRUCountLabel.text(sets, "set"))"
     }
 }
 

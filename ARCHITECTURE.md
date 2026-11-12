@@ -151,7 +151,8 @@ Cardio (`Exercise.isCardio`) is one bout with a plan, never sets and rest (RM-06
 A routine row plans a time and the machine's level or stair speed, or a treadmill's speed and incline, in place of sets and rest; `SessionFactory.start` copies the plan to the logged exercise and makes one bout, whatever sets the row stores.
 The logger shows a cardio bout with no set number, offers no Add set row while a bout exists, and starts no rest on Done.
 Planned and logged set counts leave bouts out (`SessionExerciseTemplate.workingSetCount(phase:)`, `SessionSummary.workingSetCount`, `SessionHistoryFormat.setCount(of:)`, `TodayWeek.workingSets(in:)`), as Volume does, and History and Edit workout call a cardio entry a bout.
-`Session.loggedSetCount` still counts a bout, because it decides whether a workout logged anything.
+A workout in progress counts the same way on the resume banner and slab and the Finish sheet (`SessionHistoryFormat.inProgressSetCount(of:)`), which show its time alone once only bouts are logged; the discard and remove warnings name bouts apart from sets (`SessionHistoryFormat.discardWarning(for:)`).
+`Session.loggedSetCount` still counts a bout, because it decides whether a workout logged anything: Finish or Discard workout, and whether a discard asks first.
 A swap to cardio keeps one pending row; Undo restores the rows it removed.
 The next prescription reads earlier sets only in the shape the exercise tracks now, a time for a timed exercise and reps otherwise; Last time shows the latest logged set in any shape.
 
