@@ -179,6 +179,19 @@ struct StalledExercisesTests {
         #expect(sections.last?.stalls.map(\.exercise.name) == ["Barbell Squat", "Barbell Bench Press"])
     }
 
+    @Test("a stall's flat line gets a y axis to label; a line that moves keeps its own")
+    func flatLineAxis() {
+        var flat = [112.5, 112.5]
+        padFlatDomain(&flat)
+        #expect(abs((flat.min() ?? 0) - 110.25) < 1e-9 && abs((flat.max() ?? 0) - 114.75) < 1e-9)
+        var effort = [8.0, 8.0]
+        padFlatDomain(&effort)
+        #expect(effort.min() == 7 && effort.max() == 9, "at least 1 either side")
+        var rising = [100.0, 115.0]
+        padFlatDomain(&rising)
+        #expect(rising == [100, 115])
+    }
+
     // MARK: - Helpers
 
     private func context() throws -> (ModelContext, UserSettings) {

@@ -56,9 +56,10 @@
 //    PR RuleMark → foregroundStyle(Color.bruSignal) lineStyle(dash [4, 2])
 //    PR label → chart overlay, just above the rule at the plot's
 //               trailing edge, kept inside the plot
-//    Stall band → RectangleMark bruFaint behind the lines, over each
-//               stall's flat workouts (RM-019); the legend keys it as
-//               STALLED · <INTENT> · N WORKOUTS on every chip
+//    Stall band → RectangleMark bruInk at 0.06 behind the lines, over
+//               each stall's flat workouts (RM-019); the legend keys it,
+//               outlined bruMuted, as STALLED · <INTENT> · N WORKOUTS
+//    Y domain → a near-flat line gets padFlatDomain's span
 //    Y grid → bruHair dashed [2, 3]
 //    Axes   → BRUFont.labelSmall bruMuted
 //    Background → Color.bruBg
@@ -268,6 +269,18 @@ private extension ProgressChartMetric {
 /// number instead.
 private func wholeWeight(_ value: Double) -> Int {
     Int(value.rounded())
+}
+
+/// The y axis for a line with almost no span, such as a stall's. The pad is
+/// 2% of the line's middle, at least 1; a span under half the pad gets an
+/// axis of one pad either side of the middle. With no span, Swift Charts
+/// labelled a flat 112.5 line 112 above 113.
+func padFlatDomain(_ values: inout [Double]) {
+    guard let low = values.min(), let high = values.max() else { return }
+    let middle = (low + high) / 2
+    let pad = max(abs(middle) * 0.02, 1)
+    guard high - low < pad / 2 else { return }
+    values += [middle - pad, middle + pad]
 }
 
 // MARK: - Inner chart host (owns @Query + metric binding passthrough)
@@ -504,7 +517,7 @@ private struct ProgressChartHost: View {
                             xStart: .value("Date", oldest.addingTimeInterval(-43_200)),
                             xEnd: .value("Date", newest.addingTimeInterval(43_200))
                         )
-                        .foregroundStyle(Color.bruFaint)
+                        .foregroundStyle(Self.stallTint)
                         .accessibilityHidden(true)
                     }
                 }
@@ -540,7 +553,7 @@ private struct ProgressChartHost: View {
                 }
             }
             .chartXScale(domain: .automatic(includesZero: false))
-            .chartYScale(domain: .automatic(includesZero: false))
+            .chartYScale(domain: .automatic(includesZero: false, dataType: Double.self, modifyInferredDomain: padFlatDomain))
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 6)) {
                     AxisGridLine()
@@ -701,7 +714,8 @@ private struct ProgressChartHost: View {
             ForEach(stalls) { stall in
                 HStack(spacing: 4) {
                     Rectangle()
-                        .fill(Color.bruFaint)
+                        .fill(Self.stallTint)
+                        .overlay(Rectangle().stroke(Color.bruMuted, lineWidth: 1))
                         .frame(width: 16, height: 10)
                     legendLabel(
                         (["Stalled", stall.intent.rawValue] + [stall.machine?.displayName].compactMap { $0 }
@@ -712,6 +726,9 @@ private struct ProgressChartHost: View {
         }
         .padding(.top, 4)
     }
+
+    /// The stall band's shade: a light ink tint, so the grid shows through.
+    private static let stallTint = Color.bruInk.opacity(0.06)
 
     private func legendLabel(_ text: String) -> some View {
         Text(text)

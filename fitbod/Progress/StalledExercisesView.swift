@@ -85,7 +85,9 @@ struct StalledExercisesView: View {
             }
         }
         .sheet(isPresented: $browsingLibrary) {
+            // Browse mode has no close control; the sheet swipes away.
             ExerciseLibraryView()
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingFatigueSignals) {
             if let settings = settingsList.first {
@@ -171,18 +173,12 @@ struct StalledExercisesView: View {
             .buttonStyle(.bruRow)
 
             HStack {
-                Button {
-                    act(on: stall)
-                } label: {
-                    BRUChip(stall.action.label, color: .bruInk, fill: false)
-                        .frame(minHeight: BRUMetrics.touchTarget)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Suggested: \(stall.action.label).")
-                .accessibilityHint(stall.action == .dropIntensity
-                                   ? "Says how to lighten its sets."
-                                   : stall.action.accessibilityHint)
+                // The workout card's chip; only DROP INTENSITY does
+                // something else here, so only its hint changes.
+                SuggestedActionChip(action: stall.action) { act(on: stall) }
+                    .accessibilityHint(stall.action == .dropIntensity
+                                       ? "Says how to lighten its sets."
+                                       : stall.action.accessibilityHint)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, BRUMetrics.Spacing.gutter)
