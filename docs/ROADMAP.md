@@ -118,7 +118,7 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 
 ### <a id="rm-001"></a>RM-001 — Preserve a good store when opening fails
 
-**P1 · Active: reopened 2026-11-12 (done 2026-11-10).** `FitbodModelContainer.make` used to treat every failed on-disk open as incompatibility, move the store aside and start an empty one.
+**P1 · Done (2026-11-10; the 2026-11-12 recurrence was a test race, fixed in the tests).** `FitbodModelContainer.make` used to treat every failed on-disk open as incompatibility, move the store aside and start an empty one.
 It now moves a store aside only when Core Data reports that it cannot infer a migration (NSCocoaErrorDomain 134140).
 Every other failed open leaves the store files in place and shows the [retry screen](../fitbod/App/StoreOpenFailedView.swift), whose Try again button opens the same store.
 **Done when:** distinguish incompatibility from transient access/I/O failures; a good store stays in place on transient failure, a recoverable error explains retry, and retry preserves workouts. Keep incompatible-store recovery, SQLite siblings, seed stamps and partial move failures covered by disk-backed tests.
@@ -135,7 +135,15 @@ So does a store whose migration Core Data can infer but SwiftData cannot apply; 
 Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implementation on `e1393913`. The unit target passed 1,301 tests with one expected failure, including all disk recovery cases; `ReseedRelaunchUITests` and `MilestoneOneJourneyUITests` passed 2/2 (`fast-20261110-075944`, iPhone 17/iOS 26.5). Reproduced a real `chmod 000` failure at 390pt/default text, inspected light/dark retry captures, restored permissions and relaunched into the same seeded workout; nothing moved aside. GitNexus change scope matches bootstrap/container/tests/docs. The retry button itself still has manual rather than committed UI-test evidence; no physical-phone failure injection was attempted.
 Recheck (2026-11-12): an abstraction run's full unit pass on `a7bffbb7`, with two extra characterization tests, failed `pendingMigrationOnAReadOnlyStoreKeepsTheStore` once on 2026-11-11 because the store bytes changed after the failed read-only open; the suite then passed 8/8 alone.
 The clean unit target on `c3eb8161` passed it with every other test (1,244 run, 0 failed, `fast-20261112-102948`), so the failure is not reproduced; a recurrence reopens this entry.
-Recheck (2026-11-12, CI): the first nightly run, 43285313904 on `3d20891c`, failed `nonSchemaFailureKeepsTheStore` for one of its four `Damage` cases with "The failed open must not change the store file", the recurrence named above, so this entry is open again until the cause is known; triage on the runner is in flight.
+Recheck (2026-11-12, CI): the first nightly run, 43285313904 on `3d20891c`, failed `nonSchemaFailureKeepsTheStore` for its unreadable `-shm` case with "The failed open must not change the store file", the recurrence named above, so this entry reopened.
+Cause (2026-11-12): the tests read the store file before the container that wrote it had closed it; the app's open path did not change it.
+A released container usually closes its store before the release returns, but now and then a few milliseconds later on another thread, and the close checkpoints the `-wal` into the store file.
+A throwaway probe on the iPhone 17 simulator caught that in 1 of 30 setups: the store, `-wal` (156,592 bytes) and `-shm` were still open after the release, and 7 ms later the store file had changed.
+The failed open with an unreadable `-shm` changed nothing and left no file open in 30 of 30.
+The app opens its store once per launch, with no earlier container in the process to close late, and the widget extension never opens it, so a store the app keeps is not changed this way on the phone.
+Fix: the four tests that compare the store file's bytes first wait until no file in the store's folder is open.
+GitHub's runner, iPhone 17 Pro Max, iOS 26.5, Xcode 26.6, 20 runs of the suite each: on `main`'s code 3 failed that comparison, for the unreadable `-shm` again, the read-only pending migration (the 2026-11-11 failure) and the partial move ([run 43305790528](https://github.com/Saechaoc/fitbod/actions/runs/43305790528)); with the fix all 20 passed ([run 43306436931](https://github.com/Saechaoc/fitbod/actions/runs/43306436931)).
+Locally the suite passed 10 of 10 after the rebase onto `38a8a2c0` (`fast-20261112-133631`).
 **References:** [container](../fitbod/Persistence/FitbodModelContainer.swift), [recovery tests](../fitbodTests/Persistence/IncompatibleStoreRecoveryTests.swift); step-1.2 run `full-20261107-074201`, SQLite error 4618, in the retired `261106-he2` summary.
 
 ### <a id="rm-002"></a>RM-002 — Failed writes preserve work and explain retry
@@ -980,7 +988,7 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
-**P3 · Implemented; verification pending: a nightly run must start on its own and finish inside the 120-minute limit; if none starts, the user chooses a fallback (2026-11-12).**
+**P3 · Implemented; verification pending: a nightly run that starts near its 11:17 UTC time (next due 2026-11-13) and finishes inside the 120-minute limit; the first run's two test failures are fixed (2026-11-12).**
 Push and manual runs work. GitHub created no scheduled run at 11:00 UTC on 2026-11-11, and the 11:17 UTC run of 2026-11-12, 43285313904 on `3d20891c`, started on its own only at 18:58 UTC; it finished in 94 minutes with one unit and one large-iPhone UI failure, which are triaged under [RM-001](#rm-001) and here.
 Local checks stay the delivery policy, and CI gates nothing.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
@@ -1038,6 +1046,13 @@ Not tried, because it changes repository state: disabling and re-enabling the wo
 Fallback, proposed and not created, for the user to decide: run `gh workflow run ios.yml --ref main` nightly from a launchd job on the Mac or from a scheduled Claude routine.
 A manual run already runs the UI suite, so either gives the coverage of a scheduled run.
 The launchd job uses the Mac's `gh` login and fires on wake when the Mac slept through the hour, but not when it was off; the routine needs no Mac but needs GitHub access that can start workflows.
+First nightly run's failures (2026-11-12): both were test races on the runner, not app faults.
+`IncompatibleStoreRecoveryTests` read the store file before the container that wrote it had closed it; [RM-001](#rm-001) has the cause and the data-safety check.
+`PRListAndSeriesUITests.testPRListShowsDistinctNamedSetsInEveryBucket` read the PR list during the push from Progress: the list's Weight head was already there, so its wait passed, but the first scroll view was still the Progress home's, so the reader kept the home's rows and dropped the list.
+A screen recording of a failing control run shows the PR list sliding over the Progress home at that read; the tap itself worked.
+The test now waits until the Personal Records row has left the screen before it reads; no second tap is added, since a retry would hide a row that ignores taps.
+GitHub's runner, iPhone 17 Pro Max, 20 runs each: on `main`'s code the PR list test failed 2 and the store suite 3 ([run 43305790528](https://github.com/Saechaoc/fitbod/actions/runs/43305790528)); with the fixes both passed 20 of 20 ([run 43306436931](https://github.com/Saechaoc/fitbod/actions/runs/43306436931)).
+Locally `PRListAndSeriesUITests` passed 2 of 2 on the iPhone 17 (`fast-20261112-131651`).
 **Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
 `check_map.py` and `git diff --check` passed; the checker reported five existing
 unreferenced screenshots. Documentation only; no app tests rerun.
