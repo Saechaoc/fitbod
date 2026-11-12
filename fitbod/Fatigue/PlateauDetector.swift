@@ -13,6 +13,8 @@
 //    - .notEnoughData when fewer than N e1RM-eligible sessions remain
 //    - .stalled(e1RMs:rangeRatio:) when (max - min) / mean ≤ tolerance
 //    - .progressing(e1RMs:) otherwise
+//  evaluateWindow(...) returns the same signal with the workouts it read,
+//  for the Stalled list and the chart's stall mark (RM-019).
 //
 //  Tolerance / window resolution: each Exercise may override the global
 //  defaults via plateauWindowOverride: Int? + plateauToleranceOverride:
@@ -51,6 +53,16 @@ public enum PlateauSignal: Sendable, Equatable {
     case notEnoughData
     case stalled(e1RMs: [Double], rangeRatio: Double)
     case progressing(e1RMs: [Double])
+}
+
+/// One finished workout the plateau check read: when it started and its
+/// top set, the set the check ranks the workout by.
+public struct PlateauWorkout: Sendable, Equatable {
+    public let startedAt: Date
+    public let e1RM: Double
+    public let weight: Double
+    public let reps: Int
+    public let rpe: Double?
 }
 
 /// One of D-13's 4 suggested actions. The UI chip surfaces exactly one
@@ -94,6 +106,24 @@ public enum PlateauDetector {
         now: Date = .now,
         machineID: UUID? = nil
     ) -> PlateauSignal {
+        evaluateWindow(
+            exerciseID: exerciseID, intent: intent, in: context, settings: settings, now: now, machineID: machineID
+        ).signal
+    }
+
+    /// `evaluate`, with the workouts it read, newest first: on `.stalled`
+    /// and `.progressing`, one per e1RM of the signal, in reverse order.
+    /// The Stalled list and the chart's stall mark read these, so they show
+    /// the stall the exercise card's STALLED badge shows (RM-019).
+    @MainActor
+    static func evaluateWindow(
+        exerciseID: UUID,
+        intent: Intent,
+        in context: ModelContext,
+        settings: UserSettings,
+        now: Date = .now,
+        machineID: UUID? = nil
+    ) -> (signal: PlateauSignal, workouts: [PlateauWorkout]) {
         // 1. Resolve the Exercise + per-exercise overrides.
         let targetExerciseID = exerciseID
         let exDescriptor = FetchDescriptor<Exercise>(
@@ -103,38 +133,29 @@ public enum PlateauDetector {
         let windowN = exercise?.plateauWindowOverride ?? settings.plateauWindowSessions
         let tolerance = exercise?.plateauToleranceOverride ?? settings.plateauTolerance
 
-        guard windowN > 0 else { return .notEnoughData }
+        guard windowN > 0 else { return (.notEnoughData, []) }
 
-        // 2. Fetch the finished intent-matched sessions, newest first: one
-        //    entry per session, however many times it logs the exercise.
-        let sessions = finishedSessionLogs(exerciseID: exerciseID, intent: intent, machineID: machineID, in: context)
-
-        // 3. Compute per-session top-set e1RM. Skip sessions where no
-        //    working set has a defined e1RM (all-high-rep sessions).
-        var e1RMs: [Double] = []
-        for logs in sessions {
-            guard let top = topSet(in: logs) else { continue }
-            e1RMs.append(top.e1RM)
-            if e1RMs.count >= windowN { break }
-        }
+        // 2–3. The newest N finished intent-matched sessions with a top-set
+        //      e1RM, newest first.
+        let workouts = window(exerciseID: exerciseID, intent: intent, machineID: machineID, size: windowN, in: context)
 
         // 4. Apply the window threshold.
-        guard e1RMs.count >= windowN else {
-            return .notEnoughData
+        guard workouts.count >= windowN else {
+            return (.notEnoughData, workouts)
         }
 
         // 5. Classify against tolerance.
-        let trimmed = Array(e1RMs.prefix(windowN))
+        let trimmed = workouts.map(\.e1RM)
         let minVal = trimmed.min() ?? 0
         let maxVal = trimmed.max() ?? 0
         let mean = trimmed.reduce(0, +) / Double(trimmed.count)
-        guard mean > 0 else { return .notEnoughData }
+        guard mean > 0 else { return (.notEnoughData, workouts) }
         let rangeRatio = (maxVal - minVal) / mean
 
         if rangeRatio <= tolerance {
-            return .stalled(e1RMs: trimmed, rangeRatio: rangeRatio)
+            return (.stalled(e1RMs: trimmed, rangeRatio: rangeRatio), workouts)
         }
-        return .progressing(e1RMs: trimmed)
+        return (.progressing(e1RMs: trimmed), workouts)
     }
 
     // MARK: - suggestedAction
@@ -165,14 +186,7 @@ public enum PlateauDetector {
             return .tryVariation  // safe default
         }
 
-        // Resolve primary muscle (highest weight primary; fallback first stim).
-        let stims = exercise.muscleStimuli ?? []
-        let primaryStim = stims
-            .filter { $0.role == "primary" }
-            .sorted { $0.weight > $1.weight }
-            .first
-            ?? stims.first
-        let primarySlug = primaryStim?.muscle?.slug
+        let primarySlug = primaryMuscleSlug(of: exercise)
 
         // 4. Compute weekStart (Monday-anchored midnight) for Branches 1/2.
         let weekStart = mondayAtMidnight(now, weekStartsMonday: settings.weekStartsMonday)
@@ -209,8 +223,44 @@ public enum PlateauDetector {
     // MARK: - Helpers
 
     /// One session's top set: the e1RM it ranks by, plus the load and RPE
-    /// the RPE-creep check reads.
-    typealias TopSet = (e1RM: Double, weight: Double, rpe: Double?)
+    /// the RPE-creep check reads and the reps the Stalled list shows.
+    typealias TopSet = (e1RM: Double, weight: Double, reps: Int, rpe: Double?)
+
+    /// The muscle the volume check reads: the most heavily weighted primary
+    /// muscle, else the first muscle the exercise works. ADD VOLUME opens it
+    /// outside a workout (RM-019).
+    static func primaryMuscleSlug(of exercise: Exercise) -> String? {
+        let stims = exercise.muscleStimuli ?? []
+        let primaryStim = stims
+            .filter { $0.role == "primary" }
+            .sorted { $0.weight > $1.weight }
+            .first
+            ?? stims.first
+        return primaryStim?.muscle?.slug
+    }
+
+    /// The newest `size` finished sessions of the stream that have a top
+    /// set, newest first: the window `evaluate` and the RPE-creep check
+    /// read. Sessions whose working sets all lack an e1RM (all above 10
+    /// reps) are skipped, so they never take a place in the window.
+    @MainActor
+    private static func window(
+        exerciseID: UUID,
+        intent: Intent,
+        machineID: UUID?,
+        size: Int,
+        in context: ModelContext
+    ) -> [PlateauWorkout] {
+        var workouts: [PlateauWorkout] = []
+        for session in finishedSessionLogs(exerciseID: exerciseID, intent: intent, machineID: machineID, in: context) {
+            guard let top = topSet(in: session.logs) else { continue }
+            workouts.append(PlateauWorkout(
+                startedAt: session.startedAt, e1RM: top.e1RM, weight: top.weight, reps: top.reps, rpe: top.rpe
+            ))
+            if workouts.count >= size { break }
+        }
+        return workouts
+    }
 
     /// The exercise's logs in each FINISHED session (`completedAt != nil`)
     /// of `intent`, newest session first, each session's logs in workout
@@ -227,7 +277,7 @@ public enum PlateauDetector {
         intent: Intent,
         machineID: UUID?,
         in context: ModelContext
-    ) -> [[SessionExercise]] {
+    ) -> [(startedAt: Date, logs: [SessionExercise])] {
         let targetExerciseID = exerciseID
         let targetIntentRaw = intent.rawValue
         let seDescriptor = FetchDescriptor<SessionExercise>(
@@ -252,7 +302,7 @@ public enum PlateauDetector {
         }
         return sessions
             .sorted { $0.startedAt > $1.startedAt }
-            .map { $0.logs.sorted { $0.orderIndex < $1.orderIndex } }
+            .map { ($0.startedAt, $0.logs.sorted { $0.orderIndex < $1.orderIndex }) }
     }
 
     /// The top set across one session's logs of the exercise. The "top" set
@@ -270,7 +320,7 @@ public enum PlateauDetector {
                 guard set.countsAsWork, set.reps > 0 else { continue }
                 guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
                 if best == nil || e > best!.e1RM {
-                    best = (e1RM: e, weight: set.weight, rpe: set.rpe)
+                    best = (e1RM: e, weight: set.weight, reps: set.reps, rpe: set.rpe)
                 }
             }
         }
@@ -314,16 +364,13 @@ public enum PlateauDetector {
         let windowN = exercise.plateauWindowOverride ?? settings.plateauWindowSessions
         let increment = max(exercise.smallestIncrement ?? settings.defaultIncrementKg, 0.5)
 
-        // For each session collect the top working set's (weight, rpe), most
-        // recent first. Like evaluate, skip sessions with no top set and stop
-        // at N, so both checks read the same N sessions.
-        var picks: [(weight: Double, rpe: Double?)] = []
-        for logs in finishedSessionLogs(exerciseID: exerciseID, intent: intent, machineID: machineID, in: context) {
-            guard let top = topSet(in: logs) else { continue }
-            picks.append((weight: top.weight, rpe: top.rpe))
-            if picks.count >= windowN { break }
-        }
-        picks.reverse()                                  // oldest first
+        // Each session's top working set (weight, rpe) from the window
+        // evaluate reads, so both checks read the same N sessions.
+        let picks: [(weight: Double, rpe: Double?)] = window(
+            exerciseID: exerciseID, intent: intent, machineID: machineID, size: windowN, in: context
+        )
+        .reversed()                                      // oldest first
+        .map { (weight: $0.weight, rpe: $0.rpe) }
         guard picks.count >= 4 else { return false }     // need ≥2 + ≥2 pairs
         // Use the modal load: the most common weight bucket within `increment`.
         // Simplified — use the median weight as the "matched load" anchor.
