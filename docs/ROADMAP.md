@@ -15,8 +15,8 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 ## Active work
 
-[RM-010](#rm-010) is the one open delivery.
-Its week board is on `main` (`5aa93d05`) and the phone, but its last slice is unbuilt: the Volume screen evaluates no deload advice, so the amber advisory ring that Today's embedded surface drew is gone from both tabs.
+Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
+In flight: [RM-010](#rm-010)'s last slice, Volume deload advice (its week board is on `main` at `5aa93d05` and on the phone), and [RM-062](#rm-062)'s set counts that leave bouts out.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
@@ -32,7 +32,6 @@ Ready work in independent streams may continue while another feature awaits inpu
 | 2 | [RM-011](#rm-011) redesign 1.5: Program explains Now, Planned and Past | Lane A after RM-010; the approved order below continues. |
 | 3 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
 | 4 | [RM-019](#rm-019) stalled exercises outside a workout | Analytics stream; [RM-020](#rm-020) past recaps follows, then [RM-023](#rm-023). |
-| 5 | [RM-053](#rm-053) nightly CI trigger | No scheduled run has ever started; push and manual runs work. |
 
 Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set, [RM-026](#rm-026) authoring without detours and [RM-027](#rm-027) Library/custom results.
 **Decision (user, 2026-11-12):** [RM-029](#rm-029) is deprioritized and leaves this queue.
@@ -56,6 +55,7 @@ Every phone row except RM-007's disposable-install reproduction can be checked i
 | [RM-045](#rm-045), FT-16 | Calf taps on the 430pt phone and a small (390pt) physical phone pass; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; nothing else waits on it. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
 | [RM-062](#rm-062) | On the phone: a Plank set's time in History, Library finding Stair Climber, a second bench set's time and the exercise time in History, and a Stair Climber planned at 20:00 and speed 8 that finishes untouched with no rest and reads "speed 8" in History | Closing RM-062; nothing else waits on it. |
+| [RM-053](#rm-053) | A scheduled run that starts on its own (next due 11:17 UTC on 2026-11-13) and finishes inside 120 minutes; if none starts, the user's choice of a nightly fallback | Closing RM-053; CI gates nothing, so no delivery waits on it. |
 | [RM-063](#rm-063) | The first MetricKit report, due on the phone since about 2026-11-11, shared from Settings → Diagnostics | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 | [RM-066](#rm-066) | On the phone: a machine picked for Hack Squat (Machine) is still there after a relaunch; the store already opens in place with this build | Closing RM-066; nothing else waits on it. |
 | [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, remaining aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
@@ -129,6 +129,8 @@ Limits: SQLite 4618 was not reproduced; it is `SQLITE_IOERR_SHMOPEN` (the `-shm`
 A corrupt store stays on the retry screen instead of being moved aside.
 So does a store whose migration Core Data can infer but SwiftData cannot apply; a probe with a new unique constraint over duplicate rows gave 134110, SQLite 8 and left the store unchanged.
 Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implementation on `e1393913`. The unit target passed 1,301 tests with one expected failure, including all disk recovery cases; `ReseedRelaunchUITests` and `MilestoneOneJourneyUITests` passed 2/2 (`fast-20261110-075944`, iPhone 17/iOS 26.5). Reproduced a real `chmod 000` failure at 390pt/default text, inspected light/dark retry captures, restored permissions and relaunched into the same seeded workout; nothing moved aside. GitNexus change scope matches bootstrap/container/tests/docs. The retry button itself still has manual rather than committed UI-test evidence; no physical-phone failure injection was attempted.
+Recheck (2026-11-12): an abstraction run's full unit pass on `a7bffbb7`, with two extra characterization tests, failed `pendingMigrationOnAReadOnlyStoreKeepsTheStore` once on 2026-11-11 because the store bytes changed after the failed read-only open; the suite then passed 8/8 alone.
+The clean unit target on `c3eb8161` passed it with every other test (1,244 run, 0 failed, `fast-20261112-102948`), so the failure is not reproduced; a recurrence reopens this entry.
 **References:** [container](../fitbod/Persistence/FitbodModelContainer.swift), [recovery tests](../fitbodTests/Persistence/IncompatibleStoreRecoveryTests.swift); step-1.2 run `full-20261107-074201`, SQLite error 4618, in the retired `261106-he2` summary.
 
 ### <a id="rm-002"></a>RM-002 — Failed writes preserve work and explain retry
