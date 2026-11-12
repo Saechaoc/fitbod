@@ -16,8 +16,8 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow; and [RM-062](#rm-062)'s set counts that leave bouts out.
-[RM-010](#rm-010)'s last slice, Volume deload advice, is on `main`; only its phone look stays open.
+In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; and [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow.
+On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
@@ -52,7 +52,7 @@ Every phone row except RM-007's disposable-install reproduction can be checked i
 | [RM-022](#rm-022) | On the phone: Bench Press folds into one line, History keeps logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds Lateral Raise (Dumbbell) | Closing the families and grouped-list slices; slices 7–8 can proceed. |
 | [RM-045](#rm-045), FT-16 | Calf taps on the 430pt phone and a small (390pt) physical phone pass; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; nothing else waits on it. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
-| [RM-062](#rm-062) | On the phone: a Plank set's time in History, Library finding Stair Climber, a second bench set's time and the exercise time in History, and a Stair Climber planned at 20:00 and speed 8 that finishes untouched with no rest and reads "speed 8" in History | Closing RM-062; nothing else waits on it. |
+| [RM-062](#rm-062) | On the phone: a Plank set's time in History, Library finding Stair Climber, a second bench set's time and the exercise time in History, and a Stair Climber planned at 20:00 and speed 8 that finishes untouched with no rest and reads "speed 8" in History. The user's call: the warnings' bout wording ("1 logged set and 1 bout will be deleted.", "1 logged bout will be removed with it.") | Closing RM-062; nothing else waits on it. |
 | [RM-053](#rm-053) | A scheduled run that starts on its own (next due 11:17 UTC on 2026-11-13) and finishes inside 120 minutes; if none starts, the user's choice of a nightly fallback | Closing RM-053; CI gates nothing, so no delivery waits on it. |
 | [RM-063](#rm-063) | The first MetricKit report, due on the phone since about 2026-11-11, shared from Settings → Diagnostics | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 | [RM-066](#rm-066) | On the phone: a machine picked for Hack Squat (Machine) is still there after a relaunch; the store already opens in place with this build | Closing RM-066; nothing else waits on it. |
@@ -550,6 +550,7 @@ UI: `TimedSetUITests`, `EmptyWorkoutCountsUITests`, `SkipWarmupsUITests` and `Wo
 Inspected at 390pt, light mode (iPhone 17e), with the bout alone and with a bench set too: Today's slab and its discard alert, Program's banner, the Finish sheet, the logger's discard dialog and the remove alert.
 In Library a cardio exercise's page and history call its entries bouts ("1 bout", "Best bout", "1 bout across 1 workout", "No logged bouts yet"), and lifts keep sets.
 `CardioPlanTests` (10) checks both pages' counts, the eight history and cardio suites passed (60 tests), and both pages were inspected at 390pt, light mode, for a logged Stair Climber and a never-logged Elliptical.
+Noted, not changed: a never-logged cardio exercise's history shows TONNAGE 0 in its stat strip, because the LONGEST cell needs a timed set.
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 
