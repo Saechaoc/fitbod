@@ -6,46 +6,60 @@ Routine flow is **Planned → Active → Done**. The agent implements, runs risk
 
 **Requires** means a real prerequisite to the stated scope. **Scheduled after** records chosen delivery order, not a technical dependency. **Verify when** names a stability/release/integration trigger. Conditional requirements apply only to the named delivery. The title and “Done when” define outcome/observable acceptance; “Scope / sequence” names included deliveries, order and exclusions. Evidence separates shipped baseline from unverified remainder. Broad legacy entries have bounded deliveries or explicitly triggered follow-ups; do not leave them indefinitely “Partial”.
 
-Reconciled 2026-11-08 against `ba27f304` and the existing working tree. Historical app test results below were not rerun for this documentation change. P1 protects core workout/data; P2 improves workflows; P3 is polish/optional expansion. Resolve correctness, privacy/security and data-integrity risks before extending affected paths; unrelated work can continue. Prove populated backup/recovery before schema-changing work and load provenance before mixed-unit analytics.
+Reconciled 2026-11-12 against `8c4aa58a`, CI and the code; no app tests were rerun for that review.
+P1 protects core workout/data; P2 improves workflows; P3 is polish/optional expansion.
+Resolve correctness, privacy/security and data-integrity risks before extending affected paths; unrelated work can continue.
+Prove populated backup/recovery before schema-changing work and load provenance before mixed-unit analytics.
 
 Keep concise commands/results/limitations with their RM owner. Logs/screenshots belong in CI artifacts or ignored local output. Finished substantial implementation plans move to [archive/features](archive/features/) with a historical banner, scope/build/results and RM backlink; no new backlog, tracker, report archive or personal approval process.
 
 ## Active work
 
-[RM-006](#rm-006)'s six slices and Lane B ([RM-001](#rm-001)–[RM-005](#rm-005)) are Done.
-The next Today/volume delivery is [RM-010](#rm-010); its RM-006 and RM-003 prerequisites are complete.
+[RM-010](#rm-010) is the one open delivery.
+Its week board is on `main` (`5aa93d05`) and the phone, but its last slice is unbuilt: the Volume screen evaluates no deload advice, so the amber advisory ring that Today's embedded surface drew is gone from both tabs.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
 ## Next
 
-This is the ordered dependency-ready queue; feature definitions below retain the full conditional sequence. Ready work in independent streams may continue while another feature awaits input.
+This is the ordered dependency-ready queue; feature definitions below retain the full conditional sequence.
+Ready work in independent streams may continue while another feature awaits input.
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 1 | [RM-010](#rm-010) Today week board, full volume behind it | Lane A; active 2026-11-11. |
-| 2 | [RM-019](#rm-019) stalled exercises outside a workout | Independent analytics stream; [RM-020](#rm-020) past recaps follows, then broader analytics. |
+| 1 | [RM-010](#rm-010) last slice: Volume evaluates deload advice on appear, gated by the deload-alert setting, from Today and Progress | Lane A; closes RM-010's implementation. |
+| 2 | [RM-029](#rm-029) populated restore on a second installation, then hostile/interrupted input and truthful backup state | Lane B (data safety), parallel to Lane A; overdue, see below. |
+| 3 | [RM-011](#rm-011) redesign 1.5: Program explains Now, Planned and Past | Lane A after RM-010; the approved order below continues. |
+| 4 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
+| 5 | [RM-019](#rm-019) stalled exercises outside a workout | Analytics stream; [RM-020](#rm-020) past recaps follows, then [RM-023](#rm-023). |
+| 6 | [RM-053](#rm-053) nightly CI trigger | No scheduled run has ever started; push and manual runs work. |
 
-After RM-001, [RM-029](#rm-029) populated recovery proof takes priority over schema-changing work. Preserve the approved Today/Program order: **RM-006 → RM-010 → RM-011 → RM-012 → RM-013 → RM-014 → RM-015 → RM-016 → RM-017 → RM-018**. Successors enter this queue as preceding work lands; planning may proceed meanwhile. Authoring, catalog, logging and calculator deliveries use their actual conditional prerequisites below, not the whole redesign as a gate.
+Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set, [RM-026](#rm-026) authoring without detours and [RM-027](#rm-027) Library/custom results.
+After RM-001, [RM-029](#rm-029) populated recovery proof takes priority over schema-changing work.
+Even so, [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066) added SchemaV7 fields with only the store rehearsal (`scripts/rehearse-store.sh` on a copy of the phone's store) as their gate, and RM-029 itself is still unproven.
+Preserve the approved Today/Program order: **RM-006 → RM-010 → RM-011 → RM-012 → RM-013 → RM-014 → RM-015 → RM-016 → RM-017 → RM-018**.
+Successors enter this queue as preceding work lands; planning may proceed meanwhile.
+Authoring, catalog, logging and calculator deliveries use their actual conditional prerequisites below, not the whole redesign as a gate.
 
 ## Needs input or device verification
 
 Only the named observation/decision is unavailable; this section does not pause unrelated work.
+Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `39ce98b5` (2026-11-11), whose store is on seed 10.
 
 | Owner | Missing input or proof | What depends on it |
 |---|---|---|
 | [RM-007](#rm-007), FT-19 | Exact repeated prompt text/owner on phone, then allow/deny/Focus reproduction | Identifying/fixing that prompt and its release acceptance. |
 | [RM-008](#rm-008), FT-20 | Lock Screen/Island rendering, rest adjustment/expiry/end on installed build | Closing widget rendering/lifecycle acceptance; implementation plan is archived. |
-| [RM-045](#rm-045), FT-16 | Small-phone heatmap reach and calf taps on both sizes; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; RM-010 development can proceed. |
+| [RM-010](#rm-010) | On the phone: the week board with this week's real workouts | Closing RM-010 once its Volume advice slice lands. |
+| [RM-022](#rm-022) | On the phone: Bench Press folds into one line, History keeps logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds Lateral Raise (Dumbbell) | Closing the families and grouped-list slices; slices 7–8 can proceed. |
+| [RM-045](#rm-045), FT-16 | Calf taps on the 430pt phone and a small (390pt) physical phone pass; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; nothing else waits on it. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
-| [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
-| [RM-021](#rm-021) | Provenance/legacy-data design | Stored unit changes. |
-| [RM-063](#rm-063) | The first MetricKit report on the phone, shared from Settings | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
-| [RM-053](#rm-053) | One nightly run on `main` that starts on its own, due 2026-11-12 at 11:17 UTC | Closing RM-053. |
-| [RM-022](#rm-022), [RM-062](#rm-062) | Seed 7 and grouped-list checks on the phone (logged names in History, Low Cable Triceps Extension listed, "side lateral raise" found, Bench Press folded into one line) | Closing the families and grouped-list slices; the coverage fill can proceed. |
-| [RM-062](#rm-062) | On the phone: a Stair Climber planned at 20:00 and speed 8 finishes untouched with no rest, and History reads "speed 8" | Closing RM-062 slice 6; nothing else waits on it. |
+| [RM-062](#rm-062) | On the phone: a Plank set's time in History, Library finding Stair Climber, a second bench set's time and the exercise time in History, and a Stair Climber planned at 20:00 and speed 8 that finishes untouched with no rest and reads "speed 8" in History | Closing RM-062; nothing else waits on it. |
+| [RM-063](#rm-063) | The first MetricKit report, due on the phone since about 2026-11-11, shared from Settings → Diagnostics | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 | [RM-066](#rm-066) | On the phone: a machine picked for Hack Squat (Machine) is still there after a relaunch; the store already opens in place with this build | Closing RM-066; nothing else waits on it. |
+| [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, remaining aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
+| [RM-021](#rm-021) | Provenance/legacy-data design | Stored unit changes. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
 
@@ -59,6 +73,10 @@ Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks r
 | [RM-044](#rm-044), [RM-047](#rm-047) | Each workflow becomes stable; do not wait for whole-app stability. |
 | [RM-048](#rm-048), [RM-049](#rm-049), [RM-051](#rm-051) | Release readiness/milestone close; touched docs update with every feature. |
 | [RM-052](#rm-052), [RM-054](#rm-054) | Immediately if blocking iteration; otherwise stability/release or the named test reproduction. |
+| [RM-009](#rm-009) | An untouched damaged-store copy turns up; RM-001's safe open, which repair writes need, is done. |
+| [RM-024](#rm-024) | A reproduced logging reach/reveal or keyboard obstruction, or an RM-063 report that points at the phone memory kill. |
+| [RM-028](#rm-028) | The owning workflow's redesign starts; reproduce its mapped D-rows then. |
+| [RM-050](#rm-050) | A supported runtime reproduces the SwiftData hard-delete issue. |
 
 ## Completed
 
@@ -88,7 +106,8 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 ### <a id="current-focus"></a>Core correctness and the next redesign step
 
 Finish one gym day reliably, then running a block, then the approved Today/Program redesign in order: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6, followed by phase 2.
-Steps 1.1–1.3 shipped ([RM-057](#rm-057), [RM-058](#rm-058), [RM-006](#rm-006)); 1.4 ([RM-010](#rm-010)) follows after RM-003.
+Steps 1.1–1.3 shipped ([RM-057](#rm-057), [RM-058](#rm-058), [RM-006](#rm-006)).
+Step 1.4 ([RM-010](#rm-010)) is on `main` with its Volume advice slice still to build, and 1.5 ([RM-011](#rm-011)) follows.
 Resolve data risks in the paths being changed before adding more prototype behavior.
 Each redesign step keeps affected tests serial on dedicated simulators and captures its changed 390pt states in light and dark. Broader AX3/two-phone/VoiceOver work returns at stability. For Program changes, keep NewBlockBuilderFidelityTests and ProgramViewFidelityTests in the affected checks; SwiftLint covers the fixed colors AdaptiveColorSourceTests used to catch.
 
@@ -250,14 +269,19 @@ Unit provenance and catalog retain their existing P1 priority alongside the appr
 
 ### <a id="rm-010"></a>RM-010 — Redesign 1.4: Today week board, full volume behind it
 
-**P1 · Active: Today week board.** Progress → Volume, muscle routes, neck detail, bar chevrons and map caption shipped early for FT-17/18 (`d89992fb`).
+**P1 · Active: Volume deload advice is the last slice.** The week board, Volume one tap from Today, the three-exercise preview and the first-visit empty start are on `main` (`5aa93d05`) and on the phone.
+Progress → Volume, muscle routes, neck detail, bar chevrons and map caption shipped early for FT-17/18 (`d89992fb`).
 **Decision (2026-11-11, user, Lavish review):** Today is a quick snapshot. The per-muscle MEV/MAV/MRV surface leaves Today; a week board replaces the planned VOLUME THIS WEEK row. It shows seven day tiles (each day's counted workout name and working sets; today outlined; REST on a rest day, LIVE with an open workout) and the week's totals, and opens Volume. In a block it sits under the plan line; without one it heads itself "This week · Nov 9–15". The exercise list previews three with a Show all row. First visit offers Start workout (an empty workout) first and "Plan a routine or block" second, reversing RM-006's removal of the empty start for that state only. Kept: the BRU header bar. Left out: a Recovery tab and recovery-generated workouts (no generator or exercise templates exist; a new tab needs its own roadmap decision).
 **Done when:** The board counts finished counted workouts and their `countsAsWork` sets in the user's calendar week, excludes open/empty workouts and refreshes on finished-workout changes, History corrections, activation and day change. Volume is one tap from Today and Progress on each tab's own stack. Volume evaluates advice on appear; shared evaluator gates `deloadAlertEnabled` for both tabs. Tests cover counts/calendar/alerts-off.
 **Scope / sequence:** `TodayWeek` model and board → remove Today full surface, Volume route → three-exercise preview → first-visit empty start → UI test migration and 390pt inspection. Existing Progress Volume stays; physical clipping is RM-045.
 **Requires:** Shared counted-workout rules; [RM-003](#rm-003) before extending affected volume rendering.
 **Scheduled after:** [RM-006](#rm-006).
 **Verify when:** Counts/routes/advice-off at implementation; [RM-045](#rm-045) physical reach remains separate.
-**Evidence (2026-11-11, 5aa93d05):** Unit target plus `TodayStateRoutesUITests` and `PerMuscleDetailUITests`: 1,224 tests, 1,221 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261111-093400`, iPhone 17 iOS 26.5), including `TodayWeekTests` (5) and the restored empty-start test. The other affected UI classes (MilestoneOneJourney, SessionHistoryBRU, TodayHero, BlockLifecycleEntryPoints, BlockWeekCounts, WorkoutExit) passed in `fast-20261111-092624`. 390pt light/dark captures inspected for ready, first-visit, rest, a Sunday-start week with a finished workout, and the deload notice. After the rebase onto the RM-066 machine work, `TodayWeekTests` and `WorkoutStarterTests` passed again (12 tests, `fast-20261111-134823`), and 5aa93d05 was installed and launched on the iPhone 15 Pro Max. Open: a look at the board on the phone with real history, the Show all row (no seed has more than three exercises), and the Volume advice/alerts-off gating, which this slice does not change.
+**Evidence (2026-11-11, 5aa93d05):** Unit target plus `TodayStateRoutesUITests` and `PerMuscleDetailUITests`: 1,224 tests, 1,221 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261111-093400`, iPhone 17 iOS 26.5), including `TodayWeekTests` (5) and the restored empty-start test. The other affected UI classes (MilestoneOneJourney, SessionHistoryBRU, TodayHero, BlockLifecycleEntryPoints, BlockWeekCounts, WorkoutExit) passed in `fast-20261111-092624`. 390pt light/dark captures inspected for ready, first-visit, rest, a Sunday-start week with a finished workout, and the deload notice. After the rebase onto the RM-066 machine work, `TodayWeekTests` and `WorkoutStarterTests` passed again (12 tests, `fast-20261111-134823`), and 5aa93d05 was installed and launched on the iPhone 15 Pro Max. Open: a look at the board on the phone with real history; the Show all row, which no seed reaches (none has more than three exercises), so it needs a simulator check with a longer session; and the Volume advice slice below.
+**Review finding (2026-11-12):** since `5aa93d05` no caller passes `isAdvisoryActive` to `FatigueSurfaceView`.
+Before it, Today's embedded surface passed `currentAdvisory != nil`, which `TodayView.refreshAdvisory()` sets only while `deloadAlertEnabled` is on; Progress → Volume never passed it.
+Today still shows the deload banner, but the volume bars' amber advisory ring now shows nowhere.
+The remaining slice is the Done-when's own: Volume evaluates advice on appear through one evaluator that honors `deloadAlertEnabled` on both tabs, with an alerts-off test.
 **References:** [Today layouts](design-map/redesign/today-layouts.md), D-131, redesign R-7/R-21; [board](../fitbod/Views/TodayWeekBoard.swift), [week](../fitbod/Views/TodayWeek.swift), [Progress](../fitbod/Progress/ProgressHomeView.swift), [advisor](../fitbod/Fatigue/DeloadAdvisor.swift).
 
 ### <a id="rm-011"></a>RM-011 — Redesign 1.5: Program explains Now, Planned and Past
@@ -373,40 +397,39 @@ Unit provenance and catalog retain their existing P1 priority alongside the appr
 
 ### <a id="rm-022"></a>RM-022 — Catalog curation and safe import
 
-**P1 · Active: complete catalog (user decision 2026-11-10).** Stable-ID incremental import exists; FT-05 Single-Leg Kneeling Leg Curl (hamstrings/machine) shipped at seed v3 (`0892c2cf`).
+**P1 · Planned: slices 7–8 of the complete catalog (user decision 2026-11-10).** Slices 1–6 are on `main`, and the phone's store is on seed 10.
+Stable-ID incremental import exists; FT-05 Single-Leg Kneeling Leg Curl (hamstrings/machine) shipped at seed v3 (`0892c2cf`).
 Seed v4 adds `curation.json`, a local overlay keyed by upstream ID; it retags 39 bodyweight and 6 weighted-bodyweight moves whose upstream equipment was blank or "other", so dips, chins, muscle-ups and inverted rows log at zero added weight.
 Seed v5 carries tracking through the same overlay: 9 holds and carries log a time and the band-assisted pull-up logs assistance; it also retags the 20 Smith machine rows and Bodyweight Flyes, and gives EZ-bar and medicine-ball rows their own equipment.
 Seed v6 imports nine cardio rows by opt-in under the names people use (Stair Climber, Stepmill, Elliptical, Treadmill Run, Treadmill Walk, Stationary Bike, Recumbent Bike, Rowing Machine, Jump Rope), with aliases and no muscles; `exercises.json` is the upstream file byte for byte again, the 28 local rows live in `additions.json`, and `ExerciseCatalog` resolves the three seed files for the importer and the seed checks alike.
 **Decisions (2026-11-10):** one exercise per implement, grouped under a family with equipment variants ("Triceps Extension (Cable)") plus colloquial aliases; curate existing rows in place (rename, retag, hide obscure rows, never delete or re-point history); cardio and timed moves arrive with [RM-062](#rm-062).
-**Machines (2026-11-10):** a brand machine is its own exercise row, not a choice on a logged workout, so comparable history stays exercise plus session intent (ARCHITECTURE.md) and per-machine increment/bar/unit settings stay on `Exercise`. `Exercise` gains optional brand and loading type (plate-loaded, stack, cable) beside family/variant/aliases/hidden, delivered through `curation.json`; Panatta rows keep their IDs and placard names and gain a family and brand. The brand picker offers Hammer Strength, Life Fitness, Cybex, Precor, Nautilus, Matrix, HOIST, Freemotion, Technogym, Arsenal Strength, Panatta and Other; no per-brand machine rows are pre-seeded except Arsenal from the user's gym floor, and CustomExerciseEditor gains brand and family pickers. Upstream "Leverage" rows become the generic plate-loaded variants. A first-time variant may take an estimated starting weight from a family sibling, marked as an estimate.
-**Superseded (2026-11-11):** [RM-066](#rm-066) names a machine's maker and model on the logged workout instead of in the library.
-No exercise gets a brand from now on, the custom editor's brand row is gone, and seed 9 hides the 27 Panatta rows, which keep their stored brand for the workouts that used them.
-**Decisions (2026-11-11):** the user asked for every Arsenal Strength machine: a search of the maker's catalog found 58, kept with their sources and exclusions in ignored `.ci/catalog-table/arsenal-machines.json` for the coverage fill.
-The sibling starting weight is approved, and the family picker gets a search field.
+**Machines (2026-11-10, superseded 2026-11-11 by [RM-066](#rm-066)):** brand machines were to be their own exercise rows with a brand picker.
+RM-066 names a machine's maker and model on the logged workout instead, so no exercise gets a brand from now on, the custom editor's brand row is gone, and seed 9 hides the 27 Panatta rows, which keep their stored brand for the workouts that used them.
+The 58-row Arsenal Strength library draft and its [review page](https://claude.ai/artifact/8vjPN9dtdc1x2qEWpLxaYJ) are dropped; 53 Arsenal models are suggestions in RM-066's machine picker.
+Still in force from that decision: `Exercise` keeps its optional loading type (plate-loaded, stack, cable) beside family, variant, aliases and hidden; upstream "Leverage" rows are the generic plate-loaded variants; and a first-time variant may take an estimated starting weight from a family sibling, marked as an estimate.
+**Decisions (2026-11-11):** the sibling starting weight is approved, and the family picker gets a search field.
 The agent's call on order inside a family: the standard version, the row with no variant label, comes first, then every other row A to Z by its shown title, custom exercises included.
 Each new family needs its muscle credits in `muscles.json` ([RM-065](#rm-065)).
 **Coverage check (2026-11-11):** seed 7's 172 families already hold every family line of the plan's coverage outline (129 lines; its estimate of about 250 families was wrong), so the fill adds no new family.
 Three outline names become aliases of rows the catalog has: "hike" (Outdoor Walk), "yates row" (Row (Barbell, Underhand)) and "squat clean" (Clean).
-The Arsenal Strength draft is 58 rows in 26 families (44 plate-loaded, 14 stack): two-move machines are two rows, five multi-use stations and the Smith machine are left out, and two machines get their own muscle credits.
-It waited for the user's marks and approval on a [review page](https://claude.ai/artifact/8vjPN9dtdc1x2qEWpLxaYJ); its sources are in ignored `.ci/catalog-table/slice8/`.
-Superseded the same day by [RM-066](#rm-066): the Arsenal machines are 53 models the machine picker suggests, not library rows, so the draft and its review are dropped.
+Checked 2026-11-12: "yates row" and "squat clean" have been aliases since seed 7 (`9bdd9b87`); only "hike" is missing, and the family picker (`FamilyPickerSheet`) has no search field yet.
 **Done when:** every common exercise and its colloquial names are findable; updates preserve customs, stable IDs, edited stimuli and historical links; a seed validator rejects duplicates, variants without a family, load-tracked rows without equipment and colliding aliases. Curate pattern/grip metadata before exposing filters.
-**Scope / sequence:** (1) bodyweight equipment overlay, done; (2) RM-062 fields and tracking in the logger, done; (3) cardio: a row outside the strength categories imports only when `curation.json` lists it, local rows move to `additions.json`, done; (4) RM-062 set duration, done; (5) word-prefix search over name, family, aliases and brand, replacing the substring predicate, done; (6) rename preparation (stimulus table, debug seeds and tests keyed by stable ID, empty logged-name snapshots backfilled), done; families, aliases, brand/loading, hidden rows and the trap bar and plate equipment (seed 7), done; the grouped Library/picker and the custom editor's family and brand pickers, done; (7) coverage fill: three search words, a search field in the family picker and the order inside a family (the Arsenal Strength machines moved to [RM-066](#rm-066)); (8) a first-time variant's starting weight estimated from a family sibling with the same equipment and loading (approved 2026-11-11). Damaged-store repair stays RM-009.
+**Scope / sequence:** (1) bodyweight equipment overlay, done; (2) RM-062 fields and tracking in the logger, done; (3) cardio: a row outside the strength categories imports only when `curation.json` lists it, local rows move to `additions.json`, done; (4) RM-062 set duration, done; (5) word-prefix search over name, family, aliases and brand, replacing the substring predicate, done; (6) rename preparation (stimulus table, debug seeds and tests keyed by stable ID, empty logged-name snapshots backfilled), done; families, aliases, brand/loading, hidden rows and the trap bar and plate equipment (seed 7), done; the grouped Library/picker and the custom editor's family and brand pickers, done; (7) coverage fill: the "hike" search word (the outline's other two are already aliases), a search field in the family picker and the order inside a family (the Arsenal Strength machines moved to [RM-066](#rm-066)); (8) a first-time variant's starting weight estimated from a family sibling with the same equipment and loading (approved 2026-11-11). Damaged-store repair stays RM-009.
+Commit messages number these differently: search is "slice 6", rename preparation through the grouped list is "slice 7" (7a–7c), and the coverage fill is "slice 8".
 **Requires:** Existing importer. [RM-004](#rm-004) before extending custom-photo persistence; [RM-009](#rm-009) only for damaged-store recovery, not healthy-store curation.
 **Evidence:** Slice 1: `BodyweightSetUITests` reproduced the disabled Done on Parallel Bar Dip, then passed after the overlay; `SeedTests.curationRetagsBodyweightMoves` checks overlay IDs and equipment; unit target 1,311 tests passed (1 known issue); `ReseedRelaunchUITests` and `WorkoutSwapJourneyUITests` passed.
 Seed v5: `SeedTests.curationRetagsBodyweightMoves` checks every overlay ID, equipment and tracking value against the bundled rows, and the seeded Plank, Farmer's Walk, Band Assisted Pull-Up, Smith Machine Squat and EZ-Bar Curl; the logger results are under [RM-062](#rm-062). Seed v6: `ExerciseCatalogTests` (2 tests) checks that every overlay ID, equipment and tracking value exists, that no ID is used twice, that `exercises.json` holds no local row and that only listed rows leave the strength categories (corrected 2026-11-10: this line also claimed a name and alias collision check, which did not exist until the families slice); `SeedTests.cardioAddsNoMuscleVolume` seeds Stair Climber with its name, alias, tracking and no muscles, and a logged cardio set adds no weekly muscle volume. The logger and editor results are under [RM-062](#rm-062).
 Master table (draft, 2026-11-10): all 712 catalog rows are sorted into 172 families with 572 visible rows (114 new, 11 more upstream rows to import) and 265 hidden duplicates and oddities, each with a reason. The user approved it on 2026-11-10 with three marks: hide Treadmill (Run) and the proposed Treadmill (Incline Walk), and rename Treadmill (Walk) to "Treadmill"; their note asks for speed and incline, a decision under [RM-062](#rm-062).
 Seed 7 brings the approved table into the seed with the three marks applied (570 listed rows, 113 new, 266 hidden); the draft and its builder stay in ignored `.ci/catalog-table/`.
 Seed 7 also settles the sleds, battle ropes and rows tagged "other": sled moves have the sled equipment, and the 6 listed rows left on "other" equipment (Atlas Stone, Battle Ropes, Cycling, Tire Flip, Yoke, Grip) log reps or a time.
-Remaining slices have no acceptance yet.
-Slice 6 (search, 2026-11-10): Library and picker search runs in memory after the facets (`ExerciseSearch`).
+Slice 5 (search, 2026-11-10): Library and picker search runs in memory after the facets (`ExerciseSearch`).
 Every query word must start a word of the row's name, family, aliases, brand or equipment, in any order; punctuation, case, accents, plurals, joined words ("pullup") and the short forms db, bb, kb and bw are read.
 A whole name or alias ranks first, then names that start with the query or its first word, then the rest by name; a row found only through an alias shows it ("Matches “stairmaster”").
 Unit target 1,370 passed (1 known issue), including `ExerciseSearchTests` (5) and `FilterStatePredicateTests` running the in-memory pipeline.
 Full tier 1,473 passed with no failure, 103 of them UI tests, including `LibrarySearchUITests`: "stairmaster" finds Stair Climber and shows the alias, and "press bench barbell medium" finds the medium-grip bench press.
 The first full run failed `ReseedRelaunchUITests`, which expected "1 match" for the bench press's full name, a search that now also finds the incline bench; it now checks that exactly one row carries that name.
 That run also failed `TimedSetUITests` on a lost digit, fixed under [RM-062](#rm-062).
-Not on the phone yet (2026-11-10): at landing (`fc8197f5`) the Mac listed the phone as unavailable, so Xcode found no destination; reconnect and unlock it, then run the [phone installer](SETUP.md#captures-and-phone-installs) from current main.
+At landing (`fc8197f5`, 2026-11-10) the Mac could not reach the phone; search reached it with the `9bdd9b87` install below.
 Inspected at 390pt, light mode: an alias match in the Library and in the swap picker, a search in any word order, a long result list, the empty state and the cleared list; the empty-state heading now quotes the search with curly quotes like the alias line.
 The test that every curated name, family and alias finds its row moves to the families slice, which seeds them.
 Rename preparation (2026-11-10): the curated stimulus weights, the debug seeds and their tests find catalog rows by `externalID`, so the renames to come cannot break them.
@@ -432,7 +455,7 @@ Inspected at 390pt, light mode: the Library (570 exercises), searches by a long 
 Unit target 1,378 passed (1 known issue); full tier 1,481 passed with no failure, 103 of them UI tests; after three small review fixes the unit target passed again.
 Open for the families slice: VoiceOver, larger text and dark mode are unchecked.
 Installed on the phone on 2026-11-10 (`9bdd9b87`) after a fresh copy of its store (23:18) and a rehearsal of seed 7 on that copy, starting from seed 6: exercises went from 714 to 838, and the 5 workouts, 22 logged exercises, 67 sets, the routine's 8 exercises and both custom exercises were unchanged; 19 of the 22 exercises in History get a new name.
-Verify on the phone: open Fitbod once so seed 7 runs, then check that History shows past workouts under their logged names, that Library lists Low Cable Triceps Extension, and that "side lateral raise" finds "Lateral Raise (Dumbbell)".
+Verify on the phone, where seed 7 has run: History shows past workouts under their logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds "Lateral Raise (Dumbbell)".
 Grouped list (2026-11-10): without a search, the Library and every picker fold two or more listed rows of one family into a family line ("Bench Press", "22 variants", ▾) that opens in place to its variants, each indented under it by its short label ("Barbell"); VoiceOver still reads the full name.
 A family counts only the rows that pass the facets, and a family left with one listed row shows that row itself; collapsed, the list has 172 lines instead of 570 rows, and a search stays a flat list, best first.
 The custom exercise editor picks a family from the store's families and, for a machine, cable, Smith machine or cardio machine, a brand (the `MachineBrand` list, None or Other); a copy keeps its source's family and brand, and a brand on other equipment is dropped at save.
@@ -443,8 +466,9 @@ Inspected at 390pt, light mode: the collapsed list, Bench Press and Chest Press 
 Beside the approved mock-ups for the Library, the picker and the custom exercise editor, the only new differences are the family line, the short variant labels and the Family and Brand rows, all chosen in the plan; the design-map screen files already list the older differences.
 Before the rebase onto `main`, the unit target passed 1,382 (1 known issue) and the full tier 1,486 with no failure, 104 of them UI tests.
 After the rebase (RM-063, RM-064, RM-053) and the review's fixes (two helpers made private, two comments), SwiftLint found nothing, the unit target passed 1,221 (1 known issue) and the Library, editor and swap UI suites passed all 9 of their tests.
-Installed on the phone on 2026-11-11 (`1cb90b5a`) after a fresh copy of its store (00:09) that matched the 23:18 copy, so seed 7 has not run there yet and the earlier rehearsal still covers it.
-Verify on the phone: once seed 7 has run, check that the Library folds Bench Press into one line that opens to its variants, and that a new machine exercise can pick a family (its brand row is gone since [RM-066](#rm-066)).
+Installed on the phone on 2026-11-11 (`1cb90b5a`) after a fresh copy of its store (00:09) that matched the 23:18 copy, so seed 7 had not run there yet and the earlier rehearsal still covered it.
+Seed 7 ran on the phone by 07:57 that morning (838 exercises in that store copy, [RM-065](#rm-065)), and the store has been on seed 10 since the [RM-062](#rm-062) slice 6 install.
+Verify on the phone: the Library folds Bench Press into one line that opens to its variants, and a new machine exercise can pick a family (its brand row is gone since [RM-066](#rm-066)).
 Open for the grouped list: VoiceOver, larger text and dark mode are unchecked; once a family line scrolls away, its variants show only their short labels and the indent; the Library screens in the design map wait until the workflow is stable.
 **References:** LIB-01–06/FT-05; [importer](../fitbod/ExerciseLibrary/ExerciseLibraryImporter.swift), [seed source](../fitbod/Resources/ExerciseSeed/SOURCE.md).
 
@@ -452,7 +476,7 @@ Open for the grouped list: VoiceOver, larger text and dark mode are unchecked; o
 
 **P1 · Implemented; verification pending (user decision 2026-11-10).** Since slice 3 the logger, History, Edit workout and routines handle timed holds and carries and assisted reps. Since slice 4 nine cardio rows log a time with a level or a distance, and a custom exercise picks what its sets record. Since slice 5 a load set records how long it took, from the rest before it or a START tap, and the logger and History show each exercise's time.
 Since slice 6 cardio is one bout with a plan, never sets and rest: a routine plans its time and the machine's level, a stair machine's speed or a treadmill's speed and incline, and the bout offers that plan and starts no rest.
-Unproven: the phone checks under Evidence.
+Unproven, all on the phone: a Plank set's time in History (slice 3), Library finding Stair Climber (slice 4), a second bench set's time and the exercise time in History (slice 5), and the planned Stair Climber bout (slice 6).
 **Decision (user, 2026-11-11):** a treadmill set records its time and the treadmill's own settings, speed and incline; distance is a nice-to-have, so it shows derived from speed and time.
 That adds a tracking type and set fields, an additive change to SchemaV7 that this entry's store rehearsal covers before and after.
 **Decision (user, 2026-11-11, later):** cardio has a plan, a time and the machine's speed or level, and no sets or rest.
@@ -488,7 +512,7 @@ Fixed on the way (time entry, 2026-11-10): the three time fields (a timed set in
 A digit typed just after that rewrite could show in the field and never reach its text, so "13000" typed fast saved 13:00 or 1:30: `TimedSetUITests` failed this way once in a full run, and a throwaway UI loop lost a digit in 4 of 40 rounds.
 SwiftUI draws a changed text only on a later pass, the window in which the digit is lost, so the fields now show the digits as typed and the colons once editing ends, and each logger keystroke writes its time at once.
 The loop then lost no digit in 30 rounds per field, screenshots showed the typed digits while typing and the time after DONE, and seven digits now read as no time instead of silently losing one.
-`TimedSetUITests` types the stair climber's time ten times; the full tier under [RM-022](#rm-022) slice 6 includes it.
+`TimedSetUITests` types the stair climber's time ten times; the full tier under [RM-022](#rm-022) slice 5 (search) includes it.
 Slice 6 (cardio plan, stair speed and treadmill, 2026-11-11): Stair Climber and Stepmill track `duration_step_speed` and both treadmill rows `duration_speed_incline` (seed 10).
 `SetEntry` gains `speedKmh` and `incline`, and routine rows and logged exercises gain a planned time, level, speed and incline, all additive default-nil fields in SchemaV7; backup format 5 and two new CSV columns at the end carry them, and older backups still restore.
 The routine editor plans a cardio row's time and its level, stair speed, or treadmill speed (mph with lb, km/h with kg) and incline, in place of sets and rest.
@@ -579,6 +603,7 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 **Scheduled after:** [RM-001](#rm-001), ahead of schema-changing work; independent of the redesign sequence.
 **Verify when:** Before schema changes, sole-log reliance or release: populated second installation, corrupt/interrupted cases and recovery.
 **Evidence:** 2026-11-10 rehearsal on a copy of the iPhone 15 Pro Max store, code at `aef18229` (`scripts/rehearse-store.sh`, `StoreRehearsalTests`): the copy opened in place through `FitbodModelContainer.make` with nothing moved aside; SwiftData row counts equal the SQLite table counts (704 exercises, 2,117 stimuli, 4 workouts, 14 logged exercises, 43 sets, 4 plate inventories, 17 muscles and 17 targets, 1 settings row); a backup of it restored into a second, empty on-disk store and the two export documents were equal entity by entity. Limits: the second store was in the simulator test host, not on a second phone; that store holds no routines, splits or blocks, so those rest on the `BackupRoutinesRoundTripTests` fixtures. No passing acceptance is recorded for hostile, corrupt or interrupted input, pre-restore recovery or truthful backup state.
+Schema changes since then went ahead with only the store rehearsal as their gate: [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066) added SchemaV7 fields, and the backup format is now 5; each rehearsal and phone upgrade is recorded in its entry.
 **References:** EXP-01–04/N1/T41, D-60/D-144–D-146; [workflow](design-map/workflows/settings-units-backup-restore-export.md), [tests](../fitbodTests/Phase6/BackupRoundTripTests.swift).
 
 ### Deferred feature details
@@ -770,7 +795,7 @@ Use `git show ba27f304:<old-path>` for wording, F1–F388 and evidence.
 The design-map audit keeps original finding details with one RM owner each; update status only here.
 Old review/verification folders, research/UI-review collections, milestone reports, Conway run diagnostics, HTML reports, screenshot bundles, duplicate codebase maps and impact logs are retired after reconciliation. Nested redesign reviews/prompts, risk/decision lists, evaluations and historical map changelogs are retired too; their outcomes and criteria belong here. Do not recreate those reports or ledgers as archives; retain only finished substantial feature plans under `docs/archive/features/`.
 CI uploads results as 14-day artifacts and no longer commits evidence to a branch. Long-term acceptance and concise results belong in the owning RM entry.
-The step-1.3 notes are reconciled against RM-006/O-15/O-16 and current policy; implementation has not started. Unrelated workspace changes are excluded from this documentation result.
+The step-1.3 notes were reconciled against RM-006/O-15/O-16 before implementation; RM-006 has since shipped. Unrelated workspace changes are excluded from this documentation result.
 
 ### <a id="release-checks"></a>Stability and release verification
 
@@ -869,7 +894,8 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
-**P3 · Implemented; verification pending (2026-11-11): the push and manual runs passed their checks, but the first nightly run never started; one must start on its own.**
+**P3 · Planned: the nightly trigger has never fired (2026-11-12).**
+Push and manual runs work, but GitHub has created no scheduled run for this repository: none at 11:00 UTC on 2026-11-11 and none at 11:17 UTC on 2026-11-12.
 Local checks stay the delivery policy, and CI gates nothing.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
 For the 2026-11-10 triggers: one push run on `main` is green, one manual run with the UI suite finishes inside the 120-minute limit, and one nightly run starts on its own and finishes inside it.
@@ -893,7 +919,7 @@ allocation; scripts do not enforce exclusivity.
 **Scope / sequence:** Choose delivery trigger policy → implement chosen triggers → observe expected CI run. No CI performance redesign.
 Not included: porting CI to `scripts/test.sh`, sharding on the 3-core runner, and skipping nights with no commits.
 **Requires:** None; the choice is made.
-**Verify when:** The nightly run due on 2026-11-12 at 11:17 UTC; it must start on its own and finish inside the limit.
+**Verify when:** After a trigger fix: one nightly run starts on its own and finishes inside the limit.
 **Evidence:** The user chose this on 2026-11-09. The last green CI run took 37 minutes (2026-10-04), and the PR #2 run was cancelled at the workflow's 120-minute limit. The workflow file did not change for that decision, and why that run hung was not investigated.
 Workflow change (2026-11-10): only `.github/workflows/ios.yml` changed, and `scripts/ci/ios-ci.sh` did not.
 The UI step now runs only in nightly and manual runs, the small-phone step is gone, and the last step fails the run only when a step that ran did not pass.
@@ -907,6 +933,11 @@ At 90 minutes, the UI suite has about 30 minutes to grow before the nightly run 
 Nightly run (2026-11-11): the first one, due at 11:00 UTC, never started, though the workflow was active on the default branch.
 GitHub can drop scheduled runs at the top of an hour, so the cron moved to 11:17 UTC.
 The CI summary now names the small phone only when its UI suite ran; before, it named a phone no step used.
+Nightly run (2026-11-12): none started at 11:17 UTC either.
+The Actions API lists no `schedule` run for this repository at all, while `ios.yml` is active on the default branch `main` and the repository is public; the cause is not investigated.
+Push run on `0dbc3c7c` (2026-11-11, [run 43093906725](https://github.com/Saechaoc/fitbod/actions/runs/43093906725)): marked failed only because Upload results could not create its artifact in five attempts, GitHub's artifact service answering with an HTML page.
+Its unit target passed: 1,229 run, 1,226 passed, 2 skipped, 1 expected failure, none failed.
+The upload step has no `continue-on-error`, so an artifact-service outage turns a passing run red.
 **Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
 `check_map.py` and `git diff --check` passed; the checker reported five existing
 unreferenced screenshots. Documentation only; no app tests rerun.
