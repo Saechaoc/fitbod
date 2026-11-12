@@ -612,11 +612,20 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 
 ### <a id="rm-026"></a>RM-026 — Session/routine authoring without detours
 
-**P2 · Planned.** Superset partners, multi-exercise selection, block/hybrid progression and archived inspection remain.
+**P2 · Planned.** Supersets are delivered (2026-11-12); unsaved duplication, multi-exercise selection, block/hybrid progression and archived inspection remain.
 **Done when:** name supersets' acting exercise/partners/effect in one trip, including unsaved sessions; duplication preserves/confirms unsaved edits; multi-select adds the stated count in order. Progression eligibility reads active graph, not deprecated template.block. Inspect archived routines before restore. Preserve drafts/rollback/snapshots.
 **Scope / sequence:** Deliver supersets (partners/effect/unsaved rollback), then unsaved duplication, then ordered multi-select, then graph-based progression eligibility and archived inspection. Each is a bounded authoring delivery; applied per-set targets stay RM-040.
 **Requires:** [RM-002](#rm-002) for affected superset/editor writes; [RM-040](#rm-040) only before exposing applied per-set targets.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** Supersets, the first delivery (2026-11-12): a long press offers Make superset…, or Edit superset… and Remove from superset once paired, in a new session too, so the Save Routine First alert is gone (D-61, D-140).
+One sheet names the long-pressed lift, says what a superset does and lists the session's lifts to check, two to four, each with its current superset; PAIR n LIFTS ▸ pairs them in one trip (D-152).
+Changes stay in the draft until Save: Discard writes nothing, a superset left with one lift ends, and Save deletes the session's groups that no lift uses in the same transaction.
+The editor draws one bracket per superset, so two adjacent supersets no longer read as one.
+`SupersetDraftPersistenceTests` passed 8/8; the unit target passed 1,248 of 1,252 with 2 skipped and 1 expected failure, and its one failure, `UICopyRulesTests.countsUseThePluralHelper`, fails the same on `main` (`fast-20261112-120610`).
+`SessionEditorRowsUITests` passed 2/2 on iPhone 17/iOS 26.5 (`fast-20261112-123355`): a new session pairs two lifts in one trip, saves them, keeps them after a relaunch, and keeps them after Discard.
+Captures of the flow at 390pt in light mode were compared with `phase-2--modal-superset.png`.
+Not built: the mock-up's rest behavior and CLUSTER chip, which need stored fields.
+Its line "Sets alternate between members. Rest belongs to the last lift in the cluster." describes a workout the logger does not run, so the sheet says each lift keeps its own sets and rest until the user decides.
+No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
 
 ### <a id="rm-027"></a>RM-027 — Library/custom flows finish where expected
