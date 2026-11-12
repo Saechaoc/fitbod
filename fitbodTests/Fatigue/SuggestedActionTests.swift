@@ -3,7 +3,9 @@
 //  fitbodTests
 //
 //  Pins PlateauDetector.suggestedAction's D-13 4-branch decision tree
-//  + the no-stall short-circuit + branch priority.
+//  + the no-stall short-circuit + branch priority. Each case also checks
+//  that Progress's Stalled list, which reads the logs once for every
+//  stream, shows the card's suggestion (RM-019).
 //
 
 import Foundation
@@ -16,6 +18,15 @@ import Testing
 struct SuggestedActionTests {
 
     // MARK: - Fixtures
+
+    /// The card's suggestion for `ex`'s strength workouts, after checking
+    /// that the Stalled list shows the same one, or no row when it has none.
+    private func cardAction(_ ex: Exercise, in ctx: ModelContext, settings: UserSettings) -> SuggestedAction? {
+        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let listed = StalledExercises.find(in: ctx, settings: settings).map(\.action)
+        #expect(listed == (action.map { [$0] } ?? []), "the Stalled list must show the card's suggestion")
+        return action
+    }
 
     private func makeMuscles(_ ctx: ModelContext) throws -> (chest: MuscleGroup, shoulders: MuscleGroup, triceps: MuscleGroup) {
         let chest = MuscleGroup(slug: "chest", displayName: "Chest", region: .upper)
@@ -118,7 +129,7 @@ struct SuggestedActionTests {
         let ex = try makeBench(ctx, muscles: muscles)
         try insertStalledSessionsThisWeek(ctx, ex: ex, sessionsCount: 3)  // <N=4
         let settings = defaultSettings(ctx)
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == nil)
     }
 
@@ -152,7 +163,7 @@ struct SuggestedActionTests {
         }
         try ctx.save()
         let settings = defaultSettings(ctx)
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == nil)
     }
 
@@ -169,7 +180,7 @@ struct SuggestedActionTests {
         try insertChestTarget(ctx, muscle: muscles.chest, mav: 16)
         let settings = defaultSettings(ctx)
 
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == .addVolume)
     }
 
@@ -187,7 +198,7 @@ struct SuggestedActionTests {
         try insertChestTarget(ctx, muscle: muscles.chest, mav: 2)
         let settings = defaultSettings(ctx)
 
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == .dropIntensity)
     }
 
@@ -230,7 +241,7 @@ struct SuggestedActionTests {
         try ctx.save()
         let settings = defaultSettings(ctx)
 
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == .deload)
     }
 
@@ -246,7 +257,7 @@ struct SuggestedActionTests {
         // No active block → Branch 3 cannot fire.
         let settings = defaultSettings(ctx)
 
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == .tryVariation)
     }
 
@@ -267,7 +278,7 @@ struct SuggestedActionTests {
         try ctx.save()
         let settings = defaultSettings(ctx)
 
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == .tryVariation)
     }
 
@@ -283,7 +294,7 @@ struct SuggestedActionTests {
         try insertChestTarget(ctx, muscle: muscles.chest, mav: 16)  // 4 < 16 → Branch 1
         let settings = defaultSettings(ctx)
 
-        let action = PlateauDetector.suggestedAction(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        let action = cardAction(ex, in: ctx, settings: settings)
         #expect(action == .addVolume)
     }
 }

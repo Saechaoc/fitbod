@@ -150,7 +150,9 @@ struct StalledExercisesTests {
         )
 
         #expect(StalledExercises.find(in: ctx, settings: settings).count == 2)
-        #expect(StalledExercises.find(in: ctx, settings: settings, exerciseID: squat.id).map(\.exercise.id) == [squat.id])
+        // The chart hands over its query of the exercise's logs.
+        let squatLogs = try ctx.fetch(FetchDescriptor<SessionExercise>()).filter { $0.exercise?.id == squat.id }
+        #expect(StalledExercises.find(in: ctx, settings: settings, logs: squatLogs).map(\.exercise.id) == [squat.id])
     }
 
     @Test("the list runs newest stall first, in sections by intent in the legend's order")

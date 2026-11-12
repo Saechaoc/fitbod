@@ -195,7 +195,9 @@ public struct ProgressHomeView: View {
             emptyWorkoutsKey = finishedIDs
         }
         .task(id: StallsKey(finished: finishedIDs, edits: historyEdits?.version)) {
-            stalls = userSettingsList.first.map { StalledExercises.find(in: ctx, settings: $0) } ?? []
+            stalls = userSettingsList.first.map {
+                StalledExercises.find(in: ctx, settings: $0, logs: recentSessionExercises)
+            } ?? []
         }
     }
 

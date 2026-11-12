@@ -181,6 +181,7 @@ Progression kind is not a comparability key.
 Do not widen one reader alone.
 
 Stalls outside a workout ([RM-019](docs/ROADMAP.md#rm-019)) are the exercise card's plateau check, run on each finished exercise/intent/machine stream: `StalledExercises.find` reads `PlateauDetector.evaluateWindow` and `suggestedAction`, never a second rule.
+`find` reads the logs the view's query already holds (it fetches them only when given none), hands each stream its own, and reads what no stream decides (this week's volume, MAV targets, the active block) once per call, so its fetch count does not grow with history.
 Progress and the exercise chart find them in a `.task(id:)` keyed on the finished workouts and `HistoryEdits.version`, never per render.
 Their suggestions only open a screen or explain; none writes a set, a workout or a routine.
 

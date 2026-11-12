@@ -395,7 +395,10 @@ Then `StalledExercisesTests`, `ProgressChartDescriptorTests` and `UICopyRulesTes
 390pt captures in light and dark were inspected: Progress, the list, the chart, the screens ADD VOLUME and TRY VARIATION open, and the DROP INTENSITY alert.
 The list matches the mockup except ‹ BACK for its bare chevron (the app's pushed-screen rule) and a unit after the top-set load.
 DROP INTENSITY was reached with an uncommitted seed change; no seed reaches CONSIDER DELOAD, which opens the existing fatigue signals sheet.
-Not measured: how long Progress takes to list stalls on a long history on the phone.
+On a four-year history on the iPhone 17e simulator (832 finished workouts, 4,992 logged exercises, 72 stalled streams), finding stalls took 2.03 s cold and 2.44 s warm with about 650 fetches.
+`find` now reads the logs the Progress tab's query already holds, each stream's own logs, and this week's volume, the MAV targets and the active block once per call: 92 ms cold and 34 ms again on that history, 10 ms for one exercise's chart, and 270 ms when it fetches every log itself, which only tests do.
+`SuggestedActionTests` checks that the Stalled list shows the card's suggestion in every branch; with `StalledExercisesTests`, `PlateauDetectorTests` and the other plateau suites, 66 of 67 passed (`fast-20261112-122428`), and the one failure is a `UICopyRulesTests` exemption that main's `e322f70f` drops.
+The time on the phone is not measured.
 **References:** D-21/PROG-06; [Progress workflow](design-map/workflows/check-progress.md), phase-5 deferred chip routes.
 
 ### <a id="rm-020"></a>RM-020 — Reopen past weekly recaps

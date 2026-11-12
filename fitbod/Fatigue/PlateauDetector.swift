@@ -14,7 +14,10 @@
 //    - .stalled(e1RMs:rangeRatio:) when (max - min) / mean ≤ tolerance
 //    - .progressing(e1RMs:) otherwise
 //  evaluateWindow(...) returns the same signal with the workouts it read,
-//  for the Stalled list and the chart's stall mark (RM-019).
+//  for the Stalled list and the chart's stall mark (RM-019). Given a
+//  stream's logs (`Prefetched`), it reads them instead of fetching, and
+//  suggestedAction(for:...) takes that read, so StalledExercises.find runs
+//  the card's check on every stream with one fetch of the logs.
 //
 //  Tolerance / window resolution: each Exercise may override the global
 //  defaults via plateauWindowOverride: Int? + plateauToleranceOverride:
@@ -111,6 +114,15 @@ public enum PlateauDetector {
         ).signal
     }
 
+    /// A stream's exercise and its logs, read by the caller already, so the
+    /// check fetches neither: `StalledExercises.find` reads every log once
+    /// and hands each stream its own (RM-019). The check still keeps only
+    /// the finished logs of its intent and machine, as with fetched ones.
+    struct Prefetched {
+        let exercise: Exercise
+        let logs: [SessionExercise]
+    }
+
     /// `evaluate`, with the workouts it read, newest first: on `.stalled`
     /// and `.progressing`, one per e1RM of the signal, in reverse order.
     /// The Stalled list and the chart's stall mark read these, so they show
@@ -122,14 +134,11 @@ public enum PlateauDetector {
         in context: ModelContext,
         settings: UserSettings,
         now: Date = .now,
-        machineID: UUID? = nil
+        machineID: UUID? = nil,
+        prefetched: Prefetched? = nil
     ) -> (signal: PlateauSignal, workouts: [PlateauWorkout]) {
         // 1. Resolve the Exercise + per-exercise overrides.
-        let targetExerciseID = exerciseID
-        let exDescriptor = FetchDescriptor<Exercise>(
-            predicate: #Predicate<Exercise> { $0.id == targetExerciseID }
-        )
-        let exercise = (try? context.fetch(exDescriptor))?.first
+        let exercise = prefetched?.exercise ?? fetchExercise(exerciseID, in: context)
         let windowN = exercise?.plateauWindowOverride ?? settings.plateauWindowSessions
         let tolerance = exercise?.plateauToleranceOverride ?? settings.plateauTolerance
 
@@ -137,7 +146,10 @@ public enum PlateauDetector {
 
         // 2–3. The newest N finished intent-matched sessions with a top-set
         //      e1RM, newest first.
-        let workouts = window(exerciseID: exerciseID, intent: intent, machineID: machineID, size: windowN, in: context)
+        let workouts = window(
+            exerciseID: exerciseID, intent: intent, machineID: machineID, size: windowN,
+            logs: prefetched?.logs, in: context
+        )
 
         // 4. Apply the window threshold.
         guard workouts.count >= windowN else {
@@ -172,52 +184,78 @@ public enum PlateauDetector {
         now: Date = .now,
         machineID: UUID? = nil
     ) -> SuggestedAction? {
-        let signal = evaluate(
+        let read = evaluateWindow(
             exerciseID: exerciseID, intent: intent, in: context, settings: settings, now: now, machineID: machineID
         )
-        guard case .stalled = signal else { return nil }
-
-        // Look up Exercise + primary muscle for Branch 1.
-        let targetExerciseID = exerciseID
-        let exDescriptor = FetchDescriptor<Exercise>(
-            predicate: #Predicate<Exercise> { $0.id == targetExerciseID }
+        guard case .stalled = read.signal else { return nil }
+        return suggestedAction(
+            for: read, exercise: fetchExercise(exerciseID, in: context), settings: settings,
+            facts: SuggestionFacts(context: context, settings: settings, now: now)
         )
-        guard let exercise = (try? context.fetch(exDescriptor))?.first else {
-            return .tryVariation  // safe default
+    }
+
+    /// `suggestedAction` for a window `evaluateWindow` has read, so the
+    /// Stalled list does not read it again (RM-019). `facts` holds what no
+    /// stream decides; one shared by many streams reads each fact once.
+    @MainActor
+    static func suggestedAction(
+        for read: (signal: PlateauSignal, workouts: [PlateauWorkout]),
+        exercise: Exercise?,
+        settings: UserSettings,
+        facts: SuggestionFacts
+    ) -> SuggestedAction? {
+        guard case .stalled = read.signal else { return nil }
+        guard let exercise else { return .tryVariation }  // safe default
+
+        // Branch 1 — primary muscle volume below MAV this week.
+        if let slug = primaryMuscleSlug(of: exercise), facts.isBelowMAV(slug) {
+            return .addVolume
         }
 
-        let primarySlug = primaryMuscleSlug(of: exercise)
-
-        // 4. Compute weekStart (Monday-anchored midnight) for Branches 1/2.
-        let weekStart = mondayAtMidnight(now, weekStartsMonday: settings.weekStartsMonday)
-
-        // 5. Branch 1 — primary muscle volume below MAV this week.
-        if let slug = primarySlug,
-           let target = fetchMuscleVolumeTarget(slug: slug, in: context) {
-            let total = FatigueModel.weeklyVolume(muscleSlug: slug, weekStart: weekStart, in: context)
-            if total.totalSetsRounded < target.mav {
-                return .addVolume
-            }
-        }
-
-        // 6. Branch 2 — RPE creep ≥1.0 at matched load across the window.
-        if hasRPECreep(
-            exerciseID: exerciseID,
-            intent: intent,
-            machineID: machineID,
-            in: context,
-            settings: settings
-        ) {
+        // Branch 2 — RPE creep ≥1.0 at matched load across the window.
+        let increment = max(exercise.smallestIncrement ?? settings.defaultIncrementKg, 0.5)
+        if hasRPECreep(in: read.workouts, increment: increment) {
             return .dropIntensity
         }
 
-        // 7. Branch 3 — active block week ≥3 AND deload ≤14d.
-        if isInBlockWeekThreeWithDeloadComing(now: now, in: context) {
+        // Branch 3 — active block week ≥3 AND deload ≤14d.
+        if facts.deloadComing {
             return .deload
         }
 
-        // 8. Branch 4 default.
+        // Branch 4 default.
         return .tryVariation
+    }
+
+    /// What `suggestedAction` reads that no stream decides: each primary
+    /// muscle's sets this week against its MAV target (Branch 1) and the
+    /// active block's deload check (Branch 3). Each is read when first
+    /// asked and then kept, so `StalledExercises.find` reads each once for
+    /// all its streams; the card makes a new one for each ask.
+    @MainActor
+    final class SuggestionFacts {
+        private let context: ModelContext
+        private let now: Date
+        private let weekStart: Date
+        private var belowMAV: [String: Bool] = [:]
+        private lazy var volumes = FatigueModel.weeklyVolumes(weekStart: weekStart, in: context)
+        private(set) lazy var deloadComing = PlateauDetector.isInBlockWeekThreeWithDeloadComing(now: now, in: context)
+
+        init(context: ModelContext, settings: UserSettings, now: Date) {
+            self.context = context
+            self.now = now
+            weekStart = PlateauDetector.mondayAtMidnight(now, weekStartsMonday: settings.weekStartsMonday)
+        }
+
+        /// The muscle has a MAV target and fewer sets than it this week.
+        func isBelowMAV(_ slug: String) -> Bool {
+            if let known = belowMAV[slug] { return known }
+            let below = PlateauDetector.fetchMuscleVolumeTarget(slug: slug, in: context).map { target in
+                (volumes[slug] ?? WeightedSetTotal(directSets: 0, indirectSets: 0)).totalSetsRounded < target.mav
+            } ?? false
+            belowMAV[slug] = below
+            return below
+        }
     }
 
     // MARK: - Helpers
@@ -239,6 +277,13 @@ public enum PlateauDetector {
         return primaryStim?.muscle?.slug
     }
 
+    /// The exercise, or nil when it is gone.
+    @MainActor
+    private static func fetchExercise(_ id: UUID, in context: ModelContext) -> Exercise? {
+        let descriptor = FetchDescriptor<Exercise>(predicate: #Predicate<Exercise> { $0.id == id })
+        return (try? context.fetch(descriptor))?.first
+    }
+
     /// The newest `size` finished sessions of the stream that have a top
     /// set, newest first: the window `evaluate` and the RPE-creep check
     /// read. Sessions whose working sets all lack an e1RM (all above 10
@@ -249,10 +294,14 @@ public enum PlateauDetector {
         intent: Intent,
         machineID: UUID?,
         size: Int,
+        logs: [SessionExercise]?,
         in context: ModelContext
     ) -> [PlateauWorkout] {
         var workouts: [PlateauWorkout] = []
-        for session in finishedSessionLogs(exerciseID: exerciseID, intent: intent, machineID: machineID, in: context) {
+        let sessions = finishedSessionLogs(
+            exerciseID: exerciseID, intent: intent, machineID: machineID, logs: logs, in: context
+        )
+        for session in sessions {
             guard let top = topSet(in: session.logs) else { continue }
             workouts.append(PlateauWorkout(
                 startedAt: session.startedAt, e1RM: top.e1RM, weight: top.weight, reps: top.reps, rpe: top.rpe
@@ -270,22 +319,29 @@ public enum PlateauDetector {
     /// Pitfall #1: the fetch predicate keeps the optional chain on a single
     /// hop; the finished and intent gates on the parent Session run as Swift
     /// post-filters, which also drop SessionExercises without a parent
-    /// session (orphan rows).
+    /// session (orphan rows). Given `logs`, the exercise's logs the caller
+    /// read, they stand in for the fetch.
     @MainActor
     private static func finishedSessionLogs(
         exerciseID: UUID,
         intent: Intent,
         machineID: UUID?,
+        logs: [SessionExercise]?,
         in context: ModelContext
     ) -> [(startedAt: Date, logs: [SessionExercise])] {
-        let targetExerciseID = exerciseID
         let targetIntentRaw = intent.rawValue
-        let seDescriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate<SessionExercise> { se in
-                se.exercise?.id == targetExerciseID
-            }
-        )
-        let all = (try? context.fetch(seDescriptor)) ?? []
+        let all: [SessionExercise]
+        if let logs {
+            all = logs
+        } else {
+            let targetExerciseID = exerciseID
+            let seDescriptor = FetchDescriptor<SessionExercise>(
+                predicate: #Predicate<SessionExercise> { se in
+                    se.exercise?.id == targetExerciseID
+                }
+            )
+            all = (try? context.fetch(seDescriptor)) ?? []
+        }
         // Each session's logs, in the order the sessions first appear.
         var sessions: [(startedAt: Date, logs: [SessionExercise])] = []
         var sessionIndex: [UUID: Int] = [:]
@@ -337,40 +393,23 @@ public enum PlateauDetector {
         return (try? context.fetch(descriptor))?.first
     }
 
-    /// D-13 Branch 2 — RPE creep detection. Reads the same N intent-matched
-    /// sessions used by evaluate, identifies a "matched load" (the modal
-    /// top-set weight across the window within ±max(smallestIncrement, 0.5kg)),
-    /// and compares avg of last 2 sessions' RPE vs avg of first 2.
+    /// D-13 Branch 2 — RPE creep detection. Reads the window `evaluate`
+    /// read (`workouts`, newest first), identifies a "matched load" (the
+    /// modal top-set weight across the window, within ±`increment`, which
+    /// is max(smallestIncrement, 0.5kg)), and compares avg of last 2
+    /// sessions' RPE vs avg of first 2.
     ///
-    /// Only FINISHED sessions (`completedAt != nil`) count, as in `evaluate`:
-    /// the workout in progress never enters the window, even before a set
-    /// is logged. A finished session with no top set (no logged working set,
-    /// or none with an e1RM) is skipped, also as in `evaluate`, so it never
-    /// takes a place in the window. A session that logs the exercise several
-    /// times takes one place, with its top set across all of those logs.
-    @MainActor
-    private static func hasRPECreep(
-        exerciseID: UUID,
-        intent: Intent,
-        machineID: UUID?,
-        in context: ModelContext,
-        settings: UserSettings
-    ) -> Bool {
-        let targetExerciseID = exerciseID
-        let exDescriptor = FetchDescriptor<Exercise>(
-            predicate: #Predicate<Exercise> { $0.id == targetExerciseID }
-        )
-        guard let exercise = (try? context.fetch(exDescriptor))?.first else { return false }
-        let windowN = exercise.plateauWindowOverride ?? settings.plateauWindowSessions
-        let increment = max(exercise.smallestIncrement ?? settings.defaultIncrementKg, 0.5)
-
-        // Each session's top working set (weight, rpe) from the window
-        // evaluate reads, so both checks read the same N sessions.
-        let picks: [(weight: Double, rpe: Double?)] = window(
-            exerciseID: exerciseID, intent: intent, machineID: machineID, size: windowN, in: context
-        )
-        .reversed()                                      // oldest first
-        .map { (weight: $0.weight, rpe: $0.rpe) }
+    /// As the window is `evaluate`'s, only FINISHED sessions
+    /// (`completedAt != nil`) count: the workout in progress never enters
+    /// it, even before a set is logged. A finished session with no top set
+    /// (no logged working set, or none with an e1RM) never takes a place in
+    /// it. A session that logs the exercise several times takes one place,
+    /// with its top set across all of those logs.
+    private static func hasRPECreep(in workouts: [PlateauWorkout], increment: Double) -> Bool {
+        // Each session's top working set (weight, rpe), oldest first.
+        let picks: [(weight: Double, rpe: Double?)] = workouts
+            .reversed()
+            .map { (weight: $0.weight, rpe: $0.rpe) }
         guard picks.count >= 4 else { return false }     // need ≥2 + ≥2 pairs
         // Use the modal load: the most common weight bucket within `increment`.
         // Simplified — use the median weight as the "matched load" anchor.

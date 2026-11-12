@@ -363,7 +363,7 @@ private struct ProgressChartHost: View {
             edits: historyEdits?.version
         )) {
             stalls = settingsList.first.map {
-                StalledExercises.find(in: ctx, settings: $0, exerciseID: exercise.id)
+                StalledExercises.find(in: ctx, settings: $0, logs: sessionExercises)
             } ?? []
         }
     }
