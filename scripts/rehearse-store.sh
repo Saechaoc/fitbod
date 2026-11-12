@@ -6,7 +6,7 @@
 #   FITBOD_TEST_DEVICE=<simulator udid> scripts/rehearse-store.sh run <store folder> [earlier.fitbodbackup]
 #
 # Run it before a schema change and again after it (docs/DEVELOPMENT.md:
-# "Prove populated backup/recovery before schema-changing work").
+# "Rehearse every schema change on a copy of the phone's store").
 #
 # pull: copies Library/Application Support out of the app's data container
 #       on the phone into .ci/phone-store/<date>/. Close the app first, so the

@@ -23,7 +23,7 @@ These are cheap or protect the lifter's data, so they apply to every change at e
   Model, persistence, engine and backup changes get unit tests, and a relaunch check when they change what is stored.
   Examples: `MilestoneOnePersistenceTests`, `SessionSnapshotFidelityTests`.
 - **No silent failures that lose work.** A failed save must say so and must not poison later saves.
-  The design map's dated blockers D-01 to D-04 are this class; current follow-ups are [RM-001–RM-005](ROADMAP.md#current-focus).
+  The design map's dated blockers D-01 to D-04 are this class; their follow-ups, [RM-001–RM-005](ROADMAP.md#current-focus), are done.
 - **Prescription math is right.** Progression, e1RM, volume, PR and plate logic get unit tests; the whole unit target runs in about 36 seconds.
 - **Schema and unit rules hold.** SchemaV7 has no historical migration chain; recovery preserves incompatible stores separately. Units relabel and never implicitly convert (see `ARCHITECTURE.md`).
 - **Local only.** No network sync, accounts, analytics or HealthKit.
@@ -86,7 +86,7 @@ A skipped ticket is not a completed outcome.
 - Build in small slices. A slice lands on `main` and is pushed when its local checks pass; no pull request is required and CI gates nothing ([RM-053](ROADMAP.md#rm-053)).
 - Use **Planned → Active → Done**. Done means the agreed scope works, appropriate agent-run checks pass and affected docs are current. A relevant failing check is not a pass; record its actual disposition.
 - If implementation is finished but required proof is unavailable, use **Implemented; verification pending** and identify exactly what remains unproven. Ask for user involvement only for unavailable observations (for example, Lock Screen rendering or gym ergonomics) or a product decision. Those checks block only work that actually requires their result; continue independent planning/development.
-- Separate **Requires** (real prerequisites), **Scheduled after** (delivery order) and **Verify when** (stability/release/integration triggers). Prove populated backup/recovery before schema-changing work, and load provenance before mixed-unit analytics. Keep correctness/privacy/data-integrity safeguards local to affected paths; unrelated work need not wait.
+- Separate **Requires** (real prerequisites), **Scheduled after** (delivery order) and **Verify when** (stability/release/integration triggers). Rehearse every schema change on a copy of the phone's store (`scripts/rehearse-store.sh`); prove populated backup/recovery ([RM-029](ROADMAP.md#rm-029)) before a change SwiftData cannot migrate in place, and load provenance before mixed-unit analytics. Keep correctness/privacy/data-integrity safeguards local to affected paths; unrelated work need not wait.
 - Do not write a new report, checklist or ticket to record a small change. The commit message is the record.
 - Product decisions and completion criteria go in `docs/ROADMAP.md`; technical contracts go in `ARCHITECTURE.md`. Dated audits, screenshots and layouts are references, not status sources.
 - Record concise test results and limitations in the relevant RM entry. Keep run logs and screenshots in CI artifacts or ignored local output; do not create report archives or evidence dumps in the repository.

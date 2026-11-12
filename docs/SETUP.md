@@ -218,10 +218,11 @@ Any other failed open, such as an unreadable or damaged file, leaves the store
 files in place and shows the "Training data did not open" screen
 ([RM-001](ROADMAP.md#rm-001)).
 Its Try again button opens the same store again.
-Prove populated backup/recovery ([RM-029](ROADMAP.md#rm-029)) before
-schema-changing work; move-aside preservation is not a tested restore or
-migration promise.
-`scripts/rehearse-store.sh` is that proof.
+Rehearse every schema change on a copy of the phone's store; move-aside
+preservation is not a tested restore or migration promise.
+A change SwiftData cannot migrate in place also needs the populated restore
+proof of [RM-029](ROADMAP.md#rm-029) first (decision 2026-11-12).
+`scripts/rehearse-store.sh` is the rehearsal.
 `pull` copies the phone's store into ignored `.ci/phone-store/`; close the app on the phone first.
 `run <store folder>` opens a copy through the app's own container, checks that every row is still there, and checks that a backup of it restores to the same data.
 Run it on the unchanged code, then again after the model change with the first run's backup as the third argument.

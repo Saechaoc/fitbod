@@ -9,7 +9,7 @@ Routine flow is **Planned → Active → Done**. The agent implements, runs risk
 Reconciled 2026-11-12 against `8c4aa58a`, CI and the code; no app tests were rerun for that review.
 P1 protects core workout/data; P2 improves workflows; P3 is polish/optional expansion.
 Resolve correctness, privacy/security and data-integrity risks before extending affected paths; unrelated work can continue.
-Prove populated backup/recovery before schema-changing work and load provenance before mixed-unit analytics.
+Rehearse every schema change on a copy of the phone's store, keep [RM-029](#rm-029)'s populated restore proof for a change SwiftData cannot migrate in place and for release, and load provenance before mixed-unit analytics.
 
 Keep concise commands/results/limitations with their RM owner. Logs/screenshots belong in CI artifacts or ignored local output. Finished substantial implementation plans move to [archive/features](archive/features/) with a historical banner, scope/build/results and RM backlink; no new backlog, tracker, report archive or personal approval process.
 
@@ -29,15 +29,15 @@ Ready work in independent streams may continue while another feature awaits inpu
 | Order | Ready outcome | Boundary |
 |---|---|---|
 | 1 | [RM-010](#rm-010) last slice: Volume evaluates deload advice on appear, gated by the deload-alert setting, from Today and Progress | Lane A; closes RM-010's implementation. |
-| 2 | [RM-029](#rm-029) populated restore on a second installation, then hostile/interrupted input and truthful backup state | Lane B (data safety), parallel to Lane A; overdue, see below. |
-| 3 | [RM-011](#rm-011) redesign 1.5: Program explains Now, Planned and Past | Lane A after RM-010; the approved order below continues. |
-| 4 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
-| 5 | [RM-019](#rm-019) stalled exercises outside a workout | Analytics stream; [RM-020](#rm-020) past recaps follows, then [RM-023](#rm-023). |
-| 6 | [RM-053](#rm-053) nightly CI trigger | No scheduled run has ever started; push and manual runs work. |
+| 2 | [RM-011](#rm-011) redesign 1.5: Program explains Now, Planned and Past | Lane A after RM-010; the approved order below continues. |
+| 3 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
+| 4 | [RM-019](#rm-019) stalled exercises outside a workout | Analytics stream; [RM-020](#rm-020) past recaps follows, then [RM-023](#rm-023). |
+| 5 | [RM-053](#rm-053) nightly CI trigger | No scheduled run has ever started; push and manual runs work. |
 
 Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set, [RM-026](#rm-026) authoring without detours and [RM-027](#rm-027) Library/custom results.
-After RM-001, [RM-029](#rm-029) populated recovery proof takes priority over schema-changing work.
-Even so, [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066) added SchemaV7 fields with only the store rehearsal (`scripts/rehearse-store.sh` on a copy of the phone's store) as their gate, and RM-029 itself is still unproven.
+**Decision (user, 2026-11-12):** [RM-029](#rm-029) is deprioritized and leaves this queue.
+A schema change that SwiftData migrates in place, as in [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066), needs the store rehearsal (`scripts/rehearse-store.sh` on a fresh copy of the phone's store) before and after it, and the user's go-ahead.
+RM-029's populated restore proof returns before a schema change SwiftData cannot migrate in place, and at release readiness.
 Preserve the approved Today/Program order: **RM-006 → RM-010 → RM-011 → RM-012 → RM-013 → RM-014 → RM-015 → RM-016 → RM-017 → RM-018**.
 Successors enter this queue as preceding work lands; planning may proceed meanwhile.
 Authoring, catalog, logging and calculator deliveries use their actual conditional prerequisites below, not the whole redesign as a gate.
@@ -73,6 +73,7 @@ Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks r
 | [RM-044](#rm-044), [RM-047](#rm-047) | Each workflow becomes stable; do not wait for whole-app stability. |
 | [RM-048](#rm-048), [RM-049](#rm-049), [RM-051](#rm-051) | Release readiness/milestone close; touched docs update with every feature. |
 | [RM-052](#rm-052), [RM-054](#rm-054) | Immediately if blocking iteration; otherwise stability/release or the named test reproduction. |
+| [RM-029](#rm-029) | A schema change SwiftData cannot migrate in place, release readiness, or an entry that names it in its own Requires (deprioritized 2026-11-12). |
 | [RM-009](#rm-009) | An untouched damaged-store copy turns up; RM-001's safe open, which repair writes need, is done. |
 | [RM-024](#rm-024) | A reproduced logging reach/reveal or keyboard obstruction, or an RM-063 report that points at the phone memory kill. |
 | [RM-028](#rm-028) | The owning workflow's redesign starts; reproduce its mapped D-rows then. |
@@ -596,12 +597,14 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 
 ### <a id="rm-029"></a>RM-029 — Populated backup and truthful backup state
 
-**P1 · Planned: recovery proof before schema changes or release reliance.** T41 fixed routines/snapshot names; real populated second-install restore remains unproven.
+**P1 · Deferred (user decision 2026-11-12) until a schema change SwiftData cannot migrate in place, or release readiness.** T41 fixed routines/snapshot names; real populated second-install restore remains unproven.
+Until then each schema change is gated by the store rehearsal on a copy of the phone's store, as RM-062 and RM-066 were.
+Entries that name RM-029 in their own Requires ([RM-021](#rm-021), [RM-031](#rm-031), [RM-032](#rm-032), [RM-040](#rm-040)) keep it.
 **Done when:** restore populated backup on another installation and compare entities/slots/sets/history/names; validate corrupt/hostile input before mutation, recover interruptions and retain pre-restore copy. Show last-backup date/time/content, warn about open workouts before Files and explain manual relaunch accurately.
 **Scope / sequence:** Prove populated restore on another installation → hostile/corrupt/interrupted input and pre-restore recovery → truthful backup state. New schema/format, automated backup and conversion excluded. Healthy restore does not wait for damaged-catalog repair.
 **Requires:** [RM-001](#rm-001) safe open. Healthy populated fixtures suffice; RM-009 only for a restore claiming damaged-catalog repair.
-**Scheduled after:** [RM-001](#rm-001), ahead of schema-changing work; independent of the redesign sequence.
-**Verify when:** Before schema changes, sole-log reliance or release: populated second installation, corrupt/interrupted cases and recovery.
+**Scheduled after:** its trigger; schema changes that migrate in place no longer wait for it (decision 2026-11-12). Independent of the redesign sequence.
+**Verify when:** Before a schema change SwiftData cannot migrate in place, sole-log reliance or release: populated second installation, corrupt/interrupted cases and recovery.
 **Evidence:** 2026-11-10 rehearsal on a copy of the iPhone 15 Pro Max store, code at `aef18229` (`scripts/rehearse-store.sh`, `StoreRehearsalTests`): the copy opened in place through `FitbodModelContainer.make` with nothing moved aside; SwiftData row counts equal the SQLite table counts (704 exercises, 2,117 stimuli, 4 workouts, 14 logged exercises, 43 sets, 4 plate inventories, 17 muscles and 17 targets, 1 settings row); a backup of it restored into a second, empty on-disk store and the two export documents were equal entity by entity. Limits: the second store was in the simulator test host, not on a second phone; that store holds no routines, splits or blocks, so those rest on the `BackupRoutinesRoundTripTests` fixtures. No passing acceptance is recorded for hostile, corrupt or interrupted input, pre-restore recovery or truthful backup state.
 Schema changes since then went ahead with only the store rehearsal as their gate: [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066) added SchemaV7 fields, and the backup format is now 5; each rehearsal and phone upgrade is recorded in its entry.
 **References:** EXP-01–04/N1/T41, D-60/D-144–D-146; [workflow](design-map/workflows/settings-units-backup-restore-export.md), [tests](../fitbodTests/Phase6/BackupRoundTripTests.swift).
