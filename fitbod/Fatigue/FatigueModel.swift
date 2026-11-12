@@ -118,8 +118,15 @@ public enum FatigueModel {
         in context: ModelContext,
         calendar: Calendar = .current
     ) -> [String: WeightedSetTotal] {
-        let entries = fetchWorkingSets(weekStart: weekStart, in: context, calendar: calendar)
+        volumes(of: fetchWorkingSets(weekStart: weekStart, in: context, calendar: calendar))
+    }
 
+    /// `weeklyVolumes` for working sets already read, summed in the order
+    /// given: the past weekly recaps total many weeks from one read
+    /// (RM-020). Given in `completedWorkingSets` order, the totals match
+    /// `weeklyVolumes` exactly; stimulus weights such as 0.3 can sum to a
+    /// different last digit in another order.
+    static func volumes(of entries: [SetEntry]) -> [String: WeightedSetTotal] {
         var direct: [String: Double] = [:]
         var indirect: [String: Double] = [:]
         for entry in entries {
@@ -156,8 +163,12 @@ public enum FatigueModel {
         in context: ModelContext,
         calendar: Calendar = .current
     ) -> Int {
-        fetchWorkingSets(weekStart: weekStart, in: context, calendar: calendar)
-            .count { !($0.sessionExercise?.exercise?.muscleStimuli ?? []).isEmpty }
+        workingSetCount(of: fetchWorkingSets(weekStart: weekStart, in: context, calendar: calendar))
+    }
+
+    /// `workingSetCount` for working sets already read.
+    static func workingSetCount(of entries: [SetEntry]) -> Int {
+        entries.count { !($0.sessionExercise?.exercise?.muscleStimuli ?? []).isEmpty }
     }
 
     // MARK: - contributionPerSession
@@ -184,8 +195,8 @@ public enum FatigueModel {
 
     /// `contributionPerSession` for every muscle at once, keyed by muscle
     /// slug, from one read of the week's sets. A muscle nothing hit this
-    /// week has no key.
-    @MainActor
+    /// week has no key. Not tied to the main actor: a past weekly recap
+    /// reads its week in a context of its own (RM-020).
     public static func contributionsPerSession(
         weekStart: Date,
         in context: ModelContext,
@@ -281,7 +292,6 @@ public enum FatigueModel {
 
     /// The working sets `weeklyVolume` sums for the week starting at
     /// `weekStart`.
-    @MainActor
     private static func fetchWorkingSets(
         weekStart: Date,
         in context: ModelContext,
@@ -310,8 +320,9 @@ public enum FatigueModel {
     /// as 0.3, which are not exact binary fractions, so another order could
     /// move a total across a rounding boundary. (While the context holds
     /// unsaved changes, both fetches return rows in hash order, which can
-    /// change from one fetch to the next.)
-    @MainActor
+    /// change from one fetch to the next.) Not tied to the main actor, nor
+    /// are the helpers below: a past weekly recap reads its week in a
+    /// context of its own (RM-020).
     static func completedWorkingSets(
         startedFrom start: Date,
         before end: Date,
@@ -322,39 +333,52 @@ public enum FatigueModel {
                 session.startedAt >= start && session.startedAt < end
             }
         )
-        let sessions = (try? context.fetch(sessionDescriptor)) ?? []
+        let sets = workingSets(of: (try? context.fetch(sessionDescriptor)) ?? [])
+        // A window with no working sets needs no order.
+        guard !sets.isEmpty else { return [] }
+        return ordered(sets, by: workingSetPositions(in: context))
+    }
 
-        var inWindow: [PersistentIdentifier: SetEntry] = [:]
-        var traversalOrder: [SetEntry] = []
+    /// The working sets of `sessions` (`SetEntry.countsAsWork`), each once,
+    /// in workout order.
+    static func workingSets(of sessions: [Session]) -> [SetEntry] {
+        var seen: Set<PersistentIdentifier> = []
+        var sets: [SetEntry] = []
         for session in sessions {
             for sessionExercise in session.exercises ?? [] {
                 for entry in sessionExercise.sets ?? []
-                where entry.countsAsWork {
-                    if inWindow.updateValue(entry, forKey: entry.persistentModelID) == nil {
-                        traversalOrder.append(entry)
-                    }
+                where entry.countsAsWork && seen.insert(entry.persistentModelID).inserted {
+                    sets.append(entry)
                 }
             }
         }
-        guard !inWindow.isEmpty else { return [] }
+        return sets
+    }
 
+    /// Where each completed non-warm-up set comes in a fetch of all of them,
+    /// the order `completedWorkingSets` returns its sets in. The past weekly
+    /// recaps read it once for every week (RM-020).
+    static func workingSetPositions(in context: ModelContext) -> [PersistentIdentifier: Int] {
         let orderDescriptor = FetchDescriptor<SetEntry>(
             predicate: #Predicate<SetEntry> { entry in
                 entry.isComplete == true && entry.isWarmup == false
             }
         )
         let order = (try? context.fetchIdentifiers(orderDescriptor)) ?? []
-        var result: [SetEntry] = []
-        result.reserveCapacity(inWindow.count)
-        for id in order {
-            if let entry = inWindow.removeValue(forKey: id) {
-                result.append(entry)
-            }
+        var position: [PersistentIdentifier: Int] = [:]
+        position.reserveCapacity(order.count)
+        for (index, id) in order.enumerated() where position[id] == nil {
+            position[id] = index
         }
-        // Never drop a set the identifier fetch missed; keep it, last.
-        if !inWindow.isEmpty {
-            result.append(contentsOf: traversalOrder.filter { inWindow[$0.persistentModelID] != nil })
-        }
-        return result
+        return position
+    }
+
+    /// `sets` in `position` order. Never drops a set the identifier fetch
+    /// missed: it comes last, in the order given.
+    static func ordered(_ sets: [SetEntry], by position: [PersistentIdentifier: Int]) -> [SetEntry] {
+        sets.enumerated()
+            .map { (rank: position[$0.element.persistentModelID] ?? Int.max, given: $0.offset, set: $0.element) }
+            .sorted { ($0.rank, $0.given) < ($1.rank, $1.given) }
+            .map(\.set)
     }
 }

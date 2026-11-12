@@ -30,7 +30,9 @@
 //
 //  `.sessionHistoryDestinations()` registers SessionHistoryRoute: the
 //  Workouts row's history, and the workout summary a History row or a
-//  Personal Records row opens.
+//  Personal Records row opens. `.weeklyRecapDestinations()` registers
+//  WeeklyRecapRoute: the Weekly recaps row's week list, and the past
+//  recap a row of it reopens (RM-020).
 //
 //  ## NavigationStack ownership
 //
@@ -178,6 +180,8 @@ public struct ProgressHomeView: View {
                 }
             }
             .sessionHistoryDestinations()
+            // Every past week's recap, and the one a row reopens (RM-020).
+            .weeklyRecapDestinations()
         }
         .task(id: finishedIDs) {
             guard emptyWorkoutsKey != finishedIDs else { return }
@@ -221,6 +225,14 @@ public struct ProgressHomeView: View {
             identifier: "progress.history"
         ) {
             path.append(SessionHistoryRoute.list)
+        }
+        BRUDivider(.hair)
+        progressRow(
+            title: "Weekly recaps",
+            subtitle: "Every past week's tonnage, sets and records",
+            identifier: "progress.recaps"
+        ) {
+            path.append(WeeklyRecapRoute.list)
         }
         BRUDivider(.hair)
         progressRow(

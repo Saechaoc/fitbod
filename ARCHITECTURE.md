@@ -188,6 +188,12 @@ Stalls outside a workout ([RM-019](docs/ROADMAP.md#rm-019)) are the exercise car
 Progress and the exercise chart find them in a `.task(id:)` keyed on the finished workouts and `HistoryEdits.version`, never per render.
 Their suggestions only open a screen or explain; none writes a set, a workout or a routine.
 
+Past weekly recaps ([RM-020](docs/ROADMAP.md#rm-020)) are the recap Today shows on its own once a week, one for each past week with a workout that counts as a session.
+A row of the week list and the recap it reopens both come from `WeeklyRecaps.recap`, so they agree; their records are History's, from `SessionSummary.records(replaying:)`, which `prsBySession` counts.
+The week list and every recap read in a context of their own off the main actor (`WeeklyRecaps.weeks(weekStartsMonday:now:in:)`, `WeeklyRecaps.content`), in a `.task(id:)` keyed on the workouts and `HistoryEdits.version`, because their records replay the finished workouts before the week.
+A recap replays only the workouts started before its week ends, since later ones cannot change its records.
+A week's sets are summed in `FatigueModel.completedWorkingSets` order, so its Under-Trained totals match `weeklyVolumes` to the last digit.
+
 A logged exercise may name the machine it was done on (`SessionExercise.machine`, [RM-066](docs/ROADMAP.md#rm-066)); a maker or model is never an exercise of its own, and a pick changes only that workout's log.
 Last time, the prescription, in-workout offers, records, the stall check and Compare read only sets on the same machine, and sets with no machine form their own group.
 With none on that machine, the card names the latest matching workout on another machine (or with none) and Last time shows its sets for reference; no load, progression or offer carries over.

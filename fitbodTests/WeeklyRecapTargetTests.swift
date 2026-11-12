@@ -17,9 +17,8 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-// @MainActor because WeeklyRecapSheet is a view, so its rules run on the
-// main actor, and sessionsTarget reads the store there as the sheet does.
-// Each test builds its own in-memory container.
+// @MainActor because each test's context is the main actor's, as a view's
+// is. Each test builds its own in-memory container.
 @MainActor
 @Suite("Weekly recap target")
 struct WeeklyRecapTargetTests {
@@ -50,6 +49,8 @@ struct WeeklyRecapTargetTests {
         let headline = oneLine(WeeklyRecapSheet.coverHeadline(sessions: 1, target: target, prs: 0))
         #expect(headline != "A strong week.")
         #expect(headline == "Light week.")
+        // Nor do records make it one: the week's first logs set every record (RM-036).
+        #expect(oneLine(WeeklyRecapSheet.coverHeadline(sessions: 1, target: target, prs: 19)) == "Light week.")
     }
 
     @Test("With no block last week the chip reads 1 session and names no target")

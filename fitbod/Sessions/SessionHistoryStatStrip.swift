@@ -29,10 +29,7 @@ import SwiftUI
 public struct SessionHistoryStatStrip: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    private let sessions: Int
-    private let tonnageLabel: String
-    private let perWeekLabel: String
-    private let unit: WeightUnit
+    private let cells: [BRUReadout]
 
     /// - Parameters:
     ///   - sessions: Finished sessions in the last 30 days.
@@ -40,39 +37,43 @@ public struct SessionHistoryStatStrip: View {
     ///   - perWeekLabel: Average sessions per week over 4 weeks (e.g. "3.5").
     ///   - unit: The weight unit the tonnage is in.
     public init(sessions: Int, tonnageLabel: String, perWeekLabel: String, unit: WeightUnit) {
-        self.sessions = sessions
-        self.tonnageLabel = tonnageLabel
-        self.perWeekLabel = perWeekLabel
-        self.unit = unit
-    }
-
-    public var body: some View {
-        statLayout {
-            cell(BRUReadout(
+        self.init(cells: [
+            BRUReadout(
                 label: "Sessions",
                 value: "\(sessions)",
                 caption: "30 days",
                 accessibilityLabel: "Sessions in the last 30 days"
-            ))
-
-            divider
-
-            cell(BRUReadout(
+            ),
+            BRUReadout(
                 label: "Tonnage · \(unit.rawValue)",
                 value: tonnageLabel,
                 valueColor: .bruSignal,
                 caption: "30 days",
                 accessibilityLabel: "Tonnage in the last 30 days, \(unit == .kg ? "kilograms" : "pounds")"
-            ))
-
-            divider
-
-            cell(BRUReadout(
+            ),
+            BRUReadout(
                 label: "Per week",
                 value: perWeekLabel,
                 caption: "4-week avg",
                 accessibilityLabel: "Sessions per week, last 4 weeks"
-            ))
+            ),
+        ])
+    }
+
+    /// The strip with cells of the caller's, as the past weekly recaps lay
+    /// out theirs (RM-020).
+    init(cells: [BRUReadout]) {
+        self.cells = cells
+    }
+
+    public var body: some View {
+        statLayout {
+            ForEach(Array(cells.enumerated()), id: \.offset) { index, readout in
+                if index > 0 {
+                    divider
+                }
+                cell(readout)
+            }
         }
         .fixedSize(horizontal: false, vertical: true)
         .background(Color.bruPaper)

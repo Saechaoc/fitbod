@@ -160,18 +160,12 @@ public struct SessionSummary: Sendable, Equatable {
     /// same rule `make` applies to one session. Sessions without a PR are
     /// left out.
     public static func prsBySession(_ sessions: [Session]) -> [UUID: SessionPRs] {
-        let sets = sessions
-            .filter { $0.completedAt != nil }
-            .flatMap { ($0.exercises ?? []).flatMap { $0.sets ?? [] } }
-            .filter { $0.isComplete && !$0.isWarmup }
         // Grouped by session, then by logged exercise, as in `make`, so the
         // count is the number of PR kinds the summary lists across its
         // exercises.
         var kindsBySession: [UUID: [UUID: Set<PRKind>]] = [:]
-        var table = PRTable()
-        for record in PRDetector.replay(sets, into: &table) {
-            guard let se = record.set.sessionExercise, let sessionID = se.session?.id else { continue }
-            kindsBySession[sessionID, default: [:]][se.id, default: []].formUnion(record.kinds)
+        for record in records(replaying: sessions) {
+            kindsBySession[record.sessionID, default: [:]][record.loggedExerciseID, default: []].insert(record.kind)
         }
         return kindsBySession.mapValues { kindsByExercise in
             let kinds = kindsByExercise.values.reduce(into: Set<PRKind>()) { $0.formUnion($1) }
@@ -182,9 +176,51 @@ public struct SessionSummary: Sendable, Equatable {
         }
     }
 
+    /// Every record the finished sessions among `sessions` set, one per
+    /// session, logged exercise and kind, in the order a chronological
+    /// replay first found them. Each holds the last set of its logged
+    /// exercise that set it, which is its best. `prsBySession` counts these;
+    /// a weekly recap lists them (RM-020).
+    static func records(replaying sessions: [Session]) -> [SessionRecord] {
+        let sets = sessions
+            .filter { $0.completedAt != nil }
+            .flatMap { ($0.exercises ?? []).flatMap { $0.sets ?? [] } }
+            .filter { $0.isComplete && !$0.isWarmup }
+        struct Slot: Hashable {
+            let loggedExerciseID: UUID
+            let kind: PRKind
+        }
+        var table = PRTable()
+        var index: [Slot: Int] = [:]
+        var records: [SessionRecord] = []
+        for replayed in PRDetector.replay(sets, into: &table) {
+            guard let se = replayed.set.sessionExercise, let sessionID = se.session?.id else { continue }
+            for kind in PRKind.allCases where replayed.kinds.contains(kind) {
+                let record = SessionRecord(sessionID: sessionID, loggedExerciseID: se.id, kind: kind, set: replayed.set)
+                let slot = Slot(loggedExerciseID: se.id, kind: kind)
+                if let at = index[slot] {
+                    records[at] = record
+                } else {
+                    index[slot] = records.count
+                    records.append(record)
+                }
+            }
+        }
+        return records
+    }
+
     private static func isCountedWorkingSet(_ set: SetEntry) -> Bool {
         set.countsAsWork && set.hasResult
     }
+}
+
+/// One record a finished session set: its kind, on one logged exercise, and
+/// the set of that logged exercise that holds it once the session is over.
+struct SessionRecord {
+    let sessionID: UUID
+    let loggedExerciseID: UUID
+    let kind: PRKind
+    let set: SetEntry
 }
 
 /// The personal records one finished session set, as its history row

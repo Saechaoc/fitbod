@@ -8,8 +8,17 @@
 //  Under-Trained section + Progress section + quote section + footer
 //  Start button.
 //
+//  Two presentations (RM-020). Today shows the recap on its own once a week
+//  (O-4), as a sheet with its own stack: ALL RECAPS pushes the week list
+//  inside it, DONE and START W{N} close it. A row of the week list reopens a
+//  past week's recap, pushed with ‹ BACK and no Start button.
+//
+//  The recap reads its week off the main actor once when it opens, and
+//  again after a History correction, never per render. Its cover and metric
+//  grid come from `WeeklyRecaps.recap`, the numbers its row in the week
+//  list shows.
+//
 //  Copywriting Contract verbatim strings preserved per UI-SPEC §WeeklyRecapSheet.
-//  WeeklyRecapTrigger + RootView mount + .sheet wiring untouched.
 //
 //  Banned tokens: zero Color.accentColor, zero Color(.system*),
 //  zero Color("Volume*"), zero RoundedRectangle, zero Capsule(),
@@ -87,7 +96,7 @@ public struct WeeklyRecapSheet: View {
 
     /// BRU palette-mapped delta color function (replaces systemGreen/systemRed/.secondary).
     /// Positive → bruGreen, Negative → bruSignal, Zero (|δ| < 0.1) → bruMuted.
-    public static func deltaColor(for delta: Double) -> Color {
+    public nonisolated static func deltaColor(for delta: Double) -> Color {
         if delta > 0.1 {
             return .bruGreen
         } else if delta < -0.1 {
@@ -103,15 +112,36 @@ public struct WeeklyRecapSheet: View {
     /// Content shows the PRIOR week.
     public let weekStart: Date
 
+    /// Reopened from the week list, pushed on its stack, rather than shown
+    /// on its own by Today.
+    private let isReopened: Bool
+
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.weightUnit) private var weightUnit
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
     @Query private var settingsList: [UserSettings]
-    @Query private var allMuscles: [MuscleGroup]
-    @Query private var allTargets: [MuscleVolumeTarget]
 
+    /// What the recap shows, read when it opens and after a History
+    /// correction, and what it was read for.
+    @State private var content: Content?
+    @State private var contentKey: ContentKey?
+    /// The week list and the recaps it reopens, pushed inside Today's sheet.
+    @State private var path = NavigationPath()
+
+    /// The recap Today shows on its own: of the week before the one that
+    /// starts at `weekStart`.
     public init(weekStart: Date) {
         self.weekStart = weekStart
+        self.isReopened = false
+    }
+
+    /// A past week's recap, reopened from the week list: of the week that
+    /// starts at `coveredWeekStart`.
+    init(reopening coveredWeekStart: Date) {
+        self.weekStart = FatigueModel.date(byAddingWeeks: 1, to: coveredWeekStart)
+        self.isReopened = true
     }
 
     // MARK: - Computed helpers
@@ -121,70 +151,106 @@ public struct WeeklyRecapSheet: View {
         Self.priorWeekStart(before: weekStart)
     }
 
-    /// The start of the week before last, which the prior-week
-    /// comparisons read.
-    private var weekBeforeLastStart: Date {
-        Self.priorWeekStart(before: priorWeekStart)
-    }
-
-    private var settings: UserSettings? { settingsList.first }
-
-    /// ISO week number for the CURRENT week (the new week that just started).
-    private var isoWeekNumber: Int {
-        var cal = Calendar(identifier: .iso8601)
-        cal.timeZone = TimeZone.current
-        return cal.component(.weekOfYear, from: weekStart)
-    }
-
-    /// Next week number — for the "Start WN ▸" footer button label.
-    private var nextWeekNumber: Int { isoWeekNumber }
-
     /// Units label ("lb" or "kg").
-    private var unitLabel: String {
-        settings?.unitsRaw == "kg" ? "kg" : "lb"
+    private var unitLabel: String { weightUnit.rawValue }
+
+    /// What the recap's content depends on besides its week.
+    private struct ContentKey: Equatable {
+        let edits: Int
+        let unit: WeightUnit
+        let minSets: Int
+    }
+
+    private var readKey: ContentKey {
+        ContentKey(
+            edits: historyEdits?.version ?? 0,
+            unit: weightUnit,
+            minSets: settingsList.first?.frequencyHitMinSets ?? 2
+        )
     }
 
     // MARK: - Body
 
     public var body: some View {
+        if isReopened {
+            recap
+        } else {
+            NavigationStack(path: $path) {
+                recap
+                    .weeklyRecapDestinations()
+            }
+            .presentationDetents([.large])
+        }
+    }
+
+    private var recap: some View {
         VStack(spacing: 0) {
-            // Non-breaking spaces keep the title on one line: the header
-            // fits a title with no breaking space to its third of the row,
-            // where "Week 44 · recap" wrapped before its dot on the small
-            // phone.
-            BRUHeaderBar(
-                center: "Week\u{00A0}\(isoWeekNumber)\u{00A0}·\u{00A0}recap",
-                right: HeaderAction("Done") { dismiss() }
-            )
+            header
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    coverSlab
-                    metricGrid
-                    sessionsSection
-                    musclesHitSection
-                    recordsBrokenSection
-                    underTrainedSection
-                    progressSection
-                    sessionNoteSection
+                if let content {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        coverSlab(content.recap)
+                        metricGrid(content)
+                        sessionsSection(content)
+                        musclesHitSection(content.musclesHit)
+                        recordsBrokenSection(content.records)
+                        underTrainedSection(content.underTrained)
+                        progressSection(content.progress)
+                        sessionNoteSection(content.note)
+                    }
                 }
             }
-            footerButtonStrip
+            if !isReopened {
+                footerButtonStrip
+            }
         }
-        .background(Color.bruPaper)
-        .presentationDetents([.large])
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
+        .task(id: readKey) {
+            let key = readKey
+            // Not again when the week list pushed over it pops back.
+            guard contentKey != key else { return }
+            let read = await WeeklyRecaps.content(
+                weekStart: weekStart, minSets: key.minSets, unit: key.unit, in: ctx.container
+            )
+            guard !Task.isCancelled else { return }
+            content = read
+            contentKey = key
+        }
+    }
+
+    // MARK: - Header
+
+    /// Non-breaking spaces keep the title on one line: the header fits a
+    /// title with no breaking space to its third of the row, where "Week 44
+    /// · recap" wrapped before its dot on the small phone. The title names
+    /// the week the recap covers (D-176).
+    private var header: some View {
+        let title = "Week\u{00A0}\(Self.weekNumber(ofWeekStarting: priorWeekStart))\u{00A0}·\u{00A0}recap"
+        return Group {
+            if isReopened {
+                BRUHeaderBar(left: HeaderAction("‹ Back") { dismiss() }, center: title)
+            } else {
+                BRUHeaderBar(
+                    left: HeaderAction("All recaps") { path.append(WeeklyRecapRoute.list) },
+                    center: title,
+                    right: HeaderAction("Done") { dismiss() }
+                )
+            }
+        }
     }
 
     // MARK: - Cover slab
 
-    private var coverSlab: some View {
+    private func coverSlab(_ recap: WeekRecap) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(coverDateRangeCaption)
+            Text(Self.dateRangeCaption(weekStart: weekStart))
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruPaper.opacity(0.6))
 
-            Text(coverHeadline)
+            Text(recap.headline)
                 .font(.system(size: 68, weight: .semibold))
                 .foregroundStyle(Color.bruPaper)
                 .lineSpacing(-4)
@@ -193,12 +259,12 @@ public struct WeeklyRecapSheet: View {
 
             chipLayout {
                 // A signal fill, as on every PR chip, so the label reads on it.
-                BRUChip(prChipLabel, color: .bruSignal, fill: true, textCase: nil)
+                BRUChip(Self.prChipLabel(records: recap.records), color: .bruSignal, fill: true, textCase: nil)
                     .accessibilityIdentifier("recap.prs")
-                BRUChip(Self.sessionsChipLabel(sessions: sessionsLogged, target: sessionsTarget),
+                BRUChip(Self.sessionsChipLabel(sessions: recap.sessions, target: recap.target),
                         color: .bruPaper, fill: false, textCase: nil)
                     .accessibilityIdentifier("recap.sessions")
-                BRUChip("\(tonnageFormatted) \(unitLabel)",
+                BRUChip("\(Self.tonnageText(recap.tonnage)) \(unitLabel)",
                         color: .bruPaper, fill: false, textCase: nil)
                     .accessibilityIdentifier("recap.tonnage")
             }
@@ -217,42 +283,25 @@ public struct WeeklyRecapSheet: View {
             : AnyLayout(HStackLayout(spacing: 6))
     }
 
-    // MARK: - Cover computed properties
-
-    private var coverDateRangeCaption: String {
-        Self.dateRangeCaption(weekStart: weekStart)
-    }
-
-    private var coverHeadline: String {
-        Self.coverHeadline(sessions: sessionsLogged, target: sessionsTarget, prs: weeklyPRs.count)
-    }
-
-    private var prChipLabel: String {
-        let count = weeklyPRs.count
-        if count == 0 { return "No PRs this wk" }
-        return "\u{2605} \(count) PR\(count == 1 ? "" : "s")"
-    }
-
-    private var tonnageFormatted: String {
-        let total = totalTonnageLastWeek()
-        if total >= 1_000 {
-            return String(format: "%.1fK", total / 1_000)
-        }
-        return String(format: "%.0f", total)
-    }
-
-    private var sessionsLogged: Int { lastWeekSessionsCount() }
-
-    private var sessionsTarget: Int? { Self.sessionsTarget(weekStart: weekStart, in: ctx) }
-
     // MARK: - Cover rules
 
     /// The start of the week before the one that starts at `weekStart`:
     /// local midnight 7 calendar days earlier, a daylight-saving change
     /// included (F333). The recap's reads of last week, and of the week
     /// before it, take their bounds from here.
-    static func priorWeekStart(before weekStart: Date, calendar: Calendar = .current) -> Date {
+    nonisolated static func priorWeekStart(before weekStart: Date, calendar: Calendar = .current) -> Date {
         FatigueModel.date(byAddingWeeks: -1, to: weekStart, calendar: calendar)
+    }
+
+    /// The ISO week number of the week that starts at `weekStart`, read on
+    /// its last day, so a week that starts on Sunday takes the number of
+    /// the six days after it. The recap's title names the week it covers,
+    /// its Start button the week after, and the week list each row's week.
+    static func weekNumber(ofWeekStarting weekStart: Date, calendar: Calendar = .current) -> Int {
+        var iso = Calendar(identifier: .iso8601)
+        iso.timeZone = calendar.timeZone
+        let lastMoment = FatigueModel.date(byAddingWeeks: 1, to: weekStart, calendar: calendar).addingTimeInterval(-1)
+        return iso.component(.weekOfYear, from: lastMoment)
     }
 
     /// The cover's date range, "MAR 2 → MAR 8": the first and last days of
@@ -276,9 +325,17 @@ public struct WeeklyRecapSheet: View {
     /// and a day two blocks share counts once. Rotation plans no weekdays,
     /// so a week without a block, on rotation alone, or with no planned
     /// day has no target.
-    @MainActor
-    static func sessionsTarget(weekStart: Date, in context: ModelContext, calendar: Calendar = .current) -> Int? {
-        let fixedWeekly = ((try? context.fetch(FetchDescriptor<Block>())) ?? []).filter {
+    nonisolated static func sessionsTarget(weekStart: Date, in context: ModelContext, calendar: Calendar = .current) -> Int? {
+        sessionsTarget(
+            weekStart: weekStart,
+            blocks: (try? context.fetch(FetchDescriptor<Block>())) ?? [],
+            calendar: calendar
+        )
+    }
+
+    /// `sessionsTarget` from blocks already read, for the week list's many weeks.
+    nonisolated static func sessionsTarget(weekStart: Date, blocks: [Block], calendar: Calendar = .current) -> Int? {
+        let fixedWeekly = blocks.filter {
             $0.schedulingMode == .fixedWeekly && ($0.isActive || $0.endDate != nil)
         }
         let plannedDays = (1...7).compactMap { calendar.date(byAdding: .day, value: -$0, to: weekStart) }
@@ -304,13 +361,28 @@ public struct WeeklyRecapSheet: View {
     /// The cover's headline. Against a target it weighs the sessions with
     /// it; with none it never claims a target was met, and follows the
     /// sessions and PRs alone.
-    static func coverHeadline(sessions: Int, target: Int?, prs: Int) -> String {
-        if prs >= 3 { return "A strong\nweek." }
-        guard let target else { return sessions < 2 ? "Light\nweek." : "Solid\nweek." }
+    nonisolated static func coverHeadline(sessions: Int, target: Int?, prs: Int) -> String {
+        guard let target else {
+            if prs >= 3 { return "A strong\nweek." }
+            return sessions < 2 ? "Light\nweek." : "Solid\nweek."
+        }
+        // The sessions decide against a target: a first week's first logs
+        // set every record (RM-036), and one session of four is no strong week.
         if sessions >= target             { return "A strong\nweek." }
         if sessions >= max(target - 1, 2) { return "Solid\nweek." }
         if sessions < 2                   { return "Light\nweek." }
         return "New week\nahead."
+    }
+
+    /// The cover's PR chip: "★ 3 PRs", or "No PRs this wk".
+    static func prChipLabel(records: Int) -> String {
+        records == 0 ? "No PRs this wk" : "\u{2605} \(BRUCountLabel.text(records, "PR", plural: "PRs"))"
+    }
+
+    /// Tonnage as the cover and the week list print it: "24.1K" from a
+    /// thousand, "940" below.
+    static func tonnageText(_ total: Double) -> String {
+        total >= 1_000 ? String(format: "%.1fK", total / 1_000) : String(format: "%.0f", total)
     }
 
     // MARK: - 2×2 Metric grid
@@ -322,8 +394,8 @@ public struct WeeklyRecapSheet: View {
         let accent: Bool
     }
 
-    private var metricGrid: some View {
-        let items = buildMetrics()
+    private func metricGrid(_ content: Content) -> some View {
+        let items = buildMetrics(content)
         return LazyVGrid(
             columns: [
                 GridItem(.flexible(), spacing: 0),
@@ -344,32 +416,27 @@ public struct WeeklyRecapSheet: View {
         }
     }
 
-    private func buildMetrics() -> [MetricData] {
-        let totalSets = weeklyTotalSetsCount()
-        let avgRPE = weeklyAvgRPE()
-        let musclesCount = musclesHitCount()
-        let underCount = musclesUnderTrainedLastWeek().count
-        let tonnage = totalTonnageLastWeek()
-        let priorTonnage = totalTonnagePriorWeek()
-        let tonnageDelta = priorTonnage > 0
-            ? Int(((tonnage - priorTonnage) / priorTonnage) * 100)
+    private func buildMetrics(_ content: Content) -> [MetricData] {
+        let recap = content.recap
+        let tonnageDelta = content.priorTonnage > 0
+            ? Int(((recap.tonnage - content.priorTonnage) / content.priorTonnage) * 100)
             : 0
         let tonnageDeltaStr = tonnageDelta > 0 ? "\u{2191} \(tonnageDelta)% VS PRIOR WK"
             : tonnageDelta < 0 ? "\u{2193} \(abs(tonnageDelta))% VS PRIOR WK"
             : "— VS PRIOR WK"
-        let setsDelta = weeklySetsDelta()
+        let setsDelta = recap.workingSets - content.priorWorkingSets
         let setsDeltaStr = setsDelta > 0 ? "\u{2191} \(setsDelta) VS PRIOR WK"
             : setsDelta < 0 ? "\u{2193} \(abs(setsDelta)) VS PRIOR WK"
             : "— VS PRIOR WK"
-        let avgRPEStr = avgRPE > 0 ? String(format: "%.1f", avgRPE) : "—"
+        let avgRPEStr = recap.averageRPE.map { String(format: "%.1f", $0) } ?? "—"
 
         return [
             MetricData(label: MetricCell.tonnageLabel,
-                       value: tonnageFormatted,
+                       value: Self.tonnageText(recap.tonnage),
                        sub: tonnageDeltaStr,
                        accent: tonnageDelta > 0),
             MetricData(label: MetricCell.workingSetsLabel,
-                       value: "\(totalSets)",
+                       value: "\(recap.workingSets)",
                        sub: setsDeltaStr,
                        accent: false),
             MetricData(label: MetricCell.avgRPELabel,
@@ -377,8 +444,8 @@ public struct WeeklyRecapSheet: View {
                        sub: "—",
                        accent: false),
             MetricData(label: MetricCell.musclesHitLabel,
-                       value: "\(musclesCount) / \(allMuscles.count)",
-                       sub: underCount > 0 ? "\(underCount) UNDER MEV" : "ALL ABOVE MEV",
+                       value: "\(content.musclesHit.count) / \(content.muscles)",
+                       sub: recap.underMEV > 0 ? "\(recap.underMEV) UNDER MEV" : "ALL ABOVE MEV",
                        accent: false)
         ]
     }
@@ -417,9 +484,9 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Sessions section
 
     @ViewBuilder
-    private var sessionsSection: some View {
-        let count = sessionsLogged
-        let routineCount = lastWeekRoutinesCount()
+    private func sessionsSection(_ content: Content) -> some View {
+        let count = content.recap.sessions
+        let routineCount = content.routines
         let sessionWord = count == 1 ? "session" : "sessions"
         let routineWord = routineCount == 1 ? "routine" : "routines"
 
@@ -444,10 +511,7 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Muscles Hit section
 
     @ViewBuilder
-    private var musclesHitSection: some View {
-        let minSets = settings?.frequencyHitMinSets ?? 2
-        let hits = musclesHitLastWeek(minSets: minSets)
-
+    private func musclesHitSection(_ hits: [MuscleRow]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead(SectionLabels.musclesHit)
             if hits.isEmpty {
@@ -481,36 +545,38 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Records broken section (BRU addition)
 
     @ViewBuilder
-    private var recordsBrokenSection: some View {
-        let prs = weeklyPRs
-        if !prs.isEmpty {
+    private func recordsBrokenSection(_ records: [RecordRow]) -> some View {
+        if !records.isEmpty {
             VStack(alignment: .leading, spacing: 0) {
-                BRUSectionHead(SectionLabels.recordsBroken, right: "\(prs.count)")
+                BRUSectionHead(SectionLabels.recordsBroken, right: "\(records.count)")
                 VStack(spacing: 0) {
-                    ForEach(Array(prs.enumerated()), id: \.element.exerciseID) { idx, pr in
+                    // One exercise can hold several records, so rows go by place.
+                    ForEach(Array(records.enumerated()), id: \.offset) { idx, record in
                         HStack(spacing: 12) {
                             Text("\u{2605}")
                                 .font(.system(size: 26, weight: .semibold))
                                 .foregroundStyle(Color.bruSignal)
                                 .frame(width: 24)
+                                .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(pr.exerciseName)
+                                Text(record.exerciseName)
                                     .font(BRUFont.bodyEmphasis)
                                     .foregroundStyle(Color.bruInk)
-                                Text(pr.kindLabel)
+                                Text(record.kindLabel)
                                     .font(BRUFont.labelMicro)
                                     .tracking(1.0)
                                     .foregroundStyle(Color.bruMuted)
                             }
                             Spacer()
-                            Text(pr.valueDisplay)
+                            Text(record.value)
                                 .font(.system(size: 22, weight: .semibold))
                                 .monospacedDigit()
-                                .foregroundStyle(pr.isHighlighted ? Color.bruSignal : Color.bruInk)
+                                .foregroundStyle(Color.bruInk)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 11)
-                        if idx < prs.count - 1 {
+                        .accessibilityElement(children: .combine)
+                        if idx < records.count - 1 {
                             BRUDivider(.hair)
                         }
                     }
@@ -523,9 +589,7 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Under-Trained section
 
     @ViewBuilder
-    private var underTrainedSection: some View {
-        let underTrained = musclesUnderTrainedLastWeek()
-
+    private func underTrainedSection(_ underTrained: [UnderTrainedRow]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead(SectionLabels.underTrained)
             if underTrained.isEmpty {
@@ -562,9 +626,7 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Progress section
 
     @ViewBuilder
-    private var progressSection: some View {
-        let progress = topExercisesProgress()
-
+    private func progressSection(_ progress: [ProgressRow]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead(SectionLabels.progress)
             if progress.isEmpty {
@@ -607,8 +669,8 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Session note section (BRU addition)
 
     @ViewBuilder
-    private var sessionNoteSection: some View {
-        if let note = mostRecentSessionNote() {
+    private func sessionNoteSection(_ note: SessionNoteData?) -> some View {
+        if let note {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("\u{201C}\(note.text)\u{201D}")
@@ -628,8 +690,9 @@ public struct WeeklyRecapSheet: View {
 
     // MARK: - Footer button strip
 
+    /// Only on the recap Today shows; it names the week just starting.
     private var footerButtonStrip: some View {
-        BRUButton("Start W\(nextWeekNumber) \u{25B8}", kind: .primary) {
+        BRUButton("Start W\(Self.weekNumber(ofWeekStarting: weekStart)) \u{25B8}", kind: .primary) {
             dismiss()
         }
         .overlay(alignment: .top) {
@@ -637,39 +700,79 @@ public struct WeeklyRecapSheet: View {
         }
     }
 
-    // MARK: - Data computations
+    // MARK: - Reading the week
 
-    /// Last week's workouts that count as sessions (decision 6).
-    @MainActor
-    private func lastWeekSessionsCount() -> Int {
-        let start = priorWeekStart
-        let end   = weekStart
-        let descriptor = FetchDescriptor<Session>(
-            predicate: #Predicate<Session> {
-                $0.startedAt >= start && $0.startedAt < end && $0.completedAt != nil
-            }
-        )
-        return SessionSetActions.countedWorkouts((try? ctx.fetch(descriptor)) ?? []).count
+    /// Everything the recap shows for its week, read in one go.
+    struct Content: Sendable {
+        /// The cover's and the grid's numbers, as the week list shows them.
+        let recap: WeekRecap
+        let priorTonnage: Double
+        let priorWorkingSets: Int
+        /// The routines of the week's workouts that count as sessions.
+        let routines: Int
+        /// How many muscles there are, which Muscles Hit counts against.
+        let muscles: Int
+        let musclesHit: [MuscleRow]
+        let records: [RecordRow]
+        let underTrained: [UnderTrainedRow]
+        let progress: [ProgressRow]
+        let note: SessionNoteData?
     }
 
-    /// The routines of last week's workouts that count as sessions, the
-    /// ones "Last week you logged N sessions." counts.
-    @MainActor
-    private func lastWeekRoutinesCount() -> Int {
-        let start = priorWeekStart
-        let end   = weekStart
-        let descriptor = FetchDescriptor<Session>(
-            predicate: #Predicate<Session> {
-                $0.startedAt >= start && $0.startedAt < end && $0.completedAt != nil
-            }
+    /// The recap of the week before the one that starts at `weekStart`. Its
+    /// workouts, its working sets and the week before's are each read once.
+    /// The records replay the finished workouts started before the week's
+    /// end, as History's do, so a record counts only when it beats every set
+    /// before it; later workouts cannot change the week's records.
+    nonisolated static func content(
+        weekStart: Date,
+        muscles: [MuscleGroup],
+        targets: [MuscleVolumeTarget],
+        minSets: Int,
+        unit: WeightUnit,
+        in context: ModelContext,
+        calendar: Calendar = .current
+    ) -> Content {
+        let start = priorWeekStart(before: weekStart, calendar: calendar)
+        let end = weekStart
+        let sessions = (try? context.fetch(FetchDescriptor<Session>(
+            predicate: #Predicate<Session> { $0.startedAt >= start && $0.startedAt < end }
+        ))) ?? []
+        let sets = FatigueModel.completedWorkingSets(startedFrom: start, before: end, in: context)
+        let priorSets = FatigueModel.completedWorkingSets(
+            startedFrom: priorWeekStart(before: start, calendar: calendar), before: start, in: context
         )
-        let sessions = (try? ctx.fetch(descriptor)) ?? []
-        return Set(SessionSetActions.countedWorkouts(sessions).map(\.routineSnapshotName)).count
-    }
+        let finished = (try? context.fetch(FetchDescriptor<Session>(
+            predicate: #Predicate<Session> { $0.completedAt != nil && $0.startedAt < end }
+        ))) ?? []
+        let weekIDs = Set(sessions.map(\.id))
+        let records = SessionSummary.records(replaying: finished).filter { weekIDs.contains($0.sessionID) }
+        let mev = WeeklyRecaps.mev(muscles: muscles, targets: targets)
+        let recap = WeeklyRecaps.recap(
+            weekStart: start,
+            sessions: sessions,
+            sets: sets,
+            target: sessionsTarget(weekStart: weekStart, in: context, calendar: calendar),
+            mev: mev,
+            records: records.count
+        )
+        let counted = Array(SessionSetActions.countedWorkouts(sessions))
 
-    @MainActor
-    private func musclesHitLastWeek(minSets: Int) -> [MuscleRow] {
-        Self.musclesHit(weekStart: weekStart, muscles: allMuscles, minSets: minSets, in: ctx)
+        return Content(
+            recap: recap,
+            priorTonnage: priorSets.reduce(0.0) { $0 + $1.tonnage },
+            priorWorkingSets: FatigueModel.workingSetCount(of: priorSets),
+            routines: Set(counted.map(\.routineSnapshotName)).count,
+            muscles: muscles.count,
+            musclesHit: musclesHit(weekStart: weekStart, muscles: muscles, minSets: minSets, in: context, calendar: calendar),
+            records: records.map { RecordRow($0, unit: unit) },
+            underTrained: muscles.compactMap { muscle in
+                guard let sets = recap.underTrained[muscle.slug], let minimum = mev[muscle.slug] else { return nil }
+                return UnderTrainedRow(slug: muscle.slug, displayName: muscle.displayName, totalSets: sets, mev: minimum)
+            },
+            progress: topExercisesProgress(lastWeek: sets, priorWeek: priorSets, unit: unit),
+            note: latestNote(of: sessions)
+        )
     }
 
     /// Last week's Muscles Hit rows: each of `muscles` that a session
@@ -677,8 +780,7 @@ public struct WeeklyRecapSheet: View {
     /// first. `muscles` comes from a query in no set order, so muscles
     /// with the same count go by name, then by slug, and keep one order
     /// between launches (F334).
-    @MainActor
-    static func musclesHit(
+    nonisolated static func musclesHit(
         weekStart: Date,
         muscles: [MuscleGroup],
         minSets: Int,
@@ -708,95 +810,31 @@ public struct WeeklyRecapSheet: View {
         }
     }
 
-    @MainActor
-    private func musclesUnderTrainedLastWeek() -> [UnderTrainedRow] {
-        let volumes = FatigueModel.weeklyVolumes(weekStart: priorWeekStart, in: ctx)
-        return allMuscles.compactMap { muscle in
-            guard let target = allTargets.first(where: { $0.muscle?.slug == muscle.slug }) else { return nil }
-            let total = volumes[muscle.slug] ?? WeightedSetTotal(directSets: 0, indirectSets: 0)
-            let rounded = total.totalSetsRounded
-            guard rounded > 0 && rounded < target.mev else { return nil }
-            return UnderTrainedRow(
-                slug: muscle.slug,
-                displayName: muscle.displayName,
-                totalSets: rounded,
-                mev: target.mev
-            )
-        }
-    }
-
-    @MainActor
-    private func musclesHitCount() -> Int {
-        let minSets = settings?.frequencyHitMinSets ?? 2
-        return musclesHitLastWeek(minSets: minSets).count
-    }
-
-    @MainActor
-    private func totalTonnageLastWeek() -> Double {
-        let start = priorWeekStart
-        let end   = weekStart
-        return tonnageInRange(from: start, to: end)
-    }
-
-    @MainActor
-    private func totalTonnagePriorWeek() -> Double {
-        let end   = priorWeekStart
-        let start = weekBeforeLastStart
-        return tonnageInRange(from: start, to: end)
-    }
-
-    @MainActor
-    private func tonnageInRange(from start: Date, to end: Date) -> Double {
-        FatigueModel.completedWorkingSets(startedFrom: start, before: end, in: ctx)
-            .reduce(0.0) { $0 + $1.tonnage }
-    }
-
-    /// Counted as Today counts its week (RM-038), so cardio stays out.
-    @MainActor
-    private func weeklyTotalSetsCount() -> Int {
-        FatigueModel.workingSetCount(weekStart: priorWeekStart, in: ctx)
-    }
-
-    @MainActor
-    private func weeklySetsDelta() -> Int {
-        weeklyTotalSetsCount() - FatigueModel.workingSetCount(weekStart: weekBeforeLastStart, in: ctx)
-    }
-
-    @MainActor
-    private func weeklyAvgRPE() -> Double {
-        let rpeEntries = FatigueModel.completedWorkingSets(startedFrom: priorWeekStart, before: weekStart, in: ctx)
-            .filter { entry in
-                guard let rpe = entry.rpe, rpe > 0 else { return false }
-                return true
-            }
-        guard !rpeEntries.isEmpty else { return 0 }
-        let total = rpeEntries.reduce(0.0) { $0 + ($1.rpe ?? 0) }
-        return total / Double(rpeEntries.count)
-    }
-
-    @MainActor
-    private func topExercisesProgress() -> [ProgressRow] {
-        let start     = priorWeekStart
-        let end       = weekStart
-        let priorStart = weekBeforeLastStart
-
-        let lastWeekEntries = FatigueModel.completedWorkingSets(startedFrom: start, before: end, in: ctx)
-        let priorWeekEntries = FatigueModel.completedWorkingSets(startedFrom: priorStart, before: start, in: ctx)
-
-        // Group by exercise, count working sets
+    /// The five exercises with the most working sets last week, each with
+    /// its best e1RM against the week before's. Exercises with as many sets
+    /// go by name, so a reopened recap keeps its order.
+    private nonisolated static func topExercisesProgress(
+        lastWeek: [SetEntry],
+        priorWeek: [SetEntry],
+        unit: WeightUnit
+    ) -> [ProgressRow] {
         var setCountByExercise: [UUID: (exercise: Exercise, count: Int)] = [:]
-        for entry in lastWeekEntries {
+        for entry in lastWeek {
             guard let exercise = entry.sessionExercise?.exercise else { continue }
             var existing = setCountByExercise[exercise.id] ?? (exercise: exercise, count: 0)
             existing.count += 1
             setCountByExercise[exercise.id] = existing
         }
-        let top5 = setCountByExercise.values.sorted { $0.count > $1.count }.prefix(5)
+        let top5 = setCountByExercise.values.sorted { lhs, rhs in
+            if lhs.count != rhs.count { return lhs.count > rhs.count }
+            if lhs.exercise.name != rhs.exercise.name { return lhs.exercise.name < rhs.exercise.name }
+            return lhs.exercise.id.uuidString < rhs.exercise.id.uuidString
+        }
+        .prefix(5)
 
-        return top5.compactMap { entry in
-            let lastWeekE1RM = topSetE1RM(in: lastWeekEntries, exerciseID: entry.exercise.id)
-            let priorWeekE1RM = topSetE1RM(in: priorWeekEntries, exerciseID: entry.exercise.id)
-            guard let lw = lastWeekE1RM, let pw = priorWeekE1RM else {
+        return top5.map { entry in
+            guard let lw = topSetE1RM(in: lastWeek, exerciseID: entry.exercise.id),
+                  let pw = topSetE1RM(in: priorWeek, exerciseID: entry.exercise.id) else {
                 return ProgressRow(
                     exerciseID: entry.exercise.id,
                     exerciseName: entry.exercise.name,
@@ -806,58 +844,37 @@ public struct WeeklyRecapSheet: View {
             }
             let delta = lw - pw
             let sign  = delta >= 0 ? "+" : ""
-            let copy  = "\(sign)\(String(format: "%.1f", delta)) \(unitLabel) e1RM"
+            // The exercise's own unit wins over the lifter's (units relabel, never convert).
+            let unit = WeightUnit.effective(for: entry.exercise, default: unit).rawValue
             return ProgressRow(
                 exerciseID: entry.exercise.id,
                 exerciseName: entry.exercise.name,
-                deltaCopy: copy,
-                deltaColor: Self.deltaColor(for: delta)
+                deltaCopy: "\(sign)\(String(format: "%.1f", delta)) \(unit) e1RM",
+                deltaColor: deltaColor(for: delta)
             )
         }
     }
 
-    private func topSetE1RM(in entries: [SetEntry], exerciseID: UUID) -> Double? {
-        var best: Double? = nil
+    private nonisolated static func topSetE1RM(in entries: [SetEntry], exerciseID: UUID) -> Double? {
+        var best: Double?
         for entry in entries where entry.sessionExercise?.exercise?.id == exerciseID {
             if let e = OneRepMaxEstimator.estimate(weight: entry.weight, reps: entry.reps) {
-                if best == nil || e > best! { best = e }
+                if best.map({ e > $0 }) ?? true { best = e }
             }
         }
         return best
     }
 
-    // MARK: - Weekly PRs (stub — Phase 6 PR detection deferred)
-    // UI-SPEC §What's Explicitly Deferred line 707: PR detection is Phase 6 work.
-    // Section is hidden when array is empty.
-
-    private var weeklyPRs: [PRRow] { [] }
-
-    // MARK: - Session note
-
-    private struct SessionNoteData {
-        let text: String
-        let dateLabel: String
-    }
-
-    @MainActor
-    private func mostRecentSessionNote() -> SessionNoteData? {
-        let start = priorWeekStart
-        let end   = weekStart
-        let descriptor = FetchDescriptor<Session>(
-            predicate: #Predicate<Session> {
-                $0.startedAt >= start && $0.startedAt < end && $0.completedAt != nil
-            },
-            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
-        )
-        let sessions = (try? ctx.fetch(descriptor)) ?? []
-        for session in sessions {
+    /// The note of the latest finished workout of the week that has one.
+    private nonisolated static func latestNote(of sessions: [Session]) -> SessionNoteData? {
+        let finished = sessions.filter { $0.completedAt != nil }.sorted { $0.startedAt > $1.startedAt }
+        for session in finished {
             let note = session.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             guard !note.isEmpty else { continue }
             let df = DateFormatter()
             df.dateFormat = "EEE MMM d"
             df.timeZone = TimeZone.current
-            let dateLabel = df.string(from: session.startedAt).uppercased()
-            return SessionNoteData(text: note, dateLabel: dateLabel)
+            return SessionNoteData(text: note, dateLabel: df.string(from: session.startedAt).uppercased())
         }
         return nil
     }
@@ -866,32 +883,58 @@ public struct WeeklyRecapSheet: View {
 
     /// One Muscles Hit row. Internal so WeekWindowCalendarTests can read
     /// the rows `musclesHit` orders.
-    struct MuscleRow {
+    struct MuscleRow: Sendable {
         let slug: String
         let displayName: String
         let count: Int
     }
 
-    private struct UnderTrainedRow {
+    struct UnderTrainedRow: Sendable {
         let slug: String
         let displayName: String
         let totalSets: Int
         let mev: Int
     }
 
-    private struct ProgressRow {
+    struct ProgressRow: Sendable {
         let exerciseID: UUID
         let exerciseName: String
         let deltaCopy: String
         let deltaColor: Color
     }
 
-    private struct PRRow {
-        let exerciseID: UUID
+    /// One record broken: the exercise, the kind, as the in-workout banner
+    /// names it, and the record, in the exercise's own unit.
+    struct RecordRow: Sendable {
         let exerciseName: String
         let kindLabel: String
-        let valueDisplay: String
-        let isHighlighted: Bool
+        let value: String
+
+        init(_ record: SessionRecord, unit: WeightUnit) {
+            let set = record.set
+            let unit = WeightUnit.effective(for: set.sessionExercise?.exercise, default: unit).rawValue
+            let weight = NumberText.weight(set.weight)
+            exerciseName = PRBucketRanking.exerciseName(set)
+            switch record.kind {
+            case .weight:
+                kindLabel = "Weight PR"
+                value = "\(weight) \(unit)"
+            case .reps:
+                kindLabel = "Rep PR"
+                value = "\(set.reps) @ \(weight) \(unit)"
+            case .volume:
+                kindLabel = "Volume PR"
+                value = "\(Int((set.weight * Double(set.reps)).rounded()).formatted()) \(unit)"
+            case .e1RM:
+                kindLabel = "e1RM PR"
+                let e1RM = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) ?? 0
+                value = "\(Int(e1RM.rounded()).formatted()) \(unit)"
+            }
+        }
+    }
+
+    struct SessionNoteData: Sendable {
+        let text: String
+        let dateLabel: String
     }
 }
-

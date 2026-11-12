@@ -32,6 +32,7 @@ import SwiftUI
 public struct WeeklyTonnageSparkCard: View {
     private let values: [Double]
     private let deltaPct: Double?
+    private let accent: Bool
 
     /// Creates a weekly tonnage spark card.
     /// - Parameters:
@@ -40,9 +41,13 @@ public struct WeeklyTonnageSparkCard: View {
     ///   - deltaPct: Week-over-week delta percentage. Positive = upward trend (bruSignal).
     ///               Negative = downward trend (bruInk). Nil hides the delta, e.g. when
     ///               last week had no tonnage to compare against.
-    public init(values: [Double], deltaPct: Double?) {
+    ///   - accent: False draws the newest bar and an upward delta in ink, for a
+    ///             screen whose one signal accent is elsewhere, as on the past
+    ///             weekly recaps (RM-020).
+    public init(values: [Double], deltaPct: Double?, accent: Bool = true) {
         self.values = values
         self.deltaPct = deltaPct
+        self.accent = accent
     }
 
     public var body: some View {
@@ -63,13 +68,13 @@ public struct WeeklyTonnageSparkCard: View {
                     Text(Self.deltaLabel(deltaPct))
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
-                        .foregroundStyle(deltaPct >= 0 ? Color.bruSignalText : Color.bruInk)
+                        .foregroundStyle(accent && deltaPct >= 0 ? Color.bruSignalText : Color.bruInk)
                         .accessibilityLabel(Self.spokenDelta(deltaPct))
                 }
             }
 
             // 8-bar spark chart — trailing (most-recent) bar in bruSignal
-            BRUSpark(values: values, highlightTrailing: true)
+            BRUSpark(values: values, highlightTrailing: accent)
                 .frame(height: 60)
                 .accessibilityHidden(true)
         }

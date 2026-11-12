@@ -9,8 +9,12 @@
 //  Each test seeds last week on a fresh store, so its result never depends
 //  on what the phone held before, and finds the recap by its header title,
 //  such as "Week 44 · recap", so the absence check fails when the recap
-//  shows. On the recap, START W{N} ▸ is the footer's only button: ALL
-//  RECAPS did nothing, because no screen lists past recaps.
+//  shows.
+//
+//  RM-020. ALL RECAPS on the recap, and Weekly recaps on Progress, list
+//  every past week with a workout that counts, and a row reopens that
+//  week's recap, with ‹ BACK and no Start button. The recap and the list
+//  read their weeks off the main actor, just after they show.
 //
 //  T114, findings F242 and F277. The sessions chip measures last week
 //  against the training days its block planned, "1 / 4 sessions", and
@@ -68,7 +72,7 @@ final class WeeklyRecapUITests: XCTestCase {
         }
 
         let sessions = app.staticTexts["recap.sessions"]
-        XCTAssertTrue(sessions.exists, "The recap's cover shows no sessions chip")
+        XCTAssertTrue(UITestNavigation.appears(sessions), "The recap's cover shows no sessions chip")
         XCTAssertEqual(
             sessions.label, "1 session",
             "The empty workout must not count as a session, and with no block last week the chip names no target"
@@ -83,13 +87,35 @@ final class WeeklyRecapUITests: XCTestCase {
             "Last week's one session is one routine's, but the recap reads \"\(across.label)\""
         )
 
-        let prChip = app.staticTexts["No PRs this wk"]
+        let prChip = app.staticTexts["recap.prs"]
         XCTAssertTrue(prChip.exists, "The recap's cover shows no PR chip")
+        // Last week's sets were the first ever logged, which set records (RM-036).
+        XCTAssertTrue(prChip.label.hasPrefix("\u{2605} "), "The PR chip must count last week's records, but reads \"\(prChip.label)\"")
+
+        let start = app.buttons.matching(NSPredicate(format: "label MATCHES[c] %@", #"Start W\d+.*"#)).firstMatch
+        XCTAssertTrue(start.exists, "The recap must offer its Start button")
 
         let allRecaps = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "All recaps")).firstMatch
-        XCTAssertFalse(allRecaps.exists, "ALL RECAPS did nothing, so the recap must not offer it")
-        let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Start W")).firstMatch
-        XCTAssertTrue(start.exists, "The recap must offer its Start button")
+        guard allRecaps.exists else { return XCTFail("The recap must offer ALL RECAPS") }
+        allRecaps.tap()
+        assertListReopensLastWeek(in: app)
+    }
+
+    /// Progress → Weekly recaps lists last week, and its row reopens the
+    /// recap Today showed for it.
+    @MainActor
+    func testProgressListsPastRecaps() throws {
+        let app = UITestNavigation.launch(UITestNavigation.recapWithEmpty)
+        UITestNavigation.selectTab("Progress", in: app)
+        let workouts = app.buttons["progress.history"]
+        XCTAssertTrue(
+            UITestNavigation.waitUntil(timeout: 30) { workouts.exists && workouts.label.contains("2 finished") },
+            "The seed must finish its two workouts"
+        )
+        let recaps = app.buttons["progress.recaps"]
+        guard UITestNavigation.appears(recaps) else { return XCTFail("Progress must offer Weekly recaps") }
+        recaps.tap()
+        assertListReopensLastWeek(in: app)
     }
 
     /// T114: one session on a block that planned four training days last
@@ -104,7 +130,7 @@ final class WeeklyRecapUITests: XCTestCase {
         }
 
         let sessions = app.staticTexts["recap.sessions"]
-        XCTAssertTrue(sessions.exists, "The recap's cover shows no sessions chip")
+        XCTAssertTrue(UITestNavigation.appears(sessions), "The recap's cover shows no sessions chip")
         XCTAssertEqual(
             sessions.label, "1 / 4 sessions",
             "Last week's block planned four training days, so the chip must measure the one session against 4"
@@ -118,6 +144,41 @@ final class WeeklyRecapUITests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// On the week list: one row, last week's, with its one session and its
+    /// records, which reopens last week's recap with the same counts, ‹ BACK
+    /// and no Start button. Back returns to the list.
+    @MainActor
+    private func assertListReopensLastWeek(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let row = app.buttons["recaps.row"]
+        guard UITestNavigation.appears(row) else {
+            return XCTFail("The week list must show last week", file: file, line: line)
+        }
+        XCTAssertEqual(app.buttons.matching(identifier: "recaps.row").count, 1,
+                       "Only last week has a workout that counts", file: file, line: line)
+        XCTAssertTrue(row.label.contains("1 session · "), "The row reads \"\(row.label)\"", file: file, line: line)
+        let records = row.label.firstMatch(of: /, (\d+) records?$/).flatMap { Int($0.1) }
+        XCTAssertNotNil(records, "The row must count last week's records, but reads \"\(row.label)\"", file: file, line: line)
+
+        row.tap()
+        let sessions = app.staticTexts["recap.sessions"]
+        XCTAssertTrue(UITestNavigation.appears(sessions), "The row must reopen its recap", file: file, line: line)
+        XCTAssertEqual(sessions.label, "1 session", "The reopened recap must count last week as before", file: file, line: line)
+        if let records {
+            XCTAssertEqual(app.staticTexts["recap.prs"].label, "\u{2605} \(records) \(records == 1 ? "PR" : "PRs")",
+                           "The reopened recap must count the row's records", file: file, line: line)
+        }
+        XCTAssertTrue(recapTitle(in: app).exists, "The reopened recap must name its week", file: file, line: line)
+        // START W{N} alone: Today's "Start workout ▸" stays under the sheet, and
+        // the recap under the list keeps its button until the push ends.
+        let start = app.buttons.matching(NSPredicate(format: "label MATCHES[c] %@", #"Start W\d+.*"#)).firstMatch
+        XCTAssertTrue(UITestNavigation.disappears(start), "A reopened recap has no Start button", file: file, line: line)
+
+        let back = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Back")).firstMatch
+        guard back.exists else { return XCTFail("The reopened recap must offer ‹ BACK", file: file, line: line) }
+        back.tap()
+        XCTAssertTrue(UITestNavigation.appears(row), "Back must return to the week list", file: file, line: line)
+    }
 
     /// Waits on Progress until the seed has finished `count` workouts,
     /// which its Workouts row counts, empty ones included, then makes the
