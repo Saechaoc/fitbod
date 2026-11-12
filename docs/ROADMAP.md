@@ -16,7 +16,8 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-012](#rm-012) redesign 1.6, Program's resume and discard; [RM-020](#rm-020) past weekly recaps; and the first nightly run's two failures, [RM-001](#rm-001)'s store test, which reopens RM-001, and a large-iPhone PR list test ([RM-053](#rm-053)).
+In flight: [RM-012](#rm-012) redesign 1.6, Program's resume and discard; and [RM-020](#rm-020) past weekly recaps.
+Fixed on 2026-11-12: the first nightly run's two failures, a store test and a large-iPhone PR list test, were test races, now fixed in the tests ([RM-001](#rm-001), [RM-053](#rm-053)).
 Done on 2026-11-12: [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow in the analytics stream; and [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past, which [RM-012](#rm-012) follows in the redesign order.
 Delivered on 2026-11-12: [RM-026](#rm-026)'s first delivery, superset partners in one trip; its second, unsaved duplication, follows.
 On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
@@ -92,6 +93,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-004](#rm-004) | P1 · Done | Photo metadata removed at pick/save/upgrade/export/restore; original-preserving failures and pre-delete validation verified. Evidence in RM-004. | Static photos, full pixel dimensions within decode bounds; no schema change. |
 | [RM-003](#rm-003) | P1 · Done | Both volume screens render missing targets without model writes; explicit creation rolls back and retries. Hosted before/after, units and 390pt route evidence in RM-003. | Unblocks RM-010; no schema or fatigue-math change. |
 | [RM-002](#rm-002) | P1 · Done | Failed slot additions/resets roll back and explain retry; superset drafts save with the session and Discard writes nothing. Unit/failure/relaunch evidence in RM-002. | Schema unchanged. |
+| [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. The 2026-11-12 nightly recurrence was a test race, fixed in the tests. | No schema change; populated recovery proof remains RM-029. |
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
@@ -1053,6 +1055,7 @@ A screen recording of a failing control run shows the PR list sliding over the P
 The test now waits until the Personal Records row has left the screen before it reads; no second tap is added, since a retry would hide a row that ignores taps.
 GitHub's runner, iPhone 17 Pro Max, 20 runs each: on `main`'s code the PR list test failed 2 and the store suite 3 ([run 43305790528](https://github.com/Saechaoc/fitbod/actions/runs/43305790528)); with the fixes both passed 20 of 20 ([run 43306436931](https://github.com/Saechaoc/fitbod/actions/runs/43306436931)).
 Locally `PRListAndSeriesUITests` passed 2 of 2 on the iPhone 17 (`fast-20261112-131651`).
+After the rebase onto `7ecaf4ec`, `IncompatibleStoreRecoveryTests` and `PRListAndSeriesUITests` passed 12/12 (`fast-20261112-134136`).
 **Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
 `check_map.py` and `git diff --check` passed; the checker reported five existing
 unreferenced screenshots. Documentation only; no app tests rerun.
