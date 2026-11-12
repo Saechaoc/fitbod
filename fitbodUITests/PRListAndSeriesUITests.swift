@@ -51,6 +51,9 @@ final class PRListAndSeriesUITests: XCTestCase {
         let records = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Personal Records")).firstMatch
         UITestNavigation.reveal(records, in: app)
         records.tap()
+        // The reader reads the first scroll view, which stays the Progress
+        // home's until the push has taken it away (nightly run, 2026-11-12).
+        XCTAssertTrue(UITestNavigation.disappears(records), "Personal Records never opened the PR list")
 
         let buckets = try readPRList(in: app)
         XCTAssertFalse(buckets.isEmpty, "The PR list shows no buckets")

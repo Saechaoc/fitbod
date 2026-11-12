@@ -229,9 +229,32 @@ struct IncompatibleStoreRecoveryTests {
             && defaults.bool(forKey: PlateInventorySeeder.seededKey)
     }
 
-    /// Writes a store with the incompatible shape, then releases it. The
-    /// `.default_SUPPORT` folder, where SwiftData keeps external attribute
-    /// data, is added by hand because this shape has no such attribute.
+    /// Whether this process holds a file in `dir` open.
+    private func holdsFileOpen(in dir: URL) -> Bool {
+        var path = [CChar](repeating: 0, count: Int(MAXPATHLEN))
+        return (0..<getdtablesize()).contains { fd in
+            fcntl(fd, F_GETPATH, &path) != -1 && String(cString: path).contains(dir.lastPathComponent)
+        }
+    }
+
+    /// Waits until the container that wrote the store in `dir` has closed
+    /// it, so the store file's bytes read next are the ones it keeps. A
+    /// released container usually closes its store before the release
+    /// returns, but now and then a few milliseconds later on another thread,
+    /// and the close checkpoints the `-wal` into the store file. The first
+    /// nightly run read the bytes before that close (2026-11-12).
+    private func waitUntilClosed(_ dir: URL) throws {
+        let deadline = Date.now.addingTimeInterval(10)
+        while holdsFileOpen(in: dir), Date.now < deadline {
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        try #require(!holdsFileOpen(in: dir), "The container that wrote the store never closed it")
+    }
+
+    /// Writes a store with the incompatible shape, then waits until it is
+    /// closed. The `.default_SUPPORT` folder, where SwiftData keeps external
+    /// attribute data, is added by hand because this shape has no such
+    /// attribute.
     private func writeIncompatibleStore(at url: URL) throws {
         try autoreleasepool {
             let schema = Schema([IncompatibleShape.Exercise.self])
@@ -244,6 +267,7 @@ struct IncompatibleStoreRecoveryTests {
             ctx.insert(old)
             try ctx.save()
         }
+        try waitUntilClosed(url.deletingLastPathComponent())
         let support = url.deletingLastPathComponent().appendingPathComponent(".default_SUPPORT", isDirectory: true)
         try fm.createDirectory(at: support, withIntermediateDirectories: true)
         try Data("photo".utf8).write(to: support.appendingPathComponent("blob"))
@@ -551,6 +575,7 @@ struct IncompatibleStoreRecoveryTests {
                 sets: [(100, 5, true), (102.5, 4, true)], in: context
             )
         }
+        try waitUntilClosed(dir)
         #expect(contents(of: dir) == storeFileNames)
         let storeBytes = try Data(contentsOf: url)
 
@@ -605,6 +630,7 @@ struct IncompatibleStoreRecoveryTests {
             ctx.insert(old)
             try ctx.save()
         }
+        try waitUntilClosed(dir)
         let before = contents(of: dir)
         let storeBytes = try Data(contentsOf: url)
 
