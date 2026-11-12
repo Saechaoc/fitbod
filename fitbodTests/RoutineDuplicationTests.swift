@@ -2,20 +2,10 @@
 //  RoutineDuplicationTests.swift
 //  fitbodTests
 //
-//  Deep-copy correctness coverage for `RoutineDuplicator.duplicate(routine:context:)`
-//  (plan 03-03). Six `@Test` functions:
-//
-//    1. nameSuffixedWithCopy — clone name = "{original} (Copy)"
-//    2. deepCopyOfRoutineExercises — RE rows cloned; IDs fresh; exercise
-//       refs preserved
-//    3. supersetGroupRemappedToClonedGroup — RESEARCH §6 Pitfall 6:
-//       SupersetGroup rows cloned + supersetGroupID remapped to the
-//       CLONED group, not the source group
-//    4. perSetOverridesCloned — per-set overrides cloned with fresh
-//       IDs and preserved values
-//    5. folderIDPreserved — cloned routine inherits source's folderID
-//    6. originalRoutineUntouched — source routine is unchanged (the
-//       duplicate is a parallel object)
+//  `RoutineDuplicator.duplicate(_:context:)`, the session editor's
+//  Duplicate session (RM-026): the copy is the editor's draft, unsaved
+//  changes included, saved as a new session that shares no row or superset
+//  group with the original, which keeps what it last saved.
 //
 
 import Foundation
@@ -24,8 +14,9 @@ import Testing
 @testable import fitbod
 
 @MainActor
-@Suite("RoutineDuplication (plan 03-03)")
+@Suite("RoutineDuplication")
 struct RoutineDuplicationTests {
+    enum Failure: Error { case disk }
 
     private func makeContext() throws -> ModelContext {
         let container = try InMemoryContainer.makeCurrent()
@@ -35,33 +26,19 @@ struct RoutineDuplicationTests {
     /// Seeds a session template with:
     ///   - 2 SessionExerciseTemplate rows (Bench, OHP) in order
     ///   - 1 per-set override on the Bench row (setIndex 0, 6 reps @ RPE 9)
+    ///   - warm-ups off on the OHP row
     ///   - 1 SupersetGroup linking both rows
     private func makeFixture(ctx: ModelContext) throws -> SessionTemplate {
         let routine = SessionTemplate()
         routine.name = "Push Day"
         routine.notes = "Heavy bench focus"
-        // Phase 3.1 (PIVOT-01): intent + progressionKind live on SessionTemplate.
-        // The pre-3.1 fixture had two distinct intents per-RE; under
-        // PIVOT one template carries one intent. The duplicator test now
-        // verifies the template-level intent + progression copy across.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.rpe.rawValue
         ctx.insert(routine)
 
-        let ex1 = Exercise.previewSample(
-            name: "Bench",
-            equipment: .barbell,
-            mechanic: .compound
-        )
-        let ex2 = Exercise.previewSample(
-            name: "OHP",
-            equipment: .barbell,
-            mechanic: .compound
-        )
-        ctx.insert(ex1)
-        ctx.insert(ex2)
+        let ex1 = exercise("Bench", in: ctx)
+        let ex2 = exercise("OHP", in: ctx)
 
-        // Two SessionExerciseTemplate rows.
         let re1 = SessionExerciseTemplate()
         re1.sessionTemplate = routine
         re1.exercise = ex1
@@ -74,9 +51,9 @@ struct RoutineDuplicationTests {
         re2.exercise = ex2
         re2.orderIndex = 1
         re2.targetSets = 4
+        re2.warmupOverride = WarmupConfig(enabled: false)
         ctx.insert(re2)
 
-        // Per-set override on re1 (setIndex 0, 6 reps @ RPE 9).
         let ov = RoutineExerciseSetOverride(
             setIndex: 0,
             targetRepsLow: 6,
@@ -86,7 +63,6 @@ struct RoutineDuplicationTests {
         ov.routineExercise = re1
         ctx.insert(ov)
 
-        // SupersetGroup linking re1 + re2.
         let group = SupersetGroup(
             routineID: routine.id,
             kindRaw: SupersetKind.paired.rawValue,
@@ -100,25 +76,49 @@ struct RoutineDuplicationTests {
         return routine
     }
 
-    // MARK: - 1
+    private func exercise(_ name: String, in ctx: ModelContext) -> Exercise {
+        let exercise = Exercise.previewSample(name: name, equipment: .barbell, mechanic: .compound)
+        ctx.insert(exercise)
+        return exercise
+    }
+
+    private func duplicate(_ source: SessionTemplate, in ctx: ModelContext) throws -> SessionTemplate {
+        try RoutineDuplicator.duplicate(RoutineDraft(routine: source), context: ctx)
+    }
+
+    /// `session` as the store has it, read through a fresh context.
+    private func stored(_ session: SessionTemplate, in ctx: ModelContext) throws -> SessionTemplate {
+        let id = session.id
+        let reader = ModelContext(ctx.container)
+        return try #require(try reader.fetch(FetchDescriptor<SessionTemplate>(predicate: #Predicate { $0.id == id })).first)
+    }
+
+    private func groups(of session: SessionTemplate, in ctx: ModelContext) throws -> [SupersetGroup] {
+        let id = session.id
+        return try ModelContext(ctx.container).fetch(FetchDescriptor<SupersetGroup>(predicate: #Predicate { $0.routineID == id }))
+    }
+
+    private func lifts(_ session: SessionTemplate) -> [SessionExerciseTemplate] {
+        (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+    }
+
+    // MARK: - A saved session's copy
 
     @Test("nameSuffixedWithCopy")
     func nameSuffixedWithCopy() throws {
         let ctx = try makeContext()
         let source = try makeFixture(ctx: ctx)
-        let copy = RoutineDuplicator.duplicate(routine: source, context: ctx)
+        let copy = try duplicate(source, in: ctx)
         #expect(copy.name == "Push Day (Copy)")
     }
-
-    // MARK: - 2
 
     @Test("deepCopyOfRoutineExercises")
     func deepCopyOfRoutineExercises() throws {
         let ctx = try makeContext()
         let source = try makeFixture(ctx: ctx)
-        let copy = RoutineDuplicator.duplicate(routine: source, context: ctx)
+        let copy = try stored(try duplicate(source, in: ctx), in: ctx)
 
-        let copyExercises = (copy.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+        let copyExercises = lifts(copy)
         #expect(copyExercises.count == 2)
         #expect(copyExercises[0].exercise?.name == "Bench")
         #expect(copyExercises[1].exercise?.name == "OHP")
@@ -126,62 +126,46 @@ struct RoutineDuplicationTests {
         let sourceIDs = Set((source.exercises ?? []).map { $0.id })
         let copyIDs = Set(copyExercises.map { $0.id })
         #expect(sourceIDs.isDisjoint(with: copyIDs))
-        // Cloned RE rows belong to the cloned routine, not the source.
         for re in copyExercises {
             #expect(re.sessionTemplate?.id == copy.id)
-            #expect(re.sessionTemplate?.id != source.id)
         }
-        // Prescription fields preserved verbatim.
         #expect(copyExercises[0].targetSets == 3)
         #expect(copyExercises[1].targetSets == 4)
+        #expect(copyExercises[1].warmupOverride == WarmupConfig(enabled: false))
 
-        // Phase 3.1 (PIVOT-01): intent + progressionKind copy through the
-        // routine-level (not per-RE) field set.
-        #expect(copy.intentRaw == source.intentRaw)
-        #expect(copy.progressionKindRaw == source.progressionKindRaw)
+        #expect(copy.notes == "Heavy bench focus")
         #expect(copy.intentRaw == Intent.strength.rawValue)
         #expect(copy.progressionKindRaw == ProgressionKind.rpe.rawValue)
+        #expect(!copy.isArchived)
     }
-
-    // MARK: - 3 — RESEARCH §6 Pitfall 6
 
     @Test("supersetGroupRemappedToClonedGroup")
     func supersetGroupRemappedToClonedGroup() throws {
         let ctx = try makeContext()
         let source = try makeFixture(ctx: ctx)
-        let copy = RoutineDuplicator.duplicate(routine: source, context: ctx)
+        let copy = try duplicate(source, in: ctx)
 
-        // Source's superset group remains attached to source's RE rows only.
-        let sourceID = source.id
-        let sourceGroups = try ctx.fetch(FetchDescriptor<SupersetGroup>(
-            predicate: #Predicate { $0.routineID == sourceID }
-        ))
+        let sourceGroups = try groups(of: source, in: ctx)
+        let copyGroups = try groups(of: copy, in: ctx)
         #expect(sourceGroups.count == 1)
-
-        let copyID = copy.id
-        let copyGroups = try ctx.fetch(FetchDescriptor<SupersetGroup>(
-            predicate: #Predicate { $0.routineID == copyID }
-        ))
         #expect(copyGroups.count == 1)
         #expect(sourceGroups.first?.id != copyGroups.first?.id)
-
-        // Cloned RE rows reference the CLONED group ID, not the source's.
-        let copyExercises = (copy.exercises ?? [])
-        for re in copyExercises {
+        // Cloned rows reference the CLONED group ID, not the source's.
+        for re in try stored(copy, in: ctx).exercises ?? [] {
             #expect(re.supersetGroupID == copyGroups.first?.id)
-            #expect(re.supersetGroupID != sourceGroups.first?.id)
+        }
+        for re in try stored(source, in: ctx).exercises ?? [] {
+            #expect(re.supersetGroupID == sourceGroups.first?.id)
         }
     }
-
-    // MARK: - 4
 
     @Test("perSetOverridesCloned")
     func perSetOverridesCloned() throws {
         let ctx = try makeContext()
         let source = try makeFixture(ctx: ctx)
-        let copy = RoutineDuplicator.duplicate(routine: source, context: ctx)
+        let copy = try stored(try duplicate(source, in: ctx), in: ctx)
 
-        let copyRE0 = try #require((copy.exercises ?? []).first { $0.orderIndex == 0 })
+        let copyRE0 = try #require(lifts(copy).first)
         let copyOverrides = copyRE0.setOverrides ?? []
         #expect(copyOverrides.count == 1)
         #expect(copyOverrides.first?.setIndex == 0)
@@ -189,17 +173,10 @@ struct RoutineDuplicationTests {
         #expect(copyOverrides.first?.targetRepsHigh == 6)
         #expect(copyOverrides.first?.targetRPE == 9.0)
 
-        // Fresh ID — not shared with source override.
-        let sourceRE0 = try #require((source.exercises ?? []).first { $0.orderIndex == 0 })
-        let sourceOverrideID = (sourceRE0.setOverrides ?? []).first?.id
-        let copyOverrideID = copyOverrides.first?.id
-        #expect(sourceOverrideID != copyOverrideID)
-        // Cloned override's parent is the cloned RE, not the source RE.
+        let sourceRE0 = try #require(lifts(source).first)
+        #expect((sourceRE0.setOverrides ?? []).first?.id != copyOverrides.first?.id)
         #expect(copyOverrides.first?.routineExercise?.id == copyRE0.id)
-        #expect(copyOverrides.first?.routineExercise?.id != sourceRE0.id)
     }
-
-    // MARK: - 5
 
     @Test("folderIDPreserved")
     func folderIDPreserved() throws {
@@ -211,26 +188,144 @@ struct RoutineDuplicationTests {
         source.folderID = folder.id
         try ctx.save()
 
-        let copy = RoutineDuplicator.duplicate(routine: source, context: ctx)
+        let copy = try duplicate(source, in: ctx)
         #expect(copy.folderID == folder.id)
     }
-
-    // MARK: - 6
 
     @Test("originalRoutineUntouched")
     func originalRoutineUntouched() throws {
         let ctx = try makeContext()
         let source = try makeFixture(ctx: ctx)
-        let sourceName = source.name
-        let sourceExerciseCount = (source.exercises ?? []).count
-        let sourceRE0 = try #require((source.exercises ?? []).first { $0.orderIndex == 0 })
-        let sourceOverrideCount = (sourceRE0.setOverrides ?? []).count
+        _ = try duplicate(source, in: ctx)
 
-        _ = RoutineDuplicator.duplicate(routine: source, context: ctx)
+        let original = try stored(source, in: ctx)
+        #expect(original.name == "Push Day")
+        #expect(lifts(original).count == 2)
+        #expect((lifts(original).first?.setOverrides ?? []).count == 1)
+        #expect(try ModelContext(ctx.container).fetchCount(FetchDescriptor<SessionTemplate>()) == 2)
+    }
 
-        #expect(source.name == sourceName)
-        #expect((source.exercises ?? []).count == sourceExerciseCount)
-        let sourceRE0After = try #require((source.exercises ?? []).first { $0.orderIndex == 0 })
-        #expect((sourceRE0After.setOverrides ?? []).count == sourceOverrideCount)
+    // MARK: - Unsaved changes (RM-026)
+
+    @Test("Unsaved changes go into the copy, and the session keeps what it saved")
+    func unsavedChangesGoIntoTheCopyOnly() throws {
+        let ctx = try makeContext()
+        let source = try makeFixture(ctx: ctx)
+        let squat = exercise("Squat", in: ctx)
+        try ctx.save()
+        let draft = RoutineDraft(routine: source)
+        draft.name = "  Push Day Heavy "
+        draft.intent = .power
+        draft.exercises[0].targetSets = 5
+        draft.exercises[1].warmupOverride = WarmupConfig(enabled: true, skipNextSession: true)
+        draft.append(exercise: squat)
+        let draftIDs = draft.exercises.map(\.id)
+
+        let copy = try stored(try RoutineDuplicator.duplicate(draft, context: ctx), in: ctx)
+        #expect(copy.name == "Push Day Heavy (Copy)")
+        #expect(copy.intent == .power)
+        #expect(lifts(copy).map { $0.exercise?.name } == ["Bench", "OHP", "Squat"])
+        #expect(lifts(copy).map(\.targetSets) == [5, 4, draft.exercises[2].targetSets])
+        #expect(lifts(copy)[1].warmupOverride == WarmupConfig(enabled: true, skipNextSession: true))
+
+        let original = try stored(source, in: ctx)
+        #expect(original.name == "Push Day")
+        #expect(original.intent == .strength)
+        #expect(lifts(original).map { $0.exercise?.name } == ["Bench", "OHP"])
+        #expect(lifts(original).map(\.targetSets) == [3, 4])
+        #expect(lifts(original)[1].warmupOverride == WarmupConfig(enabled: false))
+
+        // The editor's draft still edits the original, unsaved changes and all.
+        #expect(draft.exercises.map(\.id) == draftIDs)
+        #expect(draft.name == "  Push Day Heavy ")
+        #expect(!ctx.hasChanges)
+    }
+
+    @Test("Each superset becomes one new group of the copy's, its lifts together")
+    func eachSupersetBecomesOneNewGroup() throws {
+        let ctx = try makeContext()
+        let source = try makeFixture(ctx: ctx)
+        let names = ["Row", "Squat", "Curl"]
+        let extra = names.map { exercise($0, in: ctx) }
+        try ctx.save()
+        let draft = RoutineDraft(routine: source)
+        for lift in extra { draft.append(exercise: lift) }
+        // An unsaved superset of Row and Curl, which gathers Curl up to Row.
+        draft.setSuperset(of: draft.exercises[2], partners: [draft.exercises[4]])
+        let unsaved = try #require(draft.newSupersetIDs.first)
+        let saved = try #require(try groups(of: source, in: ctx).first?.id)
+
+        let copy = try stored(try RoutineDuplicator.duplicate(draft, context: ctx), in: ctx)
+        let order = lifts(copy)
+        #expect(order.map { $0.exercise?.name } == ["Bench", "OHP", "Row", "Curl", "Squat"])
+        let copyGroups = Set(try groups(of: copy, in: ctx).map(\.id))
+        #expect(copyGroups.count == 2)
+        #expect(copyGroups.isDisjoint(with: [saved, unsaved]))
+        #expect(order[0].supersetGroupID == order[1].supersetGroupID)
+        #expect(order[2].supersetGroupID == order[3].supersetGroupID)
+        #expect(order[0].supersetGroupID != order[2].supersetGroupID)
+        #expect(Set(order.compactMap(\.supersetGroupID)) == copyGroups)
+        #expect(order[4].supersetGroupID == nil)
+
+        // Saving the original afterwards gives it its own groups and leaves the copy's.
+        try draft.persist(into: source, context: ctx)
+        #expect(Set(try groups(of: source, in: ctx).map(\.id)) == [saved, unsaved])
+        #expect(Set(try groups(of: copy, in: ctx).map(\.id)) == copyGroups)
+    }
+
+    @Test("A failed copy rolls the store back and keeps the draft for a retry")
+    func aFailedCopyRollsBackAndKeepsTheDraft() throws {
+        let ctx = try makeContext()
+        let source = try makeFixture(ctx: ctx)
+        let draft = RoutineDraft(routine: source)
+        draft.name = "Changed"
+        // Bench leaves its superset, which ends it, then pairs with OHP again in a new one.
+        draft.leaveSuperset(draft.exercises[0])
+        draft.setSuperset(of: draft.exercises[0], partners: [draft.exercises[1]])
+        let unsaved = draft.newSupersetIDs
+        let before = draft.snapshotHash()
+
+        #expect(throws: Failure.self) {
+            try RoutineDuplicator.duplicate(draft, context: ctx, save: { _ in throw Failure.disk })
+        }
+        #expect(!ctx.hasChanges)
+        let reader = ModelContext(ctx.container)
+        #expect(try reader.fetchCount(FetchDescriptor<SessionTemplate>()) == 1)
+        #expect(try reader.fetchCount(FetchDescriptor<SessionExerciseTemplate>()) == 2)
+        #expect(try reader.fetchCount(FetchDescriptor<RoutineExerciseSetOverride>()) == 1)
+        #expect(try reader.fetchCount(FetchDescriptor<SupersetGroup>()) == 1)
+        #expect(draft.snapshotHash() == before)
+        #expect(draft.newSupersetIDs == unsaved)
+
+        let copy = try RoutineDuplicator.duplicate(draft, context: ctx)
+        #expect(copy.name == "Changed (Copy)")
+        #expect(try ModelContext(ctx.container).fetchCount(FetchDescriptor<SessionTemplate>()) == 2)
+        #expect(try groups(of: copy, in: ctx).count == 1)
+    }
+
+    @Test("A copy leaves logged workouts as they were")
+    func aCopyLeavesLoggedWorkouts() throws {
+        let ctx = try makeContext()
+        let source = try makeFixture(ctx: ctx)
+        let workout = try SessionFactory.start(template: source, context: ctx)
+        workout.completedAt = .now
+        try ctx.save()
+
+        let draft = RoutineDraft(routine: source)
+        draft.name = "Push Day Heavy"
+        draft.exercises[0].targetSets = 5
+        let copy = try RoutineDuplicator.duplicate(draft, context: ctx)
+
+        let sessions = try ModelContext(ctx.container).fetch(FetchDescriptor<Session>())
+        #expect(sessions.count == 1)
+        let logged = try #require(sessions.first)
+        #expect(logged.id == workout.id)
+        #expect(logged.template?.id == source.id)
+        #expect(logged.sourceRoutineID == source.id)
+        #expect(logged.displayName == "Push Day")
+        let loggedLifts = (logged.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+        #expect(loggedLifts.map(\.exerciseNameSnapshot) == ["Bench", "OHP"])
+        #expect(loggedLifts.map(\.targetSets) == [3, 4])
+        #expect(copy.id != source.id)
     }
 }

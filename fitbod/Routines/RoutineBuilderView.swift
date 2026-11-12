@@ -99,6 +99,7 @@ public struct RoutineBuilderView: View {
     @State private var presentingLibraryPicker: Bool = false
     @State private var showingMoreMenu: Bool = false
     @State private var showingValidationError: Bool = false
+    @State private var presentingDuplicateConfirm: Bool = false
     @State private var presentingArchiveConfirm: Bool = false
     @State private var archiveBlockedRoutines: [String] = []
     @State private var saveErrorMessage: String? = nil
@@ -235,9 +236,21 @@ public struct RoutineBuilderView: View {
             isPresented: $showingMoreMenu,
             titleVisibility: .hidden
         ) {
-            Button("Duplicate session") { duplicateSession() }
+            Button("Duplicate session") { requestDuplicate() }
             Button("Archive session", role: .destructive) { requestArchive() }
-            Button("Cancel", role: .cancel) {}
+            // iOS 26 hides a cancel-role button, so the way back is a plain one (D-63).
+            Button("Keep editing") {}
+        }
+        // Unsaved changes go into the copy, not into this session (RM-026).
+        .confirmationDialog(
+            "Duplicate with your changes?",
+            isPresented: $presentingDuplicateConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Duplicate session") { duplicateSession() }
+            Button("Keep editing") {}
+        } message: {
+            Text("The copy keeps your changes. This session stays as you last saved it.")
         }
         .confirmationDialog(
             "Archive this session?",
@@ -566,14 +579,25 @@ public struct RoutineBuilderView: View {
 
     // MARK: - More-menu actions (edit mode)
 
+    /// The copy is what the editor shows, so it must be valid to save, and
+    /// unsaved changes ask first: they go into the copy only (RM-026).
+    private func requestDuplicate() {
+        guard draft.isValid else {
+            showingValidationError = true
+            return
+        }
+        if hasUnsavedChanges {
+            presentingDuplicateConfirm = true
+        } else {
+            duplicateSession()
+        }
+    }
+
     private func duplicateSession() {
-        guard let editing else { return }
-        _ = RoutineDuplicator.duplicate(routine: editing, context: ctx)
         do {
-            try ctx.save()
+            try RoutineDuplicator.duplicate(draft, context: ctx)
             dismiss()
         } catch {
-            SessionSetActions.rollBack(ctx)
             saveErrorMessage = "The copy wasn't saved. Try again."
         }
     }

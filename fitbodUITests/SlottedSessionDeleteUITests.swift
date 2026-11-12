@@ -1,8 +1,10 @@
 import XCTest
 
 /// T40: real controls must save slot removal, and slotted sessions must
-/// reject archiving without losing their finished workouts. Neither journey
-/// can be proved by an in-memory model test because each reopens the app.
+/// reject archiving without losing their finished workouts. RM-026: the
+/// session menu's Duplicate session keeps unsaved changes in the copy. No
+/// journey here can be proved by an in-memory model test because each
+/// reopens the app.
 final class SlottedSessionDeleteUITests: XCTestCase {
     private static let routine = "Delete guard routine"
     private static let session = "Bench & Squat"
@@ -75,6 +77,38 @@ final class SlottedSessionDeleteUITests: XCTestCase {
         XCTAssertTrue(complete.exists || complete.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts.labeled(Self.session).exists,
                       "The retained workout must open with its original session name")
+    }
+
+    /// An unsaved rename asks before the copy, goes into the copy, and leaves
+    /// the slotted session as it was saved, through a relaunch.
+    @MainActor
+    func testDuplicateKeepsUnsavedChangesInTheCopyOnly() throws {
+        let renamed = "Bench Heavy"
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+        makeRoutine(in: app)
+        tap(app.buttons.labeled("Session 1: \(Self.session)"))
+        tap(app.buttons.labeled("Edit"))
+        UITestNavigation.type(renamed, into: app.textFields["Session name"])
+        tap(app.buttons.labeled("More"))
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("Keep editing")), "The menu must show its way back")
+        UITestNavigation.saveScreenshot("RM026", "session-menu")
+        tap(app.buttons.labeled("Duplicate session"))
+
+        let question = app.staticTexts.labeled("Duplicate with your changes?")
+        XCTAssertTrue(UITestNavigation.appears(question), "Unsaved changes must ask before the copy")
+        UITestNavigation.saveScreenshot("RM026", "duplicate-with-changes")
+        UITestNavigation.hittable(app.buttons, "Duplicate session", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(app.buttons["Save session ▸"]), "Duplicate session must close the editor")
+        XCTAssertTrue(app.staticTexts.labeled(Self.session).exists, "The session must keep its saved name")
+        XCTAssertFalse(app.staticTexts.labeled(renamed).exists, "The unsaved name must not reach the session")
+
+        UITestNavigation.relaunch(app)
+        openRoutine(in: app)
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("Session 1: \(Self.session)")),
+                      "The routine must keep the session as it was saved")
+        tap(app.buttons.labeled("+ Add session"))
+        let copy = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "\(renamed) (Copy),")).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(copy), "The copy must save with the unsaved name")
     }
 
     @MainActor

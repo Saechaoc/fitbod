@@ -64,7 +64,7 @@ Do not expose a facet whose options cannot return meaningful matches.
 | Empty session | Name, intent and progression controls, Add exercise slot, visible Save action. Invalid Save explains the missing fields. |
 | Populated session | Ordered exercise cards with target sets, rep range, rest, optional tempo and warm-up settings. Shared BRU controls replace ad hoc form controls where implemented. |
 | Reordering exercises | The trailing 44pt handle opens Move up/down. Boundary moves are disabled; saving writes contiguous order indices. The same actions are available in the card's context menu. |
-| Editing | Save updates the template. Duplicate creates a separate session; Archive removes it from new-workout pickers. Active-block editing explains that future prescriptions use the change. |
+| Editing | Save updates the template. Duplicate saves what the editor shows as a separate session; with unsaved changes it asks first, and they go into the copy only. Archive removes it from new-workout pickers. Active-block editing explains that future prescriptions use the change. |
 | Validation error | A missing name or empty exercise list is explained before persistence. Archive conflicts list affected routines. |
 
 Realistic review content: **Push A · Strength and accessory work** with Barbell

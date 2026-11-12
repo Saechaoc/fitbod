@@ -264,6 +264,8 @@ One sheet sets a lift's superset partners, two to four lifts; a superset left wi
 A superset's lifts always sit together: pairing gathers them at the first one's place, in list order, and a copy of a paired lift goes after its superset, in none.
 Move swaps a lift with a partner and passes another superset whole; a lift moved out of its superset leaves it.
 `persist(into:context:)` writes the session and its used new groups in one save and deletes the session's groups that no lift uses; failure rolls back the store while keeping the draft for retry. Discard writes no groups.
+Duplicate session saves the draft, unsaved changes included, as a new session named "{name} (Copy)", and asks first when there are unsaved changes; the session being edited keeps what it last saved.
+The copy's lifts, per-set overrides and superset groups are new rows, never the original's, and a failed copy rolls back and keeps the draft.
 The workout does not read supersets: each lift keeps its own sets and rest.
 
 Four native tab containers preserve stacks: Today, Program, Progress, Library.
