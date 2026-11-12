@@ -16,7 +16,8 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; and [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow.
+In flight: [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; and [RM-026](#rm-026)'s first delivery, superset partners in one trip.
+Done on 2026-11-12: [RM-019](#rm-019) stalled exercises, which [RM-020](#rm-020) and then [RM-023](#rm-023) follow in the analytics stream.
 On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
@@ -30,8 +31,9 @@ Ready work in independent streams may continue while another feature awaits inpu
 | Order | Ready outcome | Boundary |
 |---|---|---|
 | 1 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
+| 2 | [RM-020](#rm-020) past weekly recaps | Analytics stream; scheduled after RM-019, which is done. |
 
-Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set, [RM-026](#rm-026) authoring without detours and [RM-027](#rm-027) Library/custom results.
+Also dependency-ready, in no chosen order: [RM-025](#rm-025) plate calculator from a set and [RM-027](#rm-027) Library/custom results; [RM-026](#rm-026)'s later deliveries follow its first.
 **Decision (user, 2026-11-12):** [RM-029](#rm-029) is deprioritized and leaves this queue.
 A schema change that SwiftData migrates in place, as in [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066), needs the store rehearsal (`scripts/rehearse-store.sh` on a fresh copy of the phone's store) before and after it, and the user's go-ahead.
 RM-029's populated restore proof returns before a schema change SwiftData cannot migrate in place, and at release readiness.
@@ -42,13 +44,14 @@ Authoring, catalog, logging and calculator deliveries use their actual condition
 ## Needs input or device verification
 
 Only the named observation/decision is unavailable; this section does not pause unrelated work.
-Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `39ce98b5` (2026-11-11), whose store is on seed 10.
+Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `a2fc9ca7` (2026-11-12), whose store is on seed 10.
 
 | Owner | Missing input or proof | What depends on it |
 |---|---|---|
 | [RM-007](#rm-007), FT-19 | Exact repeated prompt text/owner on phone, then allow/deny/Focus reproduction | Identifying/fixing that prompt and its release acceptance. |
 | [RM-008](#rm-008), FT-20 | Lock Screen/Island rendering, rest adjustment/expiry/end on installed build | Closing widget rendering/lifecycle acceptance; implementation plan is archived. |
 | [RM-010](#rm-010) | On the phone: the week board with this week's real workouts. The user's call: whether Volume's amber ring outlasts a dismissed week, and whether Volume needs words for the ring | Closing RM-010; the ring keeps today's rules until the user decides. |
+| [RM-019](#rm-019) | The user's call: whether DROP INTENSITY should open the next workout instead of explaining with an alert | Only DROP INTENSITY's route; the Stalled list and the charts are done. |
 | [RM-022](#rm-022) | On the phone: Bench Press folds into one line, History keeps logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds Lateral Raise (Dumbbell) | Closing the families and grouped-list slices; slices 7–8 can proceed. |
 | [RM-045](#rm-045), FT-16 | Calf taps on the 430pt phone and a small (390pt) physical phone pass; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; nothing else waits on it. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
@@ -92,6 +95,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
 | [RM-065](#rm-065) | P1 · Done | Three delts with RP landmarks, audited muscle credits in `muscles.json` (seed 8), the week's total as working sets logged, and NOT TRAINED for an untrained muscle everywhere. Unit, full UI, 390pt and phone-store evidence in RM-065. | [RM-038](#rm-038) decision; [RM-022](#rm-022) adds a profile with each new family. |
+| [RM-019](#rm-019) | P2 · Done | Progress lists stalled exercises by intent with the flat-workout count, newest top set and the workout card's suggestion, and each exercise's chart shades its stalls; the search takes about 90 ms on four years of history. Unit, full UI, timing and 390pt evidence in RM-019. | Advisory only; DROP INTENSITY explains with an alert until the user decides. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
 | <a id="rm-057"></a>RM-057 | P1 · Done for step 1.1 | Redesign 1.1 TodayState/plan line/day refresh/oldest-ready/advisory. Removed stat strip/block band/week cells/deload banner/plan-complete note. 23 state tests/captures `a3b3ead4`–`56dc453c`; full run had 5 failures/1 expected, with fixes/remaining risks owned separately; [plan/results](archive/features/today-state-and-plan-line.md); D-159/D-341 elements replaced. R-2/R-4/R-6/R-8/R-13: today.root/Progress history entry, calendar refresh, shared BlockPosition and long-name layout shipped. | [state](../fitbod/Views/TodayState.swift), [position](../fitbod/Periodization/BlockPosition.swift); does not complete 1.3. |
@@ -384,7 +388,7 @@ A row opens the exercise's chart, which shades each stall's flat workouts and na
 **Done when:** Progress lists stalls with intent, stalled-workout count, last top set and suggested action; rows open charts that also mark stalls. Add-volume/drop-intensity suggestions lead somewhere useful or explain their limitation instead of silent no-ops.
 **Scope / sequence:** Reuse plateau results → stall list/chart routes → useful suggestion routes or explained limits. Advice stays non-mutating; broader trends excluded.
 **Requires:** Existing plateau math; preserve advisory-only behavior.
-**Evidence:** Branch `swarm/C1` (`54310884`, `bb0542d9`, `81df8c0b`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5.
+**Evidence:** On `main` (`fd417eeb`, `e36ffd4f`, `2d6fe777`, `41062e0c`, `a2fc9ca7`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5.
 `StalledExercises.find` runs the workout card's `PlateauDetector.evaluateWindow` and `suggestedAction` for each finished exercise, intent and machine, so the list, the chart and the card read one check.
 ADD VOLUME opens the primary muscle's detail, TRY VARIATION the similar exercises (a pick opens its chart, the library button the library), CONSIDER DELOAD the fatigue signals, and DROP INTENSITY an alert that says how to apply it in a workout and that it changes nothing here.
 No suggestion writes a set, a workout or a routine.
@@ -399,6 +403,8 @@ On a four-year history on the iPhone 17e simulator (832 finished workouts, 4,992
 `find` now reads the logs the Progress tab's query already holds, each stream's own logs, and this week's volume, the MAV targets and the active block once per call: 92 ms cold and 34 ms again on that history, 10 ms for one exercise's chart, and 270 ms when it fetches every log itself, which only tests do.
 `SuggestedActionTests` checks that the Stalled list shows the card's suggestion in every branch; with `StalledExercisesTests`, `PlateauDetectorTests` and the other plateau suites, 66 of 67 passed (`fast-20261112-122428`), and the one failure is a `UICopyRulesTests` exemption that main's `e322f70f` drops.
 The time on the phone is not measured.
+Before the speed fix, the full tier on the branch rebased onto `1be296a0` ran 1,361 tests: 1,357 passed, 2 skipped, 1 expected failure, and the one failure was `main`'s own `UICopyRulesTests` exemption, which `e322f70f` drops (`full-20261112-115850`).
+After the speed fix and a rebase onto `e322f70f`, `UICopyRulesTests`, `StalledExercisesTests`, `SuggestedActionTests`, `PlateauDetectorTests`, `PRListAndSeriesUITests` and `EmptyWorkoutCountsUITests` passed 36 of 36 (`fast-20261112-122743`).
 **References:** D-21/PROG-06; [Progress workflow](design-map/workflows/check-progress.md), phase-5 deferred chip routes.
 
 ### <a id="rm-020"></a>RM-020 — Reopen past weekly recaps
@@ -567,6 +573,7 @@ Inspected at 390pt, light mode (iPhone 17e), with the bout alone and with a benc
 In Library a cardio exercise's page and history call its entries bouts ("1 bout", "Best bout", "1 bout across 1 workout", "No logged bouts yet"), and lifts keep sets.
 `CardioPlanTests` (10) checks both pages' counts, the eight history and cardio suites passed (60 tests), and both pages were inspected at 390pt, light mode, for a logged Stair Climber and a never-logged Elliptical.
 Noted, not changed: a never-logged cardio exercise's history shows TONNAGE 0 in its stat strip, because the LONGEST cell needs a timed set.
+On `main` the Library change left `UICopyRulesTests` failing: the history's "No Strength sets" noun moved into its own literal, so its exemption went unused; `e322f70f` drops it, and the suite passed 3 of 3 (`fast-20261112-120922`).
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 
