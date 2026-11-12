@@ -39,8 +39,6 @@ struct UICopyRulesTests {
     /// Interpolations before one of those nouns that are not whole counts,
     /// by file, with the reason.
     private static let notWholeCounts: [(file: String, interpolation: String, reason: String)] = [
-        ("fitbod/ExerciseLibrary/ExerciseHistoryView.swift", "intentFilter!.rawValue.capitalized",
-         "an intent's name, as in \"No Strength sets\""),
         ("fitbod/Sessions/WhyThisWeightSheet.swift", #"String(format: "%.1f", rir)"#,
          "a fractional count, such as \"1.5 reps\", which is always plural; a whole one takes BRUCountLabel"),
     ]
