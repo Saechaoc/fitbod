@@ -60,7 +60,10 @@ public struct LiftListSection: View {
                     }
                 }
                 if let previewCount, sortedExercises.count > previewCount {
-                    TodayGhostRow(title: showsAll ? "Show fewer exercises" : "Show all \(BRUCountLabel.text(sortedExercises.count, "exercise"))") {
+                    TodayGhostRow(
+                        title: showsAll ? "Show fewer exercises" : "Show all \(BRUCountLabel.text(sortedExercises.count, "exercise"))",
+                        glyph: showsAll ? "▴" : "▾"
+                    ) {
                         showsAll.toggle()
                     }
                     .accessibilityIdentifier("today.showAllExercises")

@@ -292,7 +292,8 @@ The unit target passed: 1,245 tests, 1,242 passed, 0 failed, 2 skipped, 1 expect
 The missing ring was reproduced first at 390pt on main's Volume code, with Today's notice reading 2 signals.
 390pt light and dark captures were inspected for Volume from Today, from Progress and back from a muscle's detail: every bar is ringed while the notice shows, and with alerts off Today shows no notice and Volume no ring.
 The Show all row was checked with a throwaway tour that added two exercises to a two-exercise session: Today previews three under "Show all 4 exercises", which expands to four and reads "Show fewer exercises".
-That row ends in "›", which the [glyph table](design-system/iconography.md) keeps for opening a screen, though it expands in place, where "▾" and "▴" belong; it is not changed here.
+That row ended in "›", which the [glyph table](design-system/iconography.md) keeps for opening a screen; it now reads "▾" while collapsed and "▴" while open, and `TodayStateRoutesUITests` passed 6 of 6 again (`fast-20261112-110128`).
+With Volume pushed on Progress, dismissing the notice on Today and switching back clears the ring, since Volume asks again on appear when its tab is reselected.
 A dismissed week hides the ring as well as the notice, as before `5aa93d05`; whether the ring should outlast a dismissal is open for the user.
 **References:** [Today layouts](design-map/redesign/today-layouts.md), D-131, redesign R-7/R-21; [board](../fitbod/Views/TodayWeekBoard.swift), [week](../fitbod/Views/TodayWeek.swift), [Progress](../fitbod/Progress/ProgressHomeView.swift), [advisor](../fitbod/Fatigue/DeloadAdvisor.swift).
 

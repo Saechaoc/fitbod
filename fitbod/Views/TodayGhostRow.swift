@@ -2,13 +2,16 @@
 // fitbod
 //
 // A quiet full-width row on Today that opens a secondary route, such as
-// "Choose another session ›" under the exercise list (RM-006). It carries no
-// signal colour, so the hero's button stays the one loud action on the page.
+// "Choose another session ›" under the exercise list (RM-006), or expands
+// in place, as Show all does. It carries no signal colour, so the hero's
+// button stays the one loud action on the page.
 
 import SwiftUI
 
 struct TodayGhostRow: View {
     let title: String
+    /// "›" opens a screen; a row that expands in place passes "▾", or "▴" while open (iconography.md).
+    var glyph = "›"
     let action: () -> Void
 
     var body: some View {
@@ -19,7 +22,7 @@ struct TodayGhostRow: View {
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text("›")
+                Text(glyph)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruMuted)
                     .accessibilityHidden(true)
