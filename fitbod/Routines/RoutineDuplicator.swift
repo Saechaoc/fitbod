@@ -38,7 +38,7 @@ public enum RoutineDuplicator {
 
         var groupIDs: [UUID: UUID] = [:]
         for lift in draft.exercises {
-            let clone = copied(lift)
+            let clone = lift.copy()
             copy.exercises.append(clone)
             guard let id = lift.supersetGroupID else { continue }
             if let group = groupIDs[id] {
@@ -52,35 +52,5 @@ public enum RoutineDuplicator {
         context.insert(session)
         try copy.persist(into: session, context: context, save: save)
         return session
-    }
-
-    /// `lift` with no stored row behind it and in no superset.
-    @MainActor
-    private static func copied(_ lift: RoutineExerciseDraft) -> RoutineExerciseDraft {
-        let clone = RoutineExerciseDraft()
-        clone.exercise = lift.exercise
-        clone.orderIndex = lift.orderIndex
-        clone.targetSets = lift.targetSets
-        clone.targetRepsLow = lift.targetRepsLow
-        clone.targetRepsHigh = lift.targetRepsHigh
-        clone.targetRPE = lift.targetRPE
-        clone.prescribedRestSeconds = lift.prescribedRestSeconds
-        clone.tempo = lift.tempo
-        clone.tracksTempo = lift.tracksTempo
-        clone.tracksPartialReps = lift.tracksPartialReps
-        clone.warmupOverride = lift.warmupOverride
-        clone.targetDurationSeconds = lift.targetDurationSeconds
-        clone.targetLevel = lift.targetLevel
-        clone.targetSpeedKmh = lift.targetSpeedKmh
-        clone.targetIncline = lift.targetIncline
-        clone.setOverrides = lift.setOverrides.map { override in
-            let copy = PerSetOverrideDraft()
-            copy.setIndex = override.setIndex
-            copy.targetRepsLow = override.targetRepsLow
-            copy.targetRepsHigh = override.targetRepsHigh
-            copy.targetRPE = override.targetRPE
-            return copy
-        }
-        return clone
     }
 }

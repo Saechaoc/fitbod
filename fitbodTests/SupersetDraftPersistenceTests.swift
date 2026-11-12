@@ -159,6 +159,40 @@ struct SupersetDraftPersistenceTests {
         #expect(!ctx.hasChanges)
     }
 
+    @Test func aCopiedLiftKeepsItsWarmUpAndPerSetTargetsInNoSuperset() throws {
+        let (ctx, template) = try fixture()
+        let draft = RoutineDraft(routine: template)
+        let (bench, row) = (draft.exercises[0], draft.exercises[1])
+        bench.warmupOverride = WarmupConfig(enabled: false)
+        let target = bench.appendOverride(setIndex: 1)
+        target.targetRepsLow = 6
+        target.targetRepsHigh = 6
+        target.targetRPE = 9
+        draft.setSuperset(of: bench, partners: [row])
+        draft.duplicate(bench)
+
+        let copy = draft.exercises[2]
+        #expect(copy.id == nil)
+        #expect(copy.supersetGroupID == nil)
+        #expect(copy.warmupOverride == WarmupConfig(enabled: false))
+        #expect(copy.setOverrides.count == 1)
+        #expect(copy.setOverrides.first !== target)
+
+        // Saved, the copy's per-set target is a row of its own.
+        try draft.persist(into: template, context: ctx)
+        let saved = try #require(try ModelContext(ctx.container).fetch(FetchDescriptor<SessionTemplate>()).first)
+        let rows = (saved.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+        #expect(rows.map { $0.exercise?.name } == ["Bench", "Row", "Bench"])
+        #expect(rows[2].supersetGroupID == nil)
+        #expect(rows[2].warmupOverride == WarmupConfig(enabled: false))
+        let copied = try #require(rows[2].setOverrides?.first)
+        #expect(copied.setIndex == 1)
+        #expect(copied.targetRepsLow == 6)
+        #expect(copied.targetRepsHigh == 6)
+        #expect(copied.targetRPE == 9)
+        #expect(copied.id != rows[0].setOverrides?.first?.id)
+    }
+
     private func names(_ draft: RoutineDraft) -> [String?] {
         draft.exercises.map { $0.exercise?.name }
     }

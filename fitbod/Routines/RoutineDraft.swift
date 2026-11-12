@@ -163,22 +163,8 @@ public final class RoutineDraft {
     /// its superset's last lift so the superset stays together (RM-026).
     func duplicate(_ exercise: RoutineExerciseDraft) {
         guard let index = exercises.firstIndex(where: { $0 === exercise }) else { return }
-        let clone = RoutineExerciseDraft()
-        clone.exercise = exercise.exercise
-        clone.targetSets = exercise.targetSets
-        clone.targetRepsLow = exercise.targetRepsLow
-        clone.targetRepsHigh = exercise.targetRepsHigh
-        clone.targetRPE = exercise.targetRPE
-        clone.prescribedRestSeconds = exercise.prescribedRestSeconds
-        clone.tempo = exercise.tempo
-        clone.tracksTempo = exercise.tracksTempo
-        clone.tracksPartialReps = exercise.tracksPartialReps
-        clone.targetDurationSeconds = exercise.targetDurationSeconds
-        clone.targetLevel = exercise.targetLevel
-        clone.targetSpeedKmh = exercise.targetSpeedKmh
-        clone.targetIncline = exercise.targetIncline
         let last = exercise.supersetGroupID.flatMap { id in exercises.lastIndex { $0.supersetGroupID == id } } ?? index
-        exercises.insert(clone, at: last + 1)
+        exercises.insert(exercise.copy(), at: last + 1)
         for (position, lift) in exercises.enumerated() { lift.orderIndex = position }
     }
 
@@ -592,6 +578,36 @@ public final class RoutineExerciseDraft: Identifiable {
         self.setOverrides = (re.setOverrides ?? [])
             .sorted { $0.setIndex < $1.setIndex }
             .map { PerSetOverrideDraft(override: $0) }
+    }
+
+    /// This lift's whole prescription with no stored row behind it, its
+    /// per-set overrides included, and in no superset (RM-026).
+    func copy() -> RoutineExerciseDraft {
+        let clone = RoutineExerciseDraft()
+        clone.exercise = exercise
+        clone.orderIndex = orderIndex
+        clone.targetSets = targetSets
+        clone.targetRepsLow = targetRepsLow
+        clone.targetRepsHigh = targetRepsHigh
+        clone.targetRPE = targetRPE
+        clone.prescribedRestSeconds = prescribedRestSeconds
+        clone.tempo = tempo
+        clone.tracksTempo = tracksTempo
+        clone.tracksPartialReps = tracksPartialReps
+        clone.warmupOverride = warmupOverride
+        clone.targetDurationSeconds = targetDurationSeconds
+        clone.targetLevel = targetLevel
+        clone.targetSpeedKmh = targetSpeedKmh
+        clone.targetIncline = targetIncline
+        clone.setOverrides = setOverrides.map { override in
+            let draft = PerSetOverrideDraft()
+            draft.setIndex = override.setIndex
+            draft.targetRepsLow = override.targetRepsLow
+            draft.targetRepsHigh = override.targetRepsHigh
+            draft.targetRPE = override.targetRPE
+            return draft
+        }
+        return clone
     }
 
     /// Append a new per-set override row to the editor. The caller (the

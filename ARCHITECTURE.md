@@ -266,6 +266,7 @@ Move swaps a lift with a partner and passes another superset whole; a lift moved
 `persist(into:context:)` writes the session and its used new groups in one save and deletes the session's groups that no lift uses; failure rolls back the store while keeping the draft for retry. Discard writes no groups.
 Duplicate session saves the draft, unsaved changes included, as a new session named "{name} (Copy)", and asks first when there are unsaved changes; the session being edited keeps what it last saved.
 The copy's lifts, per-set overrides and superset groups are new rows, never the original's, and a failed copy rolls back and keeps the draft.
+Duplicate session and Duplicate exercise copy a lift through `RoutineExerciseDraft.copy()`: its whole prescription, warm-up and per-set targets included, with no stored row and in no superset.
 The workout does not read supersets: each lift keeps its own sets and rest.
 
 Four native tab containers preserve stacks: Today, Program, Progress, Library.
