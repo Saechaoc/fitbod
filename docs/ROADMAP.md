@@ -16,8 +16,9 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-013](#rm-013) redesign 2.1, the opt-in review notice; [RM-026](#rm-026)'s third delivery, ordered multi-select; and [RM-054](#rm-054)'s fix for reveal's swipe.
+In flight: [RM-013](#rm-013) redesign 2.1, the opt-in review notice, and [RM-026](#rm-026)'s third delivery, ordered multi-select.
 Fixed on 2026-11-12: the first nightly run's two failures, a store test and a large-iPhone PR list test, were test races, now fixed in the tests ([RM-001](#rm-001), [RM-053](#rm-053)).
+Fixed on 2026-11-15: reveal's swipe, which failed twice in the 2026-11-14 nightly, now drags by coordinates ([RM-054](#rm-054)).
 Done on 2026-11-12: [RM-019](#rm-019) stalled exercises and [RM-020](#rm-020) past weekly recaps (on `main` 2026-11-15), which [RM-023](#rm-023) follows in the analytics stream; [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; and [RM-012](#rm-012) redesign 1.6, Program's resume and discard, which [RM-013](#rm-013) follows in the redesign order.
 Delivered on 2026-11-12: [RM-026](#rm-026)'s first two deliveries, superset partners in one trip and unsaved duplication; its third, ordered multi-select, follows.
 On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
