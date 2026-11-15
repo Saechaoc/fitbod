@@ -150,8 +150,9 @@ public struct TodayView: View {
             // Suppress default Apple navigation bar — BRUHeaderBar replaces it
             .navigationBarHidden(true)
             .toolbar { ToolbarItem(placement: .principal) { EmptyView() } }
-            // BRUHeaderBar floated as a safeArea inset — renders above ScrollView content
-            .safeAreaInset(edge: .top) {
+            // BRUHeaderBar as a safe-area inset above the scroll content, flush on it
+            // as on every other screen: the default spacing left a paper sliver.
+            .safeAreaInset(edge: .top, spacing: 0) {
                 BRUHeaderBar(
                     left: HeaderAction("Settings") { presentingSettings = true },
                     center: "Fitbod / Today",

@@ -78,6 +78,8 @@ public struct BlockReviewView: View {
                 bottomActionBar(nextTemplate: nextTemplate)
                 safeAreaFiller
             }
+            // Paper under short content, not the sheet's system background.
+            .background(Color.bruBg.ignoresSafeArea())
         }
         // Seen once it closes, by any route: `BlockReviewPresenter` records
         // it then, and the block's overview reopens it (RM-013).
