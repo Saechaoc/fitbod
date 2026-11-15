@@ -699,12 +699,26 @@ On `main` the Library change left `UICopyRulesTests` failing: the history's "No 
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 
-**P2 · Planned: comparable detail routes.** Charts, PR replay, comparison, weekly tonnage and PR workout detail exist; richer trends remain.
+**P2 · Planned: Compare and older-record routes.** The first delivery (2026-11-15) compares one intent over a chosen period, explains sparse and empty charts, and makes the phase chips filter.
+Charts, PR replay, comparison, weekly tonnage and PR workout detail exist; Compare, older records and weekly muscle-set history remain.
 **Done when:** selected periods/intent/units give comparable series and sparse/empty explanations; phase chips actually filter; Compare appears for eligible histories/describes the real 14-day rule; older lifts and exercise records are reachable from history/chart/detail. Add weekly muscle-set history against landmarks. Reconcile aggregates to sets and resolve overlapping stacks before claiming additive totals.
 **Scope / sequence:** Deliver comparable period/intent/sparse routes, then eligible Compare/older-record routes. Mixed-unit series require RM-021; additive stacks require RM-041. Weekly muscle-set history returns after these and stalls/recaps as a separate bounded analytics delivery.
 **Requires:** [RM-021](#rm-021) for mixed-unit series; [RM-041](#rm-041) before additive stacks. Neither blocks same-unit navigation fixes.
 **Scheduled after:** [RM-019](#rm-019), [RM-020](#rm-020) before broader analytics screens.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** First delivery on `swarm/C3a` (`26fd5451`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5; Compare, older records and weekly muscle-set history have no passing acceptance yet.
+An exercise's chart has LAST 8 WK, LAST 26 WK and ALL TIME (the default), and an intent row when the exercise has workouts at more than one intent.
+Every chip, the hero and the stall bands read one `ProgressChartSelection`: the finished workouts of one intent that started in the period, across machines ([RM-066](#rm-066)), so a workout in progress never plots.
+The chart opens on the newest workout's intent, and a Stalled row opens it on its stall's intent.
+VOLUME and AVG RPE draw that intent alone, not a line per intent, and the PR line is the intent's best over all time, so a short period never calls a lesser best the PR.
+Units still relabel within one exercise; mixed-unit series wait for [RM-021](#rm-021).
+With fewer than two workouts to draw, the chart says what the period and intent hold and what to do, such as "1 hypertrophy workout in the last 8 weeks" over "Log another to see a trend.", or that only one workout has an RPE or a set that gives an e1RM.
+Weekly Tonnage's phase chips filter ([D-28](design-map/audit.md#d-28)): the bars, the total and a week's detail keep the sets of workouts that started in a picked phase, through one `WeeklyTonnageAggregator.sets(_:inPhases:)`, so a week's detail still equals its bar.
+The row adds Peak and turns on once a block has started, and only its chips fade before then, so the caption stays readable ([D-183](design-map/audit.md#d-183)).
+A deload week's detail reads TOTAL · 1 WORKOUT · DELOAD, and a phase without sets reads "No sets in Peak weeks in the last 26 weeks".
+`ProgressChartSelectionTests` and `WeeklyTonnagePhaseFilterTests` cover period, intent, an open workout, the PR rule, the notes and the phase filter; with the chart, series, stall, copy-rule and tonnage suites they passed 57/57 (`fast-20261115-154904-12928`).
+`EmptyWorkoutCountsUITests` passed 4/4 (`fast-20261115-153802-2477`), `PRListAndSeriesUITests` 2/2 (`fast-20261115-154301-7891`), and `WeeklyTonnageUITests` 4/4 with its new phase-chip check (`fast-20261115-155210-15895`).
+390pt light captures on the iPhone 17e were inspected: one-workout notes at ALL TIME and LAST 8 WK, both intents of a two-intent exercise, the stalled chart from its row, and Weekly Tonnage with no block, all phases, Deload, a deload week and an empty Peak.
+Still open: the hero shows e1RM on VOLUME and AVG RPE ([D-74](design-map/audit.md#d-74)), exercise history counts an open workout ([D-72](design-map/audit.md#d-72)), and at 390pt the phase row scrolls with Deload off screen ([D-182](design-map/audit.md#d-182), [RM-044](#rm-044)).
 **References:** PROG-01–08, D-28/D-48/D-72/D-74–D-80/D-130/D-132/D-134–D-135, F318/F341/F342; [workflow](design-map/workflows/check-progress.md).
 
 ### <a id="rm-024"></a>RM-024 — Compact logging preserves context and reach
