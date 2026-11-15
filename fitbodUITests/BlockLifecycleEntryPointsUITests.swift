@@ -33,7 +33,7 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(alert, within: 5), "END BLOCK must ask before it ends the block")
         alert.buttons["End Block"].tap()
         // The review opens on the overview as soon as the block ends (B9),
-        // and counts as seen once it has opened.
+        // and counts as seen once it closes (RM-013).
         let review = app.staticTexts.labeled("Block review")
         XCTAssertTrue(UITestNavigation.appears(review, within: 5), "Ending a block must open its review")
         // Start next opens New block on the first tap, with the ended
@@ -51,6 +51,7 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
                       "A finished block's overview must reopen its review (B12)")
         UITestNavigation.hittable(app.buttons, "Back").tap()
         XCTAssertFalse(UITestNavigation.appears(review, within: 3), "A review already seen must not reopen on Today")
+        XCTAssertFalse(app.buttons["today.reviewNotice"].exists, "A review closed on the overview must leave no notice on Today")
         assertNoActiveBlockOnToday(in: app)
 
         UITestNavigation.selectTab("Program", in: app)

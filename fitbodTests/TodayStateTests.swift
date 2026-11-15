@@ -283,14 +283,32 @@ struct TodayStateTests {
                 == .today(block, slot))
     }
 
-    // MARK: Advisory
+    // MARK: Notice
 
-    @Test func showsDeloadAdvisory() {
-        let (block, slot, _) = scheduled()
+    /// One notice at a time: none while a workout is open, a pending review
+    /// in every other state, before the deload advisory, which a deload
+    /// phase hides (RM-013).
+    @Test func oneNoticeAtATime() {
+        let (block, slot, routine) = scheduled()
         let open = workout(startedAt: now, finished: false)
-        #expect(!TodayState.showsDeloadAdvisory(state: .resume(open), phase: nil))
-        #expect(!TodayState.showsDeloadAdvisory(state: .today(block, slot), phase: .deload))
-        #expect(TodayState.showsDeloadAdvisory(state: .today(block, slot), phase: .accumulation))
-        #expect(TodayState.showsDeloadAdvisory(state: .first, phase: nil))
+        let ended = self.block(name: "Summer Block", active: false)
+        let advisory = DeloadAdvisory(firedSignals: [], weekStart: now)
+        func notice(_ state: TodayState, review: Block? = nil, phase: BlockPhaseKind? = nil) -> TodayState.Notice? {
+            TodayState.notice(state: state, pendingReview: review, advisory: advisory, phase: phase)
+        }
+
+        #expect(notice(.resume(open), review: ended) == nil)
+        let noBlockStates: [TodayState] = [
+            .done([workout(startedAt: now)]), .ready(self.block(name: "Next", active: false)),
+            .fix(.routineHasNoExercises(routine)), .pick(StartSlot.Suggestion(session: slot.sessionTemplate!, slot: slot)),
+            .first,
+        ]
+        for state in noBlockStates {
+            #expect(notice(state, review: ended) == .review(ended), "\(state) must show the review notice")
+        }
+        #expect(notice(.today(block, slot), phase: .accumulation) == .deload(advisory))
+        #expect(notice(.today(block, slot), phase: .deload) == nil)
+        #expect(notice(.first) == .deload(advisory))
+        #expect(TodayState.notice(state: .first, pendingReview: nil, advisory: nil, phase: nil) == nil)
     }
 }

@@ -68,7 +68,7 @@ public struct BlockReviewView: View {
                         if let message = acknowledgeError ?? exportError {
                             Text(message)
                                 .font(BRUFont.labelSmall)
-                                .foregroundStyle(Color.bruSignal)
+                                .foregroundStyle(Color.bruSignalText)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                         }
@@ -79,13 +79,12 @@ public struct BlockReviewView: View {
                 safeAreaFiller
             }
         }
+        // Seen once it closes, by any route: `BlockReviewPresenter` records
+        // it then, and the block's overview reopens it (RM-013).
         .onAppear {
             if prs == nil {
                 prs = BlockReviewStatistics.prs(context: ctx, start: blockStart, end: blockEnd)
             }
-            // Seen once it opens, so closing it any way never brings it back
-            // on Today; the block's overview reopens it (decided 2026-11-05).
-            acknowledgeIfNeeded()
         }
         // The draft rides in the item: a sheet built from separate state
         // opened empty on the first tap, before that state reached it.
@@ -406,31 +405,19 @@ public struct BlockReviewView: View {
 
     /// New block over the review: Start next with the recommended preset,
     /// Plan custom with the default phases and no name. Both keep the
-    /// ended block's routine, scheduling and days (decided 2026-11-05).
+    /// ended block's routine, scheduling and days (decided 2026-11-05), and
+    /// record the review before the builder opens (RM-013); a failed save
+    /// is tried again when the review closes.
     private func openNextBlock(template: BlockTemplate?) {
-        acknowledgeIfNeeded()
-        let draft = BlockDraft.next(after: block, template: template)
-        openedDraft = draft
-        nextBlock = NextBlock(draft: draft)
-    }
-
-    // MARK: - Acknowledge Logic
-    //
-    // The review counts as seen once it opens: Today never brings it back,
-    // and the block's overview reopens it with REVIEW ▸. The first open
-    // keeps its date; reopening doesn't move it.
-
-    private func acknowledgeIfNeeded() {
-        guard block.reviewedAt == nil else { return }
         do {
-            try BlockReviewStatistics.acknowledge(
-                block: block,
-                context: ctx,
-                now: Date.now
-            )
+            try BlockReviewStatistics.acknowledge(block: block, context: ctx)
+            acknowledgeError = nil
         } catch {
             acknowledgeError = "Couldn't save review. Try again."
         }
+        let draft = BlockDraft.next(after: block, template: template)
+        openedDraft = draft
+        nextBlock = NextBlock(draft: draft)
     }
 }
 
@@ -662,16 +649,28 @@ public enum BlockReviewStatistics {
         return [lastEnded]
     }
 
-    /// Records the review. The block already ended through
-    /// `BlockLifecycleService`, so nothing else on it changes.
+    /// Records the review, once: a review seen before keeps its first date.
+    /// The block already ended through `BlockLifecycleService`, so nothing
+    /// else on it changes. A failed save leaves `reviewedAt` nil.
     @MainActor
     public static func acknowledge(
         block: Block,
         context: ModelContext,
         now: Date = Date.now
     ) throws {
+        guard block.reviewedAt == nil else { return }
         block.reviewedAt = now
-        try SessionSetActions.saveOrRollBack(context)
+        do {
+            try SessionSetActions.saveOrRollBack(context)
+        } catch {
+            // shortcut: after a save that fails on a disk store, `rollBack`'s
+            // refetch by persistentModelID leaves the discarded date showing,
+            // and a fetch by id reads the stored nil again (probed 2026-11-15).
+            // Drop this once `rollBack` refreshes such models itself.
+            let id = block.id
+            _ = try? context.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == id }))
+            throw error
+        }
     }
 
     public static func formattedKg(_ value: Double) -> String {

@@ -71,9 +71,24 @@ enum TodayState: Equatable {
         return .first
     }
 
-    /// No notice while a workout is open or in a deload phase.
-    static func showsDeloadAdvisory(state: TodayState, phase: BlockPhaseKind?) -> Bool {
-        if case .resume = state { return false }
-        return phase != .deload
+    /// The one notice row above the hero (hierarchy.md, the notice rows).
+    enum Notice: Equatable {
+        /// "SUMMER BLOCK FINISHED · REVIEW ›": the last ended block's review is pending (RM-013).
+        case review(Block)
+        /// "CONSIDER A DELOAD · 3 SIGNALS ›".
+        case deload(DeloadAdvisory)
+    }
+
+    /// None while a workout is open. A pending review, which
+    /// `BlockReviewStatistics.pendingReviewBlocks` gives only without an
+    /// active block, outranks the deload advisory, which never shows in a
+    /// deload phase.
+    static func notice(
+        state: TodayState, pendingReview: Block?, advisory: DeloadAdvisory?, phase: BlockPhaseKind?
+    ) -> Notice? {
+        if case .resume = state { return nil }
+        if let pendingReview { return .review(pendingReview) }
+        guard let advisory, phase != .deload else { return nil }
+        return .deload(advisory)
     }
 }

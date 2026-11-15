@@ -13,6 +13,8 @@
 //      authored, rescheduled and trained through its deload keeps its
 //      schedule, its workouts' prescriptions and, once ended, its frozen
 //      plan across relaunches.
+//   4. `reviewCloseSurvivesRelaunches` - closing a block's review records
+//      it once, and the first date survives relaunches (RM-013).
 //
 //  Each test writes through a first container on an on-disk store and
 //  releases it, then opens a second container on the same file the way
@@ -288,6 +290,68 @@ final class RelaunchPersistenceTests {
             #expect(workouts.map { $0.exercises?.first?.prescribedWeight } == [0, 102.5, 105, 105],
                     "Each workout keeps the prescription it was given")
         }
+    }
+
+    // MARK: - Test 4: a review closed from Today's notice
+
+    @Test("A review's close survives relaunches, and closing it again keeps its first date")
+    @MainActor // BlockReviewPresenter and the review are main-actor isolated.
+    func reviewCloseSurvivesRelaunches() throws {
+        let ended = Date(timeIntervalSince1970: 1_790_000_000)
+        let firstClose = ended.addingTimeInterval(86_400)
+        func pending(in context: ModelContext) throws -> [UUID] {
+            try BlockReviewStatistics.pendingReviewBlocks(context: context, now: firstClose.addingTimeInterval(86_400)).map(\.id)
+        }
+        func reviewed(_ id: UUID, in context: ModelContext) throws -> Block {
+            try #require(try context.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == id })).first)
+        }
+
+        // Launch 1: the block ends, and its review is pending.
+        let blockID = try autoreleasepool {
+            let context = try launch()
+            let routine = Split()
+            context.insert(routine)
+            routine.name = "Upper / Lower"
+            let session = SessionTemplate()
+            context.insert(session)
+            session.name = "Upper A"
+            let slot = SplitSessionSlot()
+            context.insert(slot)
+            slot.split = routine
+            slot.sessionTemplate = session
+            let block = readyBlock("Spring Block", routine: routine, in: context)
+            try context.save()
+            try BlockLifecycleService.start(block: block, context: context, now: ended.addingTimeInterval(-28 * 86_400))
+            try BlockLifecycleService.end(block: block, context: context, now: ended)
+            return block.id
+        }
+
+        // Launch 2: the review is still pending, and closing it records it.
+        try autoreleasepool {
+            let context = try launch()
+            #expect(try pending(in: context) == [blockID], "An unreviewed block's review must stay pending after a relaunch")
+            var presenter = BlockReviewPresenter()
+            presenter.open(try reviewed(blockID, in: context))
+            presenter.showing = nil
+            presenter.close(in: context, now: firstClose)
+        }
+
+        // Launch 3: the close reached the store; reopening and closing the
+        // review keeps its first date.
+        try autoreleasepool {
+            let context = try launch()
+            let block = try reviewed(blockID, in: context)
+            #expect(block.reviewedAt == firstClose)
+            #expect(try pending(in: context).isEmpty, "A reviewed block's notice must not come back after a relaunch")
+            var presenter = BlockReviewPresenter()
+            presenter.open(block)
+            presenter.showing = nil
+            presenter.close(in: context, now: firstClose.addingTimeInterval(7 * 86_400))
+        }
+
+        // Launch 4: still the first date.
+        let reviewedAt = try autoreleasepool { try reviewed(blockID, in: try launch()).reviewedAt }
+        #expect(reviewedAt == firstClose, "A second close must not move the review's date")
     }
 
     /// A named block with one phase on `routine`, which is all `.ready` needs.

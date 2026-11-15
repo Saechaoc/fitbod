@@ -65,7 +65,8 @@ public struct TodayView: View {
 
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: BlockBuilderRoute? = nil
-    @State private var pendingBlockReview: Block? = nil
+    /// The review the notice opens, recorded as seen when it closes (RM-013).
+    @State private var review = BlockReviewPresenter()
     @State private var failedBlockStart: Block? = nil
     #if DEBUG
     @State private var failNextBlockStart = ProcessInfo.processInfo.arguments.contains("-fitbod-fail-block-start-once")
@@ -76,9 +77,6 @@ public struct TodayView: View {
     @State private var presentingSignalSheet: Bool = false
     // Phase 5 plan 06 — weekly recap state.
     @State private var presentingWeeklyRecap: Bool = false
-    /// The recap was due on a visit that showed a block review; it shows
-    /// once the review closes.
-    @State private var recapAfterReview: Bool = false
     /// Session detail pushed from the hero, repair action or session sheet.
     @State private var openedSession: OpenedSession? = nil
     @State private var startError: String? = nil
@@ -103,6 +101,11 @@ public struct TodayView: View {
             openWorkouts: activeSessions, activeBlock: activeBlocks.first, resolution: resolution,
             finishedWorkouts: finished, readyBlocks: readyBlocks,
             liveRoutines: routines, sessions: sessionTemplates, now: now, calendar: calendar)
+        // Read per render, so the notice clears once the review's close
+        // records it or a block starts. Against the clock, not `now`, which
+        // can predate a block that ended since Today last appeared.
+        let pendingReview = activeBlocks.isEmpty
+            ? (try? BlockReviewStatistics.pendingReviewBlocks(context: ctx, now: .now))?.first : nil
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 0) {
@@ -120,13 +123,19 @@ public struct TodayView: View {
                         ) { navigationPath.append(TodayRoute.volume) }
                     }
 
-                    if let advisory = currentAdvisory,
-                       TodayState.showsDeloadAdvisory(state: state, phase: currentPhase) {
+                    switch TodayState.notice(
+                        state: state, pendingReview: pendingReview, advisory: currentAdvisory, phase: currentPhase
+                    ) {
+                    case .review(let block):
+                        BlockReviewNotice(block: block, isUnsaved: review.isUnsaved(block)) { review.open(block) }
+                    case .deload(let advisory):
                         DeloadAdvisoryBanner(
                             advisory: advisory,
                             onDismiss: { dismissAdvisory() },
                             onTapBody: { presentingSignalSheet = true }
                         )
+                    case nil:
+                        EmptyView()
                     }
 
                     stateContent(state, resolution: resolution, finished: finished, readyCount: readyBlocks.count)
@@ -192,11 +201,7 @@ public struct TodayView: View {
                 onRetry: startBlock,
                 onOpen: { navigationPath.append(BlockOverviewRoute.summary(blockID: $0.id)) }
             ))
-            // A recap due on the same visit waits for the review to close.
-            .sheet(item: $pendingBlockReview, onDismiss: showRecapAfterReview) { block in
-                BlockReviewView(block: block)
-                    .presentationDetents([.large])
-            }
+            .blockReviewSheet($review)
             // Phase 5 plan 04 — fatigue signal detail sheet.
             .sheet(isPresented: $presentingSignalSheet) {
                 if let advisory = currentAdvisory,
@@ -250,13 +255,9 @@ public struct TodayView: View {
             // ─── Lifecycle (preserved verbatim from Phase 4/5) ───────────────
             // Both run on every appearance. The advisory check lives only in
             // onAppear: running it from the task as well repeated the deload
-            // evaluation each time Today appeared. The recap check follows
-            // the review's, so a review due on the same visit shows first.
+            // evaluation each time Today appeared. The recap shows on its own
+            // when due, whatever the review notice says (O-4).
             .task {
-                pendingBlockReview = (try? BlockReviewStatistics.pendingReviewBlocks(
-                    context: ctx,
-                    now: Date.now
-                ))?.first
                 checkWeeklyRecap()
             }
             .onAppear {
@@ -599,25 +600,12 @@ public struct TodayView: View {
             hasSessionsLastWeek: hasSessions
         )
 
-        // A recap to show is marked seen once it shows. SwiftUI shows one
-        // sheet at a time, so it waits for a review due on the same visit.
+        // A recap to show is marked seen once it shows.
         if decision.shouldPresent {
-            if pendingBlockReview == nil {
-                presentingWeeklyRecap = true
-            } else {
-                recapAfterReview = true
-            }
+            presentingWeeklyRecap = true
         } else if decision.shouldMarkSeen {
             markRecapSeen(thisMonday, in: settings)
         }
-    }
-
-    /// Shows the recap that waited for the block review to close.
-    @MainActor
-    private func showRecapAfterReview() {
-        guard recapAfterReview else { return }
-        recapAfterReview = false
-        presentingWeeklyRecap = true
     }
 
     @MainActor

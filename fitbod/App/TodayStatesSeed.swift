@@ -21,6 +21,8 @@
 //    -fitbod-seed-today-pick    T-PICK: no block; a routine whose Push A was
 //                               finished two days ago and whose Legs A is
 //                               empty; and "Arms", a session in no routine.
+//    -fitbod-seed-today-fix     T-FIX without a block: a routine whose
+//                               sessions have no exercises.
 //
 //  Every state uses a "Push Pull Legs" routine. A workout finished today is
 //  stamped between local midnight and launch, its sets inside it, so it
@@ -28,6 +30,13 @@
 //  opens on the state. Use one flag at a time, on an empty store.
 //  Idempotent: does nothing when a "Push Pull Legs" routine already exists.
 //  Compiled out of release builds.
+//
+//  -fitbod-seed-today-review leaves the last ended block's review pending,
+//  so Today shows its notice (RM-013). With -fitbod-seed-today-done it ends
+//  Spring Block, so Today is T-DONE without a block. With ready, pick or
+//  fix, "Winter Block" ran on the routine and ended yesterday. Alone, it
+//  ran on an archived "Winter Routine" whose one session is empty, so
+//  Today is T-FIRST. Idempotent: does nothing once a block has ended.
 //
 //  The other states have seeds already: T-TODAY is
 //  `-fitbod-seed-block-states`, T-RESUME is `-fitbod-seed-demo-workout`, and
@@ -43,21 +52,27 @@ enum TodayStatesSeed {
     static func runIfRequested(in context: ModelContext) {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
-        guard let state = State.allCases.first(where: { arguments.contains($0.launchArgument) }) else { return }
-        seed(state, in: context, now: .now)
+        if let state = State.allCases.first(where: { arguments.contains($0.launchArgument) }) {
+            seed(state, in: context, now: .now)
+        }
+        if arguments.contains(reviewLaunchArgument) {
+            seedPendingReview(in: context, now: .now)
+        }
         #endif
     }
 
     #if DEBUG
     enum State: String, CaseIterable {
-        case ready, empty, done, rest, attach, pick
+        case ready, empty, done, rest, attach, pick, fix
 
         var launchArgument: String { "-fitbod-seed-today-\(rawValue)" }
     }
 
+    static let reviewLaunchArgument = "-fitbod-seed-today-review"
     static let routineName = "Push Pull Legs"
     static let blockName = "Spring Block"
     static let laterReadyBlockName = "Summer Block"
+    static let endedBlockName = "Winter Block"
     static let emptySessionName = "Push B"
     static let standaloneSessionName = "Arms"
 
@@ -86,6 +101,7 @@ enum TodayStatesSeed {
         let plans: [SessionPlan] = switch state {
         case .empty: [(emptySessionName, []), pull, legs]
         case .pick: [push, pull, (legs.name, [])]
+        case .fix: [push, pull, legs].map { ($0.name, []) }
         default: [push, pull, legs]
         }
         let split = Split()
@@ -134,6 +150,8 @@ enum TodayStatesSeed {
         case .pick:
             _ = makeSession(arms, catalog: catalog, in: context)
             finish(slots[0], block: nil, startedAt: now.addingTimeInterval(-2 * day), duration: 47 * 60, in: context)
+        case .fix:
+            break
         }
 
         // A workout two days ago can sit in last week, which would open Today on the weekly recap.
@@ -143,6 +161,38 @@ enum TodayStatesSeed {
             )
         }
         try? context.save()
+    }
+
+    /// Leaves the last ended block's review pending: ends the active block,
+    /// else runs Winter Block for six weeks to yesterday, through the
+    /// lifecycle service as Start and END BLOCK do.
+    @MainActor
+    static func seedPendingReview(in context: ModelContext, now: Date) {
+        let blocks = (try? context.fetch(FetchDescriptor<Block>())) ?? []
+        guard !blocks.contains(where: { $0.endDate != nil }) else { return }
+        if let active = blocks.first(where: \.isActive) {
+            try? BlockLifecycleService.end(block: active, context: context, now: now)
+            return
+        }
+        let seeded = ((try? context.fetch(FetchDescriptor<Split>())) ?? []).first { $0.name == routineName }
+        let routine = seeded ?? Split()
+        if seeded == nil {
+            context.insert(routine)
+            routine.name = "Winter Routine"
+            let slot = SplitSessionSlot()
+            context.insert(slot)
+            slot.split = routine
+            slot.sessionTemplate = makeSession(("Winter Day", []), catalog: [], in: context)
+        }
+        let block = BlockStatesSeed.makeBlock(endedBlockName, phases: phases, split: routine, in: context)
+        try? context.save()
+        try? BlockLifecycleService.start(block: block, context: context, now: now.addingTimeInterval(-43 * day))
+        try? BlockLifecycleService.end(block: block, context: context, now: now.addingTimeInterval(-day))
+        if seeded == nil {
+            // No live routine is left, as on T-FIRST.
+            routine.isArchived = true
+            try? context.save()
+        }
     }
 
     @MainActor

@@ -14,16 +14,25 @@ struct TodayStatesSeedTests {
 
     /// Seeds `seed` into an empty store at `now` and resolves Today from what Today reads.
     private func state(after seed: TodayStatesSeed.State, now: Date) throws -> TodayState {
+        try seeded(seed, now: now).state
+    }
+
+    /// Seeds `seed`, then the pending review when `review` is set, and
+    /// resolves Today's state and the review its notice offers.
+    private func seeded(
+        _ seed: TodayStatesSeed.State?, review: Bool = false, now: Date
+    ) throws -> (state: TodayState, pendingReview: Block?) {
         let ctx = ModelContext(try InMemoryContainer.makeCurrent())
         for id in TodayStatesSeed.catalogIDs {
             ctx.insert(Exercise(externalID: id, name: id, canonicalName: id.lowercased(), equipmentRaw: "barbell", mechanicRaw: "compound"))
         }
-        TodayStatesSeed.seed(seed, in: ctx, now: now)
+        if let seed { TodayStatesSeed.seed(seed, in: ctx, now: now) }
+        if review { TodayStatesSeed.seedPendingReview(in: ctx, now: now) }
 
         let blocks = try ctx.fetch(FetchDescriptor<Block>())
         let workouts = try ctx.fetch(FetchDescriptor<Session>())
         let active = blocks.first { $0.isActive }
-        return TodayState.resolve(
+        let state = TodayState.resolve(
             openWorkouts: workouts.filter { $0.completedAt == nil },
             activeBlock: active,
             resolution: active.map { TodayResolver.resolve(block: $0, context: ctx, today: now, calendar: calendar) } ?? .noBlock,
@@ -32,6 +41,7 @@ struct TodayStatesSeedTests {
             liveRoutines: try ctx.fetch(FetchDescriptor<Split>()).filter { !$0.isArchived },
             sessions: try ctx.fetch(FetchDescriptor<SessionTemplate>()).filter { !$0.isArchived },
             now: now, calendar: calendar)
+        return (state, try BlockReviewStatistics.pendingReviewBlocks(context: ctx, now: now).first)
     }
 
     @Test("each seed reaches its Today state", arguments: TodayStatesSeed.State.allCases)
@@ -48,10 +58,29 @@ struct TodayStatesSeedTests {
             // Push A was trained two days ago, so the routine's NEXT is Pull A.
             #expect(suggestion.session.name == "Pull A")
             #expect(suggestion.slot?.split?.name == TodayStatesSeed.routineName)
+        case (.fix, .fix(.routineHasNoExercises(let routine))):
+            #expect(routine.name == TodayStatesSeed.routineName)
         case (.rest, .rest), (.attach, .attach):
             break
         default:
             Issue.record("the \(seed.rawValue) seed gave \(state)")
+        }
+    }
+
+    /// The captures of the review notice (RM-013) open each state it shows on.
+    @Test("the review flag leaves a review pending on the state it is seeded with",
+          arguments: [TodayStatesSeed.State.done, .ready, .pick, .fix, nil])
+    func reviewFlagLeavesAReviewPending(_ seed: TodayStatesSeed.State?) throws {
+        let (state, pending) = try seeded(seed, review: true, now: noon)
+        let review = try #require(pending, "the review flag left no review pending")
+        #expect(TodayState.notice(state: state, pendingReview: review, advisory: nil, phase: nil) == .review(review))
+        switch (seed, state) {
+        case (.done, .done):
+            #expect(review.name == TodayStatesSeed.blockName, "the done seed's block ends")
+        case (.ready, .ready), (.pick, .pick), (.fix, .fix(.routineHasNoExercises)), (nil, .first):
+            #expect(review.name == TodayStatesSeed.endedBlockName)
+        default:
+            Issue.record("the \(seed?.rawValue ?? "review") seed gave \(state)")
         }
     }
 

@@ -10,6 +10,10 @@
 //  Ticket T86, finding F96. While any block is active, no review opens, so
 //  a review put off with Plan custom stops once the lifter starts a block.
 //
+//  RM-013. Today's notice opens the review through BlockReviewPresenter,
+//  whose close records it once, keeping the first date. A close that cannot
+//  save leaves the review pending and says so until a later close saves.
+//
 
 import Foundation
 import SwiftData
@@ -130,6 +134,94 @@ struct BlockReviewTriggerTests {
         try BlockReviewStatistics.acknowledge(block: peak, context: context, now: started + 15 * day)
         #expect(try pendingReviews(in: context, now: started + 16 * day).isEmpty,
                 "A block that ended before the last one never opens a review")
+    }
+
+    // MARK: - Closing the review (RM-013)
+
+    /// Opens `block`'s review and closes it at `now`, as the sheet does.
+    private func openAndClose(
+        _ block: Block, with presenter: inout BlockReviewPresenter, in context: ModelContext, now: Date
+    ) {
+        presenter.open(block)
+        presenter.showing = nil
+        presenter.close(in: context, now: now)
+    }
+
+    @Test("opening the review records nothing; closing it records it and the notice clears")
+    func firstCloseRecordsTheReview() throws {
+        let context = try makeContext()
+        let block = try startBlock("Strength", at: started, in: context)
+        let ended = started + 7 * day
+        try BlockLifecycleService.end(block: block, context: context, now: ended)
+
+        var presenter = BlockReviewPresenter()
+        presenter.open(block)
+        #expect(block.reviewedAt == nil, "Opening the review must not record it")
+        #expect(try pendingReviews(in: context, now: ended + day) == [block.id])
+
+        presenter.showing = nil
+        presenter.close(in: context, now: ended + day)
+        #expect(block.reviewedAt == ended + day)
+        #expect(!presenter.isUnsaved(block))
+        #expect(try pendingReviews(in: context, now: ended + 2 * day).isEmpty)
+    }
+
+    @Test("a second close keeps the first review's date")
+    func secondCloseKeepsTheFirstDate() throws {
+        let context = try makeContext()
+        let block = try startBlock("Strength", at: started, in: context)
+        let ended = started + 7 * day
+        try BlockLifecycleService.end(block: block, context: context, now: ended)
+        var presenter = BlockReviewPresenter()
+        openAndClose(block, with: &presenter, in: context, now: ended + day)
+
+        openAndClose(block, with: &presenter, in: context, now: ended + 5 * day)
+
+        #expect(block.reviewedAt == ended + day, "Reopening a review must not move its date")
+        #expect(!presenter.isUnsaved(block))
+    }
+
+    @Test("a close that cannot save keeps the review pending and says so, until a later close saves")
+    func failedCloseKeepsTheReviewPending() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("BlockReviewTrigger-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("review.store")
+        let ended = started + 7 * day
+
+        let blockID = try autoreleasepool {
+            let context = ModelContext(try FitbodModelContainer.make(storeURL: url))
+            let block = try startBlock("Strength", at: started, in: context)
+            try BlockLifecycleService.end(block: block, context: context, now: ended)
+            return block.id
+        }
+        func block(in context: ModelContext) throws -> Block {
+            try #require(try context.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == blockID })).first)
+        }
+
+        // The same store opened so that every save fails, as a full disk would.
+        var presenter = BlockReviewPresenter()
+        try autoreleasepool {
+            let schema = Schema(versionedSchema: FitbodModelContainer.CurrentSchema.self)
+            let readOnly = ModelContext(try ModelContainer(
+                for: schema, configurations: ModelConfiguration(schema: schema, url: url, allowsSave: false)
+            ))
+            let unsaved = try block(in: readOnly)
+            openAndClose(unsaved, with: &presenter, in: readOnly, now: ended + day)
+            #expect(unsaved.reviewedAt == nil, "A failed save must leave the review unseen")
+            #expect(!readOnly.hasChanges, "Nothing may stay pending for a later save to write")
+            #expect(presenter.isUnsaved(unsaved), "The opening row must say the review was not saved")
+            #expect(try pendingReviews(in: readOnly, now: ended + day) == [blockID], "The notice must stay")
+        }
+
+        let context = ModelContext(try FitbodModelContainer.make(storeURL: url))
+        let reopened = try block(in: context)
+        #expect(try pendingReviews(in: context, now: ended + 2 * day) == [blockID], "The failed close wrote nothing")
+        openAndClose(reopened, with: &presenter, in: context, now: ended + 2 * day)
+        #expect(reopened.reviewedAt == ended + 2 * day)
+        #expect(!presenter.isUnsaved(reopened), "A close that saves clears the line")
+        #expect(try pendingReviews(in: context, now: ended + 3 * day).isEmpty)
     }
 
     @Test("a planned end date still ahead neither opens a review nor hides one")

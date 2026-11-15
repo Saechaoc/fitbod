@@ -239,7 +239,8 @@ isolated UI checks. The full authored journey uses no demo workout. Both launch
 arguments are restricted to DEBUG builds.
 
 Every Today state opens from one DEBUG launch argument on an empty store.
-`fitbod/App/TodayStatesSeed.swift` lists `-fitbod-seed-today-ready`, `-empty`, `-done`, `-rest`, `-attach` and `-pick`.
+`fitbod/App/TodayStatesSeed.swift` lists `-fitbod-seed-today-ready`, `-empty`, `-done`, `-rest`, `-attach`, `-pick` and `-fix`.
+Adding `-fitbod-seed-today-review` to one of them, or using it alone for T-FIRST, leaves an ended block's review pending, so Today shows its notice.
 The scheduled session is `-fitbod-seed-block-states`, the open workout is `-fitbod-seed-demo-workout`, and the first-run state needs no seed.
 `fitbod/App/ProgramStatesSeed.swift` adds the Program states no other seed reaches: `-fitbod-seed-program-drafts`, `-past`, `-long-names` and `-archived`.
 

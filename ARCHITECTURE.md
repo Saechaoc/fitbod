@@ -119,6 +119,10 @@ Today renders one resolved state: first-run offers an empty workout first and ro
 No-block repair names the routine with the newest session edit, otherwise the newest routine, with deterministic ties.
 DONE lists all counted workouts started today, newest first, as paper rows opening their own history detail; PR counts use History's replay and refresh after corrections.
 READY names the oldest ready block, creation date and ready count; Start calls the lifecycle service, with Retry/Open on failure.
+Today opens no block review by itself; the weekly recap still shows on its own once a week when due (O-4).
+Without an active block or an open workout, the last ended block's pending review (`BlockReviewStatistics.pendingReviewBlocks`) is Today's one notice, ahead of the deload advice (`TodayState.notice`).
+Today's notice and Block overview's END BLOCK and REVIEW ▸ open a review through `BlockReviewPresenter`, which keeps the opened block and, when the sheet closes by any route, records `reviewedAt` once, keeping the first date; Start next and Plan custom record it before New block opens.
+A close that cannot save rolls back, leaves the review pending, and shows "Couldn't save the review. Open it again to retry." under the row that opened it until a later close saves.
 Block creation stays on Program and the review's next-block flow. Today retains existing-block editing; its only empty-workout start is first-run's.
 Today's week board (`TodayWeek`) shows the user's calendar week: each day's counted workouts and their `countsAsWork` sets, so open, empty and warm-up work never count.
 It is counted in a `.task(id:)` keyed on the finished workout IDs, the week start and `HistoryEdits.version`, never per render; the full per-muscle model runs only when Volume opens from the board or Progress.

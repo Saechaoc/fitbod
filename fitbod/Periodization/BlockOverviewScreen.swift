@@ -211,8 +211,9 @@ public struct BlockOverviewScreen: View {
     @State private var presentingSwapConfirm = false
     @State private var presentingEndConfirm = false
     @State private var presentingDeleteConfirm = false
-    /// The block's review: right after END BLOCK, or from REVIEW ▸.
-    @State private var presentingReview = false
+    /// The block's review, right after END BLOCK or from REVIEW ▸, recorded
+    /// as seen when it closes (RM-013).
+    @State private var review = BlockReviewPresenter()
     /// What a failed save says, in plain words; nil hides the alert.
     @State private var saveError: String? = nil
     /// A failed routine change, shown once the routine picker has gone.
@@ -361,16 +362,13 @@ public struct BlockOverviewScreen: View {
                     return
                 }
                 // The review opens wherever the block ended (B9).
-                presentingReview = true
+                review.open(block)
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Its plan is frozen and its review opens.")
         }
-        .sheet(isPresented: $presentingReview) {
-            BlockReviewView(block: block)
-                .presentationDetents([.large])
-        }
+        .blockReviewSheet($review)
         // The message names no block: it can redraw while the deleted
         // block's alert goes away.
         .alert("Delete block?", isPresented: $presentingDeleteConfirm) {
@@ -1383,16 +1381,26 @@ public struct BlockOverviewScreen: View {
 
     // MARK: - Review Button
 
-    /// A finished block's review, which closes for good once seen, opens
-    /// again from here (B12).
+    /// A finished block's review opens again from here (B12). When its
+    /// last close did not save, the line under the button says so.
     private var reviewButton: some View {
-        BRUButton("REVIEW ▸", kind: .primary) {
-            presentingReview = true
-        }
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Color.bruInk)
-                .frame(height: 2)
+        VStack(alignment: .leading, spacing: 0) {
+            BRUButton("REVIEW ▸", kind: .primary) {
+                review.open(block)
+            }
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(Color.bruInk)
+                    .frame(height: 2)
+            }
+            if review.isUnsaved(block) {
+                Text(BlockReviewPresenter.unsavedMessage)
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruSignalText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+            }
         }
     }
 
