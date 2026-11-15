@@ -51,20 +51,44 @@ enum ExercisePhoto {
     }
 }
 
+/// Re-encodes stored photos that still carry their source metadata. The actor
+/// reads and re-encodes off the main actor; the main context writes, since a
+/// second writer leaves the main context an older copy that its next save of
+/// that exercise writes back, location included (RM-004).
 @ModelActor
 actor ExercisePhotoSanitizer {
-    /// Each original stays stored until its replacement has encoded and saved successfully.
-    func run(save: @Sendable (ModelContext) throws -> Void = { try $0.save() }) throws {
-        let exercises = try modelContext.fetch(FetchDescriptor<Exercise>())
-        for exercise in exercises {
-            guard let original = exercise.imageData else { continue }
+    /// The exercises with a stored photo.
+    func exercisesWithPhotos() throws -> [PersistentIdentifier] {
+        try modelContext.fetch(FetchDescriptor<Exercise>()).filter { $0.imageData != nil }.map(\.persistentModelID)
+    }
+
+    /// The exercise's stored photo and its sanitized bytes, or nil when they are the same.
+    func replacement(for id: PersistentIdentifier) throws -> (original: Data, sanitized: Data)? {
+        guard let exercise = modelContext.model(for: id) as? Exercise, let original = exercise.imageData else { return nil }
+        do {
+            let sanitized = try ExercisePhoto.sanitized(original)
+            return sanitized == original ? nil : (original, sanitized)
+        } catch {
+            throw ExercisePhotoError.existing(exercise.name)
+        }
+    }
+
+    /// Each original stays stored until its replacement has encoded and saved
+    /// successfully. A photo changed since it was read keeps the change.
+    @MainActor
+    static func run(in context: ModelContext, save: (ModelContext) throws -> Void = { try $0.save() }) async throws {
+        let sanitizer = ExercisePhotoSanitizer(modelContainer: context.container)
+        for id in try await sanitizer.exercisesWithPhotos() {
+            guard let photo = try await sanitizer.replacement(for: id),
+                  let exercise = try context.fetch(FetchDescriptor<Exercise>(
+                      predicate: #Predicate { $0.persistentModelID == id }
+                  )).first,
+                  exercise.imageData == photo.original else { continue }
+            exercise.imageData = photo.sanitized
             do {
-                let replacement = try ExercisePhoto.sanitized(original)
-                guard replacement != original else { continue }
-                exercise.imageData = replacement
-                try save(modelContext)
+                try save(context)
             } catch {
-                SessionSetActions.rollBack(modelContext)
+                SessionSetActions.rollBack(context)
                 throw ExercisePhotoError.existing(exercise.name)
             }
         }

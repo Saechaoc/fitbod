@@ -80,19 +80,58 @@ struct ExercisePhotoPrivacyTests {
         let original = try PhotoFixtures.image(orientation: 8, geotagged: true)
         exercise.imageData = original
         try ctx.save()
-        let upgrader = ExercisePhotoSanitizer(modelContainer: container)
         await #expect(throws: ExercisePhotoError.self) {
-            try await upgrader.run(save: { _ in throw Failure.disk })
+            try await ExercisePhotoSanitizer.run(in: ctx, save: { _ in throw Failure.disk })
         }
         let before = try #require(try ModelContext(container).fetch(FetchDescriptor<Exercise>()).first)
         #expect(before.imageData == original)
-        try await upgrader.run()
+        try await ExercisePhotoSanitizer.run(in: ctx)
         let reopened = try FitbodModelContainer.make(storeURL: url)
         let saved = try #require(try ModelContext(reopened).fetch(FetchDescriptor<Exercise>()).first)
         let image = try #require(saved.imageData)
         #expect(PhotoFixtures.properties(image)[kCGImagePropertyGPSDictionary] == nil)
         #expect(PhotoFixtures.properties(image)[kCGImagePropertyPixelWidth] as? Int == 20)
-        try await upgrader.run(save: { _ in throw Failure.disk }) // Canonical bytes need no second save.
+        try await ExercisePhotoSanitizer.run(in: ctx, save: { _ in throw Failure.disk }) // Canonical bytes need no second save.
+    }
+
+    /// The main context held the exercise before its photo was sanitized; a
+    /// save of the exercise's own settings must not write the old photo back.
+    @Test func settingsSavedAfterAnUpgradeKeepTheSanitizedPhoto() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("photo-privacy-\(UUID())")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let container = try FitbodModelContainer.make(storeURL: directory.appendingPathComponent("default.store"))
+        let ctx = container.mainContext
+        let exercise = LoggerFixtures.exercise("Legacy photo", in: ctx)
+        exercise.imageData = try PhotoFixtures.image(orientation: 6, geotagged: true)
+        try ctx.save()
+
+        try await ExercisePhotoSanitizer.run(in: ctx)
+        _ = exercise.imageData // The exercise's screen shows the photo,
+        exercise.unitOverride = .kg // then the lifter changes its unit.
+        try ctx.save()
+
+        let stored = try #require(try ModelContext(container).fetch(FetchDescriptor<Exercise>()).first?.imageData)
+        #expect(PhotoFixtures.properties(stored)[kCGImagePropertyGPSDictionary] == nil)
+        #expect(exercise.imageData == stored)
+    }
+
+    /// A photo the main context changed after the sanitizer read the stored
+    /// one keeps the change; a later launch sanitizes what was saved.
+    @Test func sanitizingLeavesAPhotoChangedSinceItWasRead() async throws {
+        let container = try FitbodModelContainer.make(inMemory: true)
+        let ctx = container.mainContext
+        let exercise = LoggerFixtures.exercise("Legacy photo", in: ctx)
+        exercise.imageData = try PhotoFixtures.image(orientation: 6, geotagged: true)
+        try ctx.save()
+        let newer = try ExercisePhoto.sanitized(try PhotoFixtures.image(variant: true))
+        exercise.imageData = newer
+
+        try await ExercisePhotoSanitizer.run(in: ctx)
+
+        #expect(exercise.imageData == newer)
+        try ctx.save()
+        #expect(try ModelContext(container).fetch(FetchDescriptor<Exercise>()).first?.imageData == newer)
     }
 
     @Test func badBackupPhotoIsRejectedBeforeDeletingWorkouts() async throws {

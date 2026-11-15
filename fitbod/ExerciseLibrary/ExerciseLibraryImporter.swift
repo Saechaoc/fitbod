@@ -57,6 +57,8 @@
 //    a dedicated context separate from the main context. SQLite WAL mode
 //    handles concurrent readers + serialized writers. No explicit
 //    `autosaveEnabled = false` is needed; we trust the actor isolation.
+//    The main context's loaded exercises keep their old values after these
+//    saves, so `seed(into:)` fetches them again (RM-004).
 //
 //  ## Observability
 //
@@ -85,6 +87,18 @@ public actor ExerciseLibraryImporter {
     /// until it has run.
     public static func seedIsPending(bundle: Bundle = .main, defaults: UserDefaults = .standard) -> Bool {
         defaults.integer(forKey: seedVersionKey) < ((try? bundledSeedVersion(bundle: bundle)) ?? 0)
+    }
+
+    /// Seeds a pending catalog, then fetches the exercises again in `context`,
+    /// the main context: the importer saves in its own context, so an exercise
+    /// `context` loaded first keeps its old values, and a save of what a screen
+    /// read from it would write them back over the update (RM-004). The fetch
+    /// also follows a seed that stopped partway.
+    @MainActor
+    public static func seed(into context: ModelContext, bundle: Bundle = .main, defaults: sending UserDefaults = .standard) async throws {
+        guard seedIsPending(bundle: bundle, defaults: defaults) else { return }
+        defer { _ = try? context.fetch(FetchDescriptor<Exercise>()) }
+        try await ExerciseLibraryImporter(modelContainer: context.container).seedIfNeeded(bundle: bundle, defaults: defaults)
     }
 
     /// Batch size for context-save calls. 100 rows keeps each SQLite

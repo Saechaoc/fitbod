@@ -187,7 +187,7 @@ public struct RootView: View {
 
     private func preparePhotos() async {
         do {
-            try await ExercisePhotoSanitizer(modelContainer: modelContext.container).run()
+            try await ExercisePhotoSanitizer.run(in: modelContext)
             photoPreparationError = nil
         } catch {
             photoPreparationError = error.localizedDescription
@@ -350,8 +350,7 @@ public struct RootView: View {
     private func runSeed() async {
         seedState.phase = .loading
         do {
-            let importer = ExerciseLibraryImporter(modelContainer: modelContext.container)
-            try await importer.seedIfNeeded(bundle: .main)
+            try await ExerciseLibraryImporter.seed(into: modelContext)
 
             // NOTE: PlateInventory seeding uses `.lb` as the unit-system fallback
             // when `UserSettings` is freshly inserted by the exercise seed above.

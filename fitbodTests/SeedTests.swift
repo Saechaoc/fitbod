@@ -536,6 +536,37 @@ final class SeedTests {
         #expect(reread.exercise?.name == catalogName, "the re-seed must have renamed the bench")
     }
 
+    @Test("A re-seed's update stays when the main context, which held the exercise first, saves its settings")
+    @MainActor
+    func reseedSurvivesTheMainContextsOlderCopy() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("SeedTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let container = try FitbodModelContainer.make(storeURL: directory.appendingPathComponent("seed.store"))
+        let ctx = container.mainContext
+        try await ExerciseLibraryImporter.seed(into: ctx, defaults: defaults)
+        let benchExternalID = "Barbell_Bench_Press_-_Medium_Grip"
+        let bench = try #require(try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == benchExternalID }
+        )).first)
+        let datasetInstructions = bench.instructions
+        // A field the dataset supplies, as an older dataset wrote it.
+        bench.instructions = ["An older dataset's step"]
+        try ctx.save()
+
+        defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+        try await ExerciseLibraryImporter.seed(into: ctx, defaults: defaults)
+        _ = bench.instructions // The exercise's screen shows its steps,
+        bench.unitOverride = .kg // then the lifter changes its unit.
+        try ctx.save()
+
+        let stored = try #require(try ModelContext(container).fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == benchExternalID }
+        )).first)
+        #expect(stored.instructions == datasetInstructions)
+        #expect(stored.unitOverride == .kg)
+    }
+
     @Test("A row curation hides stays listed while a logged workout or a routine uses it")
     @MainActor // LoggerFixtures is main-actor isolated.
     func hiddenRowsInUseStayListed() async throws {
