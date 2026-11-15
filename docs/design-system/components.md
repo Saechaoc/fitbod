@@ -12,7 +12,7 @@ Read a component's file header before using it: each one documents its contract 
 | --- | --- | --- | --- | --- | --- |
 | `BRUHeaderBar` | Screen header: left action, centered title, right action, 2pt ink rule | `HeaderAction` init or `.slots(left:center:right:)` with `.back`, `.cancel`, `.action`, `.text`; signal-colored actions; title wraps to two lines | `.navigationTitle`, `.toolbar` | About 40 screens and sheets | Every screen |
 | `BRUTabBar`, `BRUTab` | Bottom bar for Today, Program, Progress and Library | Active cell is ink with paper text and the selected trait | System tab bar | `RootView` | `phase-2--today.png` |
-| `BRUSectionHead` | Section strip between 2pt rules: title on the left, metadata or an action on the right | Plain, with right text, with a tappable right action | `Section` headers | About 23 screens | `phase-2--today.png` |
+| `BRUSectionHead` | Section strip between 2pt rules: title on the left, metadata or an action on the right. Right under a slab or an ink hero, `underSlab: true` drops the top rule, because the slab's edge is the rule | Plain, with right text, with a tappable right action, under a slab | `Section` headers | About 23 screens | `phase-2--today.png` |
 | `BRUDivider` | Horizontal rule | `.hair` (1pt `bruHair`), `.ink` (2pt `bruInk`) | `Divider()` | About 42 screens | Every screen |
 
 ## Actions

@@ -32,6 +32,9 @@ import SwiftUI
 /// - Accessibility sizes: the right metadata sits under the title, so the
 ///   title has the full width and breaks only between its words.
 /// - Accessibility: adds `.isHeader` trait so VoiceOver announces the section.
+/// - Right under a slab the head draws no top rule: the slab's edge is the
+///   rule, as `phase-2--today.png` shows, and under a dark-mode `bruSlab` an
+///   ink rule would draw an off-white line.
 public struct BRUSectionHead: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -39,6 +42,7 @@ public struct BRUSectionHead: View {
 
     private let title: String
     private let right: String?
+    private let underSlab: Bool
     private let rightAction: (() -> Void)?
 
     // MARK: - Init
@@ -49,12 +53,14 @@ public struct BRUSectionHead: View {
     ///            is as-typed for VoiceOver.
     ///   - right: Optional right-side metadata string (e.g. "Tap to reorder", "14 sessions",
     ///            "+ ADD PHASE"). Rendered uppercase labelSmall. Pass `nil` (default) to omit.
+    ///   - underSlab: True right under a slab, whose edge is then the top rule.
     ///   - rightAction: Optional tap closure for the right label. When provided, the right
     ///                  label renders in `bruSignal` (instead of `bruMuted`) and is tappable.
     ///                  Used by Phase 04.1 surfaces for "+ADD PHASE" actions per UI-SPEC line 513.
-    public init(_ title: String, right: String? = nil, rightAction: (() -> Void)? = nil) {
+    public init(_ title: String, right: String? = nil, underSlab: Bool = false, rightAction: (() -> Void)? = nil) {
         self.title = title
         self.right = right
+        self.underSlab = underSlab
         self.rightAction = rightAction
     }
 
@@ -62,7 +68,9 @@ public struct BRUSectionHead: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            BRUDivider(.ink)
+            if !underSlab {
+                BRUDivider(.ink)
+            }
 
             rowLayout {
                 Text(title)

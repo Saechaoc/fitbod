@@ -238,7 +238,8 @@ public struct BlockReviewView: View {
         let positiveCount = deltas.filter { $0.delta > 0 }.count
 
         return VStack(spacing: 0) {
-            BRUSectionHead("e1RM movement", right: "↑ \(positiveCount) LIFTS")
+            // Right under the hero band, whose edge is the rule.
+            BRUSectionHead("e1RM movement", right: "↑ \(positiveCount) LIFTS", underSlab: true)
 
             if deltas.isEmpty {
                 Text("Not enough sessions logged to compute deltas.")

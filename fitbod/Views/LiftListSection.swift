@@ -40,7 +40,8 @@ public struct LiftListSection: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            BRUSectionHead("Exercises · \(sortedExercises.count)", right: "View ›", rightAction: onView)
+            // Today shows it right under the hero slab.
+            BRUSectionHead("Exercises · \(sortedExercises.count)", right: "View ›", underSlab: true, rightAction: onView)
 
             if sortedExercises.isEmpty {
                 // Minimal placeholder — not the full empty-state (that's TodayView's job)

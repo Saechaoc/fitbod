@@ -966,7 +966,8 @@ public struct BlockOverviewScreen: View {
     @ViewBuilder
     private var splitAttachSwapBand: some View {
         VStack(spacing: 0) {
-            BRUSectionHead("Routine", right: nil)
+            // Right under the hero: a draft or ready block has no week strip.
+            BRUSectionHead("Routine", right: nil, underSlab: true)
             HStack(spacing: 12) {
                 if block.split == nil {
                     // A no-break space keeps "▸" on ROUTINE's line when the
@@ -1031,7 +1032,8 @@ public struct BlockOverviewScreen: View {
     @ViewBuilder
     private var modePickerSection: some View {
         VStack(spacing: 0) {
-            BRUSectionHead("Scheduling", right: nil)
+            // Right under the hero only for an active block before its start date.
+            BRUSectionHead("Scheduling", right: nil, underSlab: block.derivedStatus == .active && planWeek == nil)
             HStack(spacing: 8) {
                 SchedulingModeChip("ROTATION", selected: block.schedulingMode == .rotation) {
                     block.schedulingMode = .rotation
@@ -1241,7 +1243,8 @@ public struct BlockOverviewScreen: View {
 
         VStack(spacing: 0) {
             // Archived phase progression from snapshot — HISTORY label, not live WHAT'S NEXT
-            BRUSectionHead("Phase progression", right: "HISTORY")
+            // Right under the hero: a finished block has no week strip.
+            BRUSectionHead("Phase progression", right: "HISTORY", underSlab: true)
             VStack(spacing: 0) {
                 ForEach(Array(config.phases.enumerated()), id: \.offset) { index, phase in
                     archivedPhaseRow(phase: phase, index: index, allPhases: config.phases, state: phaseStates[index])

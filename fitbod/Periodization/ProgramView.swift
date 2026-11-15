@@ -127,7 +127,7 @@ public struct ProgramView: View {
                                 }
                             } else {
                                 blocksSection(blocks)
-                                routinesSection
+                                routinesSection(underSlab: blocks.leadIsSlab && blocks.planned.isEmpty)
                                 if !blocks.past.isEmpty {
                                     pastBlocksEntry(count: blocks.past.count)
                                 }
@@ -288,7 +288,7 @@ public struct ProgramView: View {
         }
 
         if !blocks.planned.isEmpty {
-            BRUSectionHead("Planned")
+            BRUSectionHead("Planned", underSlab: blocks.leadIsSlab)
             ForEach(Array(blocks.planned.enumerated()), id: \.element.id) { index, block in
                 if index > 0 {
                     BRUDivider(.hair)
@@ -301,8 +301,8 @@ public struct ProgramView: View {
     // MARK: - Routines
 
     @ViewBuilder
-    private var routinesSection: some View {
-        BRUSectionHead("Routines")
+    private func routinesSection(underSlab: Bool) -> some View {
+        BRUSectionHead("Routines", underSlab: underSlab)
 
         if allSplits.isEmpty {
             EmptySectionLine(message: "No routines yet.", action: "+ New routine", isSignal: openWorkout == nil, onTap: startNewRoutine)
@@ -412,6 +412,10 @@ struct ProgramBlocks {
     /// The block the page leads with: the active one, else the first ready
     /// one, else the newest draft.
     var lead: Block? { active ?? ready.first ?? drafts.first }
+
+    /// The lead draws as a dark slab, so the head right under it draws no
+    /// top rule; a draft's paper slab stands apart.
+    var leadIsSlab: Bool { active != nil || !ready.isEmpty }
 
     /// PLANNED: the ready blocks, then the drafts, without the lead.
     var planned: [Block] { (ready + drafts).filter { $0.id != lead?.id } }
