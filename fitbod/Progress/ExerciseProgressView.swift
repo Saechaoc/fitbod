@@ -16,21 +16,35 @@
 //    Name row (the exercise's whole name, wrapping: the bar's middle
 //    third cuts long names short on the 390pt phone)
 //    ↓
-//    ProgressChartHost (owns @Query, renders hero + chips + chart)
+//    ProgressChartHost (owns @Query, renders rows + hero + chips + chart)
+//      ├─ Period row (TimeRangeChipRow: LAST 8 WK, LAST 26 WK, ALL TIME)
+//      │  and, for an exercise trained at more than one intent, the
+//      │  intent row (one ProgressFilterChip per intent, wrapping)
+//      │  BRUDivider(.ink)
 //      ├─ HeroSummaryBand (caption · BRUDisplay value · BRUChip delta · mono sub-line)
 //      │  BRUDivider(.ink)
 //      ├─ SeriesToggleChipRow (4-segment BRU bar, one ProgressChartMetric selected)
 //      │  BRUDivider(.ink)
 //      └─ Chart content area (bruBg background)
-//           Branch A: < 2 distinct sessions in the series → empty-state (BRU fonts/colors)
-//           Branch B: otherwise                           → BRU-styled chart + legend
+//           Branch A: < 2 workouts with a value → a note: what the period
+//                     and intent hold, and why no line (ProgressChartSelection.gapNote)
+//           Branch B: otherwise                → BRU-styled chart + legend
+//
+//  ## Comparable workouts (RM-023)
+//
+//  Every chip, the hero and the stall bands read ProgressChartSelection:
+//  the finished workouts of one intent that started in the period, ALL TIME
+//  by default. The intent is the one picked, else the newest workout's; a
+//  stall's row opens the chart on its stall's intent. An open workout never
+//  plots. The PR rule is the intent's best over all time, so a short period
+//  never shows a lesser best as the PR.
 //
 //  ## Series per chip
 //
 //    e1RM     top-set e1RM + all-set average e1RM (SeriesBuilder.buildPoints)
 //    TOP SET  top-set e1RM alone
-//    VOLUME   SeriesBuilder.volumePoints, one line per intent
-//    AVG RPE  SeriesBuilder.averageRPEPoints, one line per intent
+//    VOLUME   SeriesBuilder.volumePoints, a line for the intent
+//    AVG RPE  SeriesBuilder.averageRPEPoints, a line for the intent
 //
 //  VoiceOver reads each point by itself, by its series and date, then
 //  its value ("112 lb", "2,140 lb", "RPE 7.6"). The chart's audio graph
@@ -65,7 +79,8 @@
 //
 //  ## Outer/inner @Query split (RESEARCH Pitfall 3 + Phase 6 perf)
 //
-//  Outer view owns `.exercise` parameter and the selected metric.
+//  Outer view owns `.exercise` parameter and the selected metric, period
+//  and intent.
 //  Inner `ProgressChartHost` declares `@Query var sessionExercises`
 //  with a predicate scoped via local-let UUID capture — keeps the
 //  outer view stable across re-renders and confines @Query
@@ -80,11 +95,18 @@ import SwiftUI
 public struct ExerciseProgressView: View {
     public let exercise: Exercise
     @State private var metric: ProgressChartMetric = .e1RM
+    /// The period and intent the chart compares workouts in (RM-023).
+    @State private var period: TimeRangeChoice = .allTime
+    /// Nil until the lifter picks one: the newest workout's intent.
+    @State private var intent: Intent?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(exercise: Exercise) {
+    /// `intent` opens the chart on that intent, as a stall's row does;
+    /// nil opens it on the newest workout's.
+    public init(exercise: Exercise, intent: Intent? = nil) {
         self.exercise = exercise
+        _intent = State(initialValue: intent)
     }
 
     public var body: some View {
@@ -99,6 +121,8 @@ public struct ExerciseProgressView: View {
             ProgressChartHost(
                 exercise: exercise,
                 metric: $metric,
+                period: $period,
+                intent: $intent,
                 reduceMotion: reduceMotion
             )
 
@@ -292,6 +316,8 @@ private struct ProgressChartHost: View {
     @Environment(\.weightUnit) private var defaultUnit
     let exercise: Exercise
     @Binding var metric: ProgressChartMetric
+    @Binding var period: TimeRangeChoice
+    @Binding var intent: Intent?
     let reduceMotion: Bool
     /// The exercise's stalls, shaded on the chart (RM-019): the ones the
     /// Stalled list and the workout's STALLED badge show.
@@ -300,6 +326,8 @@ private struct ProgressChartHost: View {
     init(
         exercise: Exercise,
         metric: Binding<ProgressChartMetric>,
+        period: Binding<TimeRangeChoice>,
+        intent: Binding<Intent?>,
         reduceMotion: Bool
     ) {
         // RESEARCH Pitfall 3: local-let capture of the UUID before the #Predicate
@@ -313,20 +341,39 @@ private struct ProgressChartHost: View {
         )
         self.exercise = exercise
         self._metric = metric
+        self._period = period
+        self._intent = intent
         self.reduceMotion = reduceMotion
     }
 
     var body: some View {
-        let allPoints = SeriesBuilder.buildPoints(from: sessionExercises)
-        let plotted = chartPoints(e1RMPoints: allPoints)
+        // Last 8 wk and Last 26 wk hold whole weeks, as on Weekly Tonnage.
+        let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: settingsList.first?.weekStartsMonday ?? true)
+        let since = period.lowerBound(now: .now, calendar: calendar)
+        let selection = ProgressChartSelection(logs: sessionExercises, intent: intent, since: since)
+        let allPoints = SeriesBuilder.buildPoints(from: selection.logs)
+        let plotted = chartPoints(e1RMPoints: allPoints, logs: selection.logs)
         let distinctSessionCount = Set(allPoints.map(\.date)).count
         let plottedSessionCount = Set(plotted.map(\.date)).count
-        let anyHighRepSuppressed = sessionExercises.contains { se in
+        let anyHighRepSuppressed = selection.logs.contains { se in
             (se.sets ?? []).contains { PRDetector.isWorkingSet($0) && $0.reps > 10 }
+        }
+        // The intent's best over all time, so a short period never calls a
+        // lesser best its PR. The top set is always the higher line.
+        let prValue = metric.plotsE1RM
+            ? SeriesBuilder.buildPoints(from: selection.intentLogs).map(\.e1RM).max() ?? 0
+            : 0
+        // The intent's stalls still running in the period.
+        let shownStalls = stalls.filter { stall in
+            guard stall.intent == selection.intent, let newest = stall.workouts.first?.startedAt else { return false }
+            return since.map { newest >= $0 } ?? true
         }
 
         ScrollView {
             VStack(spacing: 0) {
+                filterRows(selection)
+                BRUDivider(.ink)
+
                 // Hero band only visible when there's e1RM data to show
                 if distinctSessionCount >= 2 {
                     heroBand(allPoints: allPoints)
@@ -340,10 +387,13 @@ private struct ProgressChartHost: View {
                 // Chart content branch
                 Group {
                     if plottedSessionCount < 2 {
-                        emptyStateLayout
+                        gapNoteLayout(selection.gapNote(metric: metric, plotted: plottedSessionCount, period: period))
                     } else {
                         chartLayout(
                             points: plotted,
+                            prValue: prValue,
+                            stalls: shownStalls,
+                            since: since,
                             highRepSuppressed: anyHighRepSuppressed && metric.plotsE1RM
                         )
                     }
@@ -375,7 +425,7 @@ private struct ProgressChartHost: View {
 
     // MARK: - Series for the selected chip
 
-    private func chartPoints(e1RMPoints: [E1RMSeriesPoint]) -> [ChartPoint] {
+    private func chartPoints(e1RMPoints: [E1RMSeriesPoint], logs: [SessionExercise]) -> [ChartPoint] {
         switch metric {
         case .e1RM, .topSet:
             return e1RMPoints
@@ -391,9 +441,9 @@ private struct ProgressChartHost: View {
                     )
                 }
         case .volume:
-            return workoutChartPoints(SeriesBuilder.volumePoints(from: sessionExercises))
+            return workoutChartPoints(SeriesBuilder.volumePoints(from: logs))
         case .averageRPE:
-            return workoutChartPoints(SeriesBuilder.averageRPEPoints(from: sessionExercises))
+            return workoutChartPoints(SeriesBuilder.averageRPEPoints(from: logs))
         }
     }
 
@@ -484,20 +534,47 @@ private struct ProgressChartHost: View {
         .background(Color.bruPaper)
     }
 
-    // MARK: - Branch A: empty state
+    // MARK: - Period and intent rows
 
-    private var emptyStateLayout: some View {
+    /// The period, then the intent when the exercise has more than one,
+    /// picked one at a time so each line compares like with like (RM-023).
+    private func filterRows(_ selection: ProgressChartSelection) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            TimeRangeChipRow(selection: $period)
+            if selection.intents.count > 1 {
+                BRUFlowLayout(spacing: 8, lineSpacing: 8) {
+                    ForEach(selection.intents, id: \.self) { choice in
+                        ProgressFilterChip(
+                            label: choice.rawValue.capitalized,
+                            accessibilityName: choice.rawValue.capitalized,
+                            isActive: choice == selection.intent
+                        ) {
+                            intent = choice
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+        .background(Color.bruPaper)
+    }
+
+    // MARK: - Branch A: too little to draw
+
+    /// What the period and intent hold, and why they draw no line.
+    private func gapNoteLayout(_ note: (heading: String, body: String)) -> some View {
         VStack(spacing: 8) {
-            Text("Not enough data")
+            Text(note.heading)
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruInk)
-            Text(metric == .averageRPE
-                 ? "Log RPE in 2 workouts to see your trend."
-                 : "Log 2 sessions to see your trend.")
+            Text(note.body)
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
-                .multilineTextAlignment(.center)
         }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, minHeight: 240)
         .padding(.vertical, 32)
         .background(Color.bruBg)
@@ -508,19 +585,21 @@ private struct ProgressChartHost: View {
     @ViewBuilder
     private func chartLayout(
         points: [ChartPoint],
+        prValue: Double,
+        stalls: [ExerciseStall],
+        since: Date?,
         highRepSuppressed: Bool
     ) -> some View {
-        let prValue = metric.plotsE1RM ? (points.map(\.value).max() ?? 0) : 0
-
         VStack(alignment: .leading, spacing: 8) {
             Chart {
                 // Stall bands, behind the lines: each stall's flat workouts,
                 // half a day past the first and last so their points sit
-                // inside. The legend names them, so VoiceOver skips them.
+                // inside, and never before the period. The legend names
+                // them, so VoiceOver skips them.
                 ForEach(stalls) { stall in
                     if let newest = stall.workouts.first?.startedAt, let oldest = stall.workouts.last?.startedAt {
                         RectangleMark(
-                            xStart: .value("Date", oldest.addingTimeInterval(-43_200)),
+                            xStart: .value("Date", max(oldest.addingTimeInterval(-43_200), since ?? .distantPast)),
                             xEnd: .value("Date", newest.addingTimeInterval(43_200))
                         )
                         .foregroundStyle(Self.stallTint)
@@ -610,7 +689,7 @@ private struct ProgressChartHost: View {
             .padding(.top, 12)
 
             // Legend row below chart
-            legendRow(points: points)
+            legendRow(points: points, stalls: stalls)
                 .padding(.horizontal, 16)
 
             if highRepSuppressed {
@@ -707,7 +786,7 @@ private struct ProgressChartHost: View {
     /// The keys in a row, wrapping onto the next row when they run out of
     /// width.
     @ViewBuilder
-    private func legendRow(points: [ChartPoint]) -> some View {
+    private func legendRow(points: [ChartPoint], stalls: [ExerciseStall]) -> some View {
         BRUFlowLayout(spacing: 16, lineSpacing: 6) {
             ForEach(legendKeys(points: points)) { key in
                 HStack(spacing: 4) {

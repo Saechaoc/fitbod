@@ -8,7 +8,7 @@
 //  followed by an empty one:
 //
 //    - Progress's Recent rows read "1 session", and the chart a row opens
-//      still asks for 2 sessions.
+//      counts 1 workout and asks for another.
 //    - Compare shows its locked state.
 //    - Today counts 1 session in all and this week.
 //    - History's stat strip and its "Past sessions" header count 1
@@ -63,8 +63,9 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
         }
 
         bench.tap()
-        let locked = app.staticTexts.matching(NSPredicate(format: "label == %@", "Log 2 sessions to see your trend.")).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(locked), "With 1 session the chart must still ask for 2")
+        let counted = app.staticTexts.matching(NSPredicate(format: "label == %@", "1 hypertrophy workout")).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(counted), "The chart must count 1 workout, without the empty one")
+        XCTAssertTrue(app.staticTexts["Log another to see a trend."].exists, "With 1 workout the chart must ask for another")
     }
 
     @MainActor

@@ -12,6 +12,8 @@
 //      then VOLUME, then AVG RPE changes what the chart reads each time;
 //      VOLUME reads the first workout's 2,140, AVG RPE reads its mean RPE,
 //      and each chip's legend names the lines it draws.
+//    - RM-023: the chart plots one intent at a time, opening on the newest
+//      workout's; the intent chips swap in each intent's own workouts.
 //
 //  The PR list is lazy, so the test reads it one screen at a time and
 //  places each row under the bucket header above it.
@@ -105,10 +107,17 @@ final class PRListAndSeriesUITests: XCTestCase {
         bench.tap()
         XCTAssertTrue(UITestNavigation.appears(app.buttons["e1RM"]), "The progress chart never opened")
 
-        var readout = chartReadout(in: app)
-        XCTAssertFalse(readout.isEmpty, "The chart reads nothing before any chip is tapped")
+        // One intent at a time (RM-023): the chart opens on the newest
+        // workout's, strength, and Hypertrophy swaps in its own workouts.
+        // The chip's uppercased text uppercases the value XCUI reads too.
+        XCTAssertEqual((app.buttons["Strength"].value as? String)?.lowercased(), "selected", "The chart must open on the newest workout's intent")
+        let opened = chartReadout(in: app)
+        XCTAssertFalse(opened.isEmpty, "The chart reads nothing before any chip is tapped")
+        app.buttons["Hypertrophy"].tap()
+        var readout = chartReadout(in: app, changingFrom: opened)
+        XCTAssertNotEqual(readout, opened, "Picking Hypertrophy left the chart reading strength's workouts")
         var readouts: [String: String] = [:]
-        let intents = ["HYPERTROPHY · 2 WORKOUTS", "STRENGTH · 2 WORKOUTS"]
+        let intents = ["HYPERTROPHY · 2 WORKOUTS"]
         let chips: [(chip: String, legend: [String])] = [
             ("TOP SET", ["TOP SET"]),
             ("e1RM", ["TOP SET", "ALL-SET AVG"]),
@@ -130,6 +139,11 @@ final class PRListAndSeriesUITests: XCTestCase {
         XCTAssertTrue(volume.contains("2,140"), "VOLUME should read the first workout's 2,140:\n\(volume)")
         let rpe = readouts["AVG RPE"] ?? ""
         XCTAssertTrue(rpe.contains("RPE 7.6"), "AVG RPE should read the first workout's mean RPE, 7.6:\n\(rpe)")
+
+        app.buttons["Strength"].tap()
+        let strength = chartReadout(in: app, changingFrom: readout)
+        XCTAssertNotEqual(strength, readout, "Picking Strength left AVG RPE reading hypertrophy's line")
+        XCTAssertEqual(legendKeys(in: app), ["STRENGTH · 2 WORKOUTS"], "AVG RPE on Strength must draw strength's line alone")
     }
 
     // MARK: - Chart readout

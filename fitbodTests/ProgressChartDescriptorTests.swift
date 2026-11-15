@@ -16,6 +16,7 @@
 //  but the legend named only HYPERTROPHY and STRENGTH, and a power line
 //  was drawn like strength's. The legend now names every intent drawn,
 //  as in POWER · 1 WORKOUT, in the order the audio graph reads them.
+//  Since RM-023 the chart draws one intent at a time, picked by its chip.
 //
 
 import Accessibility
@@ -117,12 +118,13 @@ struct ProgressChartDescriptorTests {
         #expect(Set(styles.map(\.swatchDash)).count == styles.count)
     }
 
-    /// Two, three and four workouts in three intents, so each line is
-    /// drawn and each key's count is its own. Main actor, as it hosts the
-    /// screen in a UIKit window.
+    /// Two, three and four workouts in three intents, so each key's count is
+    /// its own. The chart draws one intent at a time (RM-023), the newest
+    /// workout's first, power. Main actor, as it hosts the screen in a
+    /// UIKit window.
     @MainActor
-    @Test("VOLUME's legend names every intent it draws, as its audio graph does", .hostedAccessibility)
-    func volumeLegendNamesEveryIntentItDraws() throws {
+    @Test("VOLUME's legend names the intent it draws, as its audio graph does", .hostedAccessibility)
+    func volumeLegendNamesTheIntentItDraws() throws {
         let container = try FitbodModelContainer.make(inMemory: true)
         let bench = try logBenchPress(in: container.mainContext, workouts: [
             (.hypertrophy, [80]), (.strength, [100]), (.power, [60]),
@@ -142,12 +144,20 @@ struct ProgressChartDescriptorTests {
         RunLoop.main.run(until: Date.now.addingTimeInterval(0.3))
         attachScreen(of: window, named: "T129-chart-volume")
 
-        let legend = intentKeys(under: window)
-        #expect(legend == ["HYPERTROPHY · 2 WORKOUTS", "STRENGTH · 3 WORKOUTS", "POWER · 4 WORKOUTS"])
-        #expect(
-            chartDescriptor(under: window)?.series.compactMap(\.name) == legend,
-            "The audio graph must name each line as the legend does, in its order"
-        )
+        let picks: [(chip: String?, key: String)] = [
+            (nil, "POWER · 4 WORKOUTS"), ("Hypertrophy", "HYPERTROPHY · 2 WORKOUTS"), ("Strength", "STRENGTH · 3 WORKOUTS"),
+        ]
+        for (chip, key) in picks {
+            if let chip {
+                try #require(button(labeled: chip, under: window), "The \(chip) chip is not on screen").accessibilityActivate()
+                HostedAccessibility.waitUntil { intentKeys(under: window) == [key] }
+            }
+            #expect(intentKeys(under: window) == [key])
+            #expect(
+                chartDescriptor(under: window)?.series.compactMap(\.name) == [key],
+                "The audio graph must name the line as the legend does"
+            )
+        }
     }
 
     // MARK: - Helpers

@@ -9,8 +9,8 @@
 //
 //    timeRange       — single-select TimeRangeChoice; default
 //                      .last26wk (CONTEXT D-19).
-//    blockPhases     — multi-select Set<String>; default empty (=
-//                      "all" semantics until Phase 4 ships).
+//    blockPhases     — multi-select Set<String> of phase raw values;
+//                      default empty (= every phase).
 //    selectedMuscles — multi-select Set<UUID>; default empty (= one
 //                      single-color bar per week, CONTEXT D-19).
 //
@@ -42,9 +42,9 @@ public final class ChartFilterState {
     /// Default per CONTEXT D-19: `.last26wk`.
     public var timeRange: TimeRangeChoice = .last26wk
 
-    /// Multi-select block-phase chips. Empty set means "all phases" for
-    /// chart rendering purposes (block-row is visually disabled until
-    /// Phase 4 ships).
+    /// Multi-select block-phase chips, by `BlockPhaseKind` raw value. Empty
+    /// means every phase; otherwise the chart keeps the sets of workouts
+    /// that ran in a chosen phase (RM-023).
     public var blockPhases: Set<String> = []
 
     /// Multi-select muscle chips by MuscleGroup.id. Empty means

@@ -29,7 +29,10 @@
 //  setting, in the shared week calendar, so a workout that runs past
 //  midnight at a week's end counts in the same week here as on the chart,
 //  and the detail's total equals the bar. `WeekDetailGrouping` does the
-//  grouping.
+//  grouping. With phase chips on, the detail keeps only those phases' sets,
+//  through the filter the bar went through
+//  (`WeeklyTonnageAggregator.sets(_:inPhases:)`), and names the phases
+//  beside its total (RM-023).
 //
 //  ## Predicate-narrowed @Query (RESEARCH Pitfall 3)
 //
@@ -48,16 +51,20 @@ public struct WeekDetailView: View {
     @Environment(\.weightUnit) private var weightUnit
     public let weekStart: Date
     private let weekStartsMonday: Bool
+    /// The phase chips on when its bar was tapped, by raw value: the week
+    /// lists only those phases' sets, as its bar totals them (RM-023).
+    private let phases: Set<String>
     @Query private var sets: [SetEntry]
     /// The workout a row tap opened, whose summary is pushed.
     @State private var openedWorkoutID: UUID?
 
-    public init(weekStart: Date, weekStartsMonday: Bool) {
+    public init(weekStart: Date, weekStartsMonday: Bool, phases: Set<String> = []) {
         let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
         let lower = weekStart
         let upper = calendar.date(byAdding: .weekOfYear, value: 1, to: weekStart) ?? weekStart
         self.weekStart = weekStart
         self.weekStartsMonday = weekStartsMonday
+        self.phases = phases
         _sets = Query(
             filter: #Predicate<SetEntry> { entry in
                 entry.isComplete
@@ -71,7 +78,7 @@ public struct WeekDetailView: View {
 
     public var body: some View {
         let detail = WeekDetailGrouping.detail(
-            counting: sets,
+            counting: WeeklyTonnageAggregator.sets(sets, inPhases: phases),
             inWeekStarting: weekStart,
             weekStartsMonday: weekStartsMonday
         )
@@ -112,8 +119,10 @@ public struct WeekDetailView: View {
     /// lists, in the app-wide unit, which relabels the stored numbers
     /// without converting them.
     private func totalBand(_ detail: WeekDetail) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("TOTAL · \(BRUCountLabel.text(detail.workouts.count, "WORKOUT"))")
+        // The phases it counts, when the chart's phase chips narrowed it.
+        let phaseNames = BlockPhaseKind.allCases.filter { phases.contains($0.rawValue) }.map { $0.rawValue.uppercased() }
+        return VStack(alignment: .leading, spacing: 4) {
+            Text((["TOTAL", BRUCountLabel.text(detail.workouts.count, "WORKOUT")] + phaseNames).joined(separator: " · "))
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .foregroundStyle(Color.bruMuted)

@@ -57,7 +57,9 @@ import SwiftUI
 // MARK: - Navigation routes
 
 public enum ExerciseProgressRoute: Hashable, Sendable {
-    case progress(UUID)
+    /// The exercise's chart, on `intent` when given, else on its newest
+    /// workout's (RM-023).
+    case progress(UUID, intent: Intent? = nil)
     case prs(UUID)
 }
 
@@ -326,9 +328,9 @@ public struct ProgressHomeView: View {
     @ViewBuilder
     private func routeDestination(_ route: ExerciseProgressRoute) -> some View {
         switch route {
-        case .progress(let id):
+        case .progress(let id, let intent):
             if let ex = allExercises.first(where: { $0.id == id }) {
-                ExerciseProgressView(exercise: ex)
+                ExerciseProgressView(exercise: ex, intent: intent)
             } else {
                 Text("Exercise not found")
             }

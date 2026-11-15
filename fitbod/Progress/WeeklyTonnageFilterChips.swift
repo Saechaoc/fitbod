@@ -13,15 +13,15 @@
 //
 //  ## Row 2 — BlockPhaseChipRow
 //
-//  Four chips per `BlockPhaseKind` case (accumulation /
-//  intensification / realization / deload), multi-select bound to a
-//  `Set<String>` Binding. The entire row is visually disabled
-//  (`.opacity(0.5)` + `.disabled(true)`) when no `Block` entities
-//  exist (`@Query<Block>.isEmpty`) — i.e. until Phase 4 ships. A
-//  footer caption sends the lifter to the Program tab, where blocks are
-//  defined:
+//  One chip per `BlockPhaseKind` case (accumulation / intensification /
+//  peak / realization / deload), multi-select bound to a `Set<String>`
+//  Binding of raw values. The chart keeps the sets of workouts that ran in
+//  a chosen phase (`WeeklyTonnageAggregator.sets(_:inPhases:)`); none
+//  chosen keeps every set (RM-023). The row is disabled until a block has
+//  started, since only a started block's workouts have a phase: the chips
+//  fade, and a caption, kept readable, sends the lifter to the Program tab:
 //
-//      "No block data yet. Define a block in Program."
+//      "No block data yet. Start a block in Program."
 //
 //  ## Row 3 — MuscleChipRow
 //
@@ -96,32 +96,32 @@ public struct BlockPhaseChipRow: View {
     }
 
     public var body: some View {
-        let disabled = blocks.isEmpty
+        // Only a started block's workouts have a phase.
+        let disabled = !blocks.contains { $0.isActive || $0.endDate != nil }
         VStack(alignment: .leading, spacing: 4) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    chip(kind: .accumulation, label: "Accumulation")
-                    chip(kind: .intensification, label: "Intensification")
-                    chip(kind: .realization, label: "Realization")
-                    chip(kind: .deload, label: "Deload")
+                    ForEach(BlockPhaseKind.allCases, id: \.self) { chip(kind: $0) }
                 }
                 .padding(.horizontal, 16)
             }
+            // The chips fade; the caption stays readable muted text (D-183).
+            .opacity(disabled ? 0.5 : 1.0)
             if disabled {
-                Text("No block data yet. Define a block in Program.")
+                Text("No block data yet. Start a block in Program.")
                     .font(BRUFont.labelSmall)
                     .tracking(1.0)
                     .foregroundStyle(Color.bruMuted)
                     .padding(.horizontal, 16)
             }
         }
-        .opacity(disabled ? 0.5 : 1.0)
         .disabled(disabled)
     }
 
     @ViewBuilder
-    private func chip(kind: BlockPhaseKind, label: String) -> some View {
+    private func chip(kind: BlockPhaseKind) -> some View {
         let raw = kind.rawValue
+        let label = BlockPhaseColors.phaseLabel(kind)
         ProgressFilterChip(
             label: label,
             accessibilityName: label,

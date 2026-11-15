@@ -123,7 +123,7 @@ public struct WeeklyTonnageView: View {
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
         .navigationDestination(item: $navigationDestination) { weekStart in
-            WeekDetailView(weekStart: weekStart, weekStartsMonday: weekStartsMonday)
+            WeekDetailView(weekStart: weekStart, weekStartsMonday: weekStartsMonday, phases: filterState.blockPhases)
         }
     }
 }
@@ -177,7 +177,7 @@ private struct WeeklyTonnageChartHost: View {
 
     var body: some View {
         let bars = WeeklyTonnageAggregator.aggregate(
-            sets: sets,
+            sets: WeeklyTonnageAggregator.sets(sets, inPhases: filterState.blockPhases),
             weekStartsMonday: weekStartsMonday,
             selectedMuscleIDs: filterState.selectedMuscles
         )
@@ -229,16 +229,33 @@ private struct WeeklyTonnageChartHost: View {
 
     // MARK: - Empty state
 
+    /// What the range and phases hold, when they hold no sets: the range or
+    /// the phases left nothing to draw, or nothing is logged yet (RM-023).
     @ViewBuilder
     private var emptyState: some View {
+        let range = filterState.timeRange
+        let phases = BlockPhaseKind.allCases
+            .filter { filterState.blockPhases.contains($0.rawValue) }
+            .map(BlockPhaseColors.phaseLabel)
+        let span = range.phrase.map { " \($0)" } ?? ""
+        let note: (heading: String, body: String) = if !phases.isEmpty {
+            // Joined, not interpolated: the copy rules read "\(x) weeks" as a count.
+            ("No sets in " + phases.formatted(.list(type: .or)) + " weeks" + span,
+             range == .allTime ? "Pick another phase." : "Pick another phase or All time.")
+        } else if range != .allTime {
+            ("No sets\(span)", "Pick All time to see every week.")
+        } else {
+            ("Not enough data", "Log one week of training to see tonnage.")
+        }
         VStack(alignment: .center, spacing: 8) {
-            Text("Not enough data")
+            Text(note.heading)
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruInk)
-            Text("Log one week of training to see tonnage.")
+            Text(note.body)
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
         }
+        .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.top, 48)
         .padding(.horizontal, 16)

@@ -16,6 +16,12 @@
 //    - Last 8 wk holds the eight whole weeks that end with this one, so
 //      nine weeks of data never read more than eight weeks.
 //
+//  RM-023:
+//
+//    - A phase chip keeps its phase's weeks: Deload keeps a block's two
+//      deload weeks, a deload week's detail names the phase, and Peak,
+//      which the block skips, draws nothing.
+//
 
 import XCTest
 
@@ -119,6 +125,53 @@ final class WeeklyTonnageUITests: XCTestCase {
         )
         XCTAssertEqual(drawnBarCount(in: app), expected, "Last 8 wk must draw the \(expected) weeks in its eight whole weeks")
         UITestNavigation.saveScreenshot("T104", "tonnage-8wk-9wk-data")
+    }
+
+    // MARK: - RM-023: a phase chip keeps its phase's weeks
+
+    /// The seed's eight weekly workouts in a block of 3 weeks of
+    /// accumulation, 2 of intensification, 1 of realization and 2 of
+    /// deload, so the newest two are deload workouts.
+    @MainActor
+    func testPhaseChipKeepsItsPhasesWeeks() throws {
+        let app = UITestNavigation.launch([UITestNavigation.resetFlag, "-fitbod-seed-weekly-tonnage", "8", "-fitbod-seed-tonnage-block"])
+        openWeeklyTonnage(in: app)
+        app.buttons["Last 26 weeks"].tap()
+        XCTAssertTrue(
+            app.staticTexts["TOTAL · 8 WEEKS"].waitForExistence(timeout: 5),
+            "With no phase picked, the chart must keep all eight weeks, not \(rangeLabel(in: app))"
+        )
+
+        // The phase row scrolls sideways, and Deload starts past the screen's edge.
+        app.buttons["Intensification"].swipeLeft()
+        app.buttons["Deload"].tap()
+        XCTAssertTrue(
+            app.staticTexts["TOTAL · 2 WEEKS"].waitForExistence(timeout: 5),
+            "Deload must keep the two deload weeks, not \(rangeLabel(in: app))"
+        )
+        let chart = app.otherElements["weeklyTonnage.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 5), "Missing the chart")
+        let drawn = drawnBars(in: chart.frame, of: XCUIScreen.main.screenshot())
+        XCTAssertEqual(drawn.bars.count, 2, "Deload must draw the two deload weeks")
+        UITestNavigation.saveScreenshot("RM-023", "tonnage-deload")
+
+        // Swift Charts reports bars at frames other than the drawn ones, so
+        // tap the middle of the newest bar as drawn.
+        let newest = try XCTUnwrap(drawn.bars.last, "Deload draws no bars")
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: (newest.lowerBound + newest.upperBound) / 2, dy: drawn.row))
+            .tap()
+        XCTAssertTrue(
+            app.staticTexts["TOTAL · 1 WORKOUT · DELOAD"].waitForExistence(timeout: 5),
+            "The newest deload week must list its one workout and name the phase it keeps"
+        )
+        app.buttons["Back"].firstMatch.tap()
+
+        app.buttons["Deload"].tap()
+        app.buttons["Peak"].tap()
+        let note = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "No sets in Peak weeks")).firstMatch
+        XCTAssertTrue(note.waitForExistence(timeout: 5), "Peak, which the block skips, must say it holds no sets")
+        XCTAssertFalse(chart.exists, "Peak must draw no bars")
     }
 
     // MARK: - Navigation

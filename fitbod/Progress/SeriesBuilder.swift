@@ -192,6 +192,71 @@ public enum SeriesBuilder {
     }
 }
 
+// MARK: - Comparable selection (RM-023)
+
+/// What the progress chart reads for one period and intent: the finished
+/// workouts of one intent that started in the period. Every line then joins
+/// comparable workouts, as ARCHITECTURE.md defines them (one exercise, one
+/// intent, finished workouts), across machines (RM-066); units relabel, so
+/// one exercise's numbers share a unit.
+struct ProgressChartSelection {
+    /// The intents of the exercise's finished workouts with a logged work
+    /// set, in `Intent` order: the ones the lifter picks from.
+    let intents: [Intent]
+    /// The intent drawn: the one picked, else the newest workout's; nil
+    /// when no finished workout logged the exercise.
+    let intent: Intent?
+    /// The logs of the finished workouts at `intent` started in the period.
+    let logs: [SessionExercise]
+    /// The logs of the finished workouts at `intent`, whenever they started:
+    /// the PR rule reads these, so a period never passes off a lesser best
+    /// as the PR.
+    let intentLogs: [SessionExercise]
+    /// The workouts in `logs` with a logged work set of the exercise.
+    let workouts: Int
+
+    init(logs all: [SessionExercise], intent picked: Intent?, since lowerBound: Date?) {
+        let finished = all.filter { $0.session?.completedAt != nil }
+        // One point per finished workout with a logged work set, oldest first.
+        let worked = SeriesBuilder.volumePoints(from: finished)
+        let intent = picked ?? worked.last?.intent
+        let intentLogs = finished.filter { $0.session?.intent == intent }
+        let logs = intentLogs.filter { log in
+            lowerBound.map { (log.session?.startedAt ?? .distantPast) >= $0 } ?? true
+        }
+        self.intents = Intent.allCases.filter { intent in worked.contains { $0.intent == intent } }
+        self.intent = intent
+        self.intentLogs = intentLogs
+        self.logs = logs
+        self.workouts = SeriesBuilder.volumePoints(from: logs).count
+    }
+
+    /// What the chart says in place of a line when `plotted` of the
+    /// selection's workouts have a value for `metric`, fewer than the two a
+    /// line needs: what the period and intent hold, then what to do or why
+    /// the chip has too little to draw.
+    func gapNote(metric: ProgressChartMetric, plotted: Int, period: TimeRangeChoice) -> (heading: String, body: String) {
+        guard let intent else {
+            return ("No finished workouts yet", "Finish a workout with this exercise to see its trend.")
+        }
+        let span = period.phrase.map { " \($0)" } ?? ""
+        guard workouts > 0 else {
+            return (
+                "No \(intent.rawValue) workouts\(span)",
+                period == .allTime ? "Pick another intent." : "Pick All time to see older workouts."
+            )
+        }
+        let heading = BRUCountLabel.text(workouts, "\(intent.rawValue) workout") + span
+        guard plotted < workouts else { return (heading, "Log another to see a trend.") }
+        let some = plotted == 0 ? "None" : "Only one"
+        // VOLUME plots every workout counted here, so it never gets this far.
+        return switch metric {
+        case .averageRPE: (heading, "\(some) has an RPE logged.")
+        case .e1RM, .topSet, .volume: (heading, "\(some) has an e1RM, which needs a set with weight and 10 reps or fewer.")
+        }
+    }
+}
+
 /// One point per workout on the VOLUME or AVG RPE chart.
 public struct WorkoutSeriesPoint: Identifiable, Sendable, Equatable {
     public let id: String

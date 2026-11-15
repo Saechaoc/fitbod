@@ -146,7 +146,7 @@ struct StalledExercisesView: View {
     private func row(_ stall: ExerciseStall) -> some View {
         VStack(spacing: 0) {
             Button {
-                path.append(ExerciseProgressRoute.progress(stall.exercise.id))
+                path.append(ExerciseProgressRoute.progress(stall.exercise.id, intent: stall.intent))
             } label: {
                 HStack(spacing: BRUMetrics.Spacing.related) {
                     VStack(alignment: .leading, spacing: BRUMetrics.Spacing.tight) {

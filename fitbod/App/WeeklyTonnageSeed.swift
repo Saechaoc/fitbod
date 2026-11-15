@@ -21,6 +21,11 @@
 //  Add `-fitbod-week-starts-sunday` to set the week-start setting to
 //  Sunday first, because Settings has no control for it.
 //
+//  Add `-fitbod-seed-tonnage-block` to log the workouts in "Tonnage Block",
+//  active since the day of the oldest one, with 3 weeks of accumulation, 2
+//  of intensification, 1 of realization and 2 of deload, so each workout
+//  falls in a phase and the phase chips have something to filter (RM-023).
+//
 //  Use it without the other seed flags. Idempotent: does nothing when a
 //  "Tonnage Weeks" workout already exists. Compiled out of release builds.
 //
@@ -31,6 +36,7 @@ import SwiftData
 enum WeeklyTonnageSeed {
     static let launchArgument = "-fitbod-seed-weekly-tonnage"
     static let weekStartsSundayArgument = "-fitbod-week-starts-sunday"
+    static let blockArgument = "-fitbod-seed-tonnage-block"
 
     @MainActor
     static func runIfRequested(in context: ModelContext) {
@@ -43,16 +49,17 @@ enum WeeklyTonnageSeed {
         }
         guard let index = arguments.firstIndex(of: launchArgument) else { return }
         let weeks = arguments.dropFirst(index + 1).first.flatMap { Int($0) } ?? 8
-        seed(weeks: max(weeks, 1), in: context)
+        seed(weeks: max(weeks, 1), inBlock: arguments.contains(blockArgument), in: context)
         #endif
     }
 
     #if DEBUG
     static let workoutName = "Tonnage Weeks"
+    static let blockName = "Tonnage Block"
     private static let benchID = "Barbell_Bench_Press_-_Medium_Grip"
 
     @MainActor
-    private static func seed(weeks: Int, in context: ModelContext) {
+    private static func seed(weeks: Int, inBlock: Bool, in context: ModelContext) {
         let name = workoutName
         let existing = (try? context.fetch(FetchDescriptor<Session>(
             predicate: #Predicate { $0.routineSnapshotName == name }
@@ -64,10 +71,12 @@ enum WeeklyTonnageSeed {
         let now = Date.now
         let calendar = Calendar(identifier: .gregorian)
         guard let newest = newestStart(before: now, in: calendar) else { return }
+        let oldest = calendar.date(byAdding: .day, value: -7 * (weeks - 1), to: newest) ?? newest
+        let block = inBlock ? makeBlock(startingOn: oldest, in: context) : nil
         for weeksAgo in 0..<weeks {
             guard let start = calendar.date(byAdding: .day, value: -7 * weeksAgo, to: newest) else { continue }
             let weight = 100 - 2.5 * Double(weeksAgo)
-            log(bench, weight: weight, at: start, context: context)
+            log(bench, weight: weight, at: start, context: context).block = block
         }
 
         // The newest workout can sit in last week, so Today would open on
@@ -95,10 +104,32 @@ enum WeeklyTonnageSeed {
         return calendar.date(byAdding: .day, value: -7, to: nine)
     }
 
+    /// "Tonnage Block", active since the start of `day`: accumulation 3
+    /// weeks, intensification 2, realization 1 and deload 2, with no routine.
+    @MainActor
+    private static func makeBlock(startingOn day: Date, in context: ModelContext) -> Block {
+        let block = Block()
+        context.insert(block)
+        block.name = blockName
+        block.startDate = Calendar.current.startOfDay(for: day)
+        block.isActive = true
+        let phases: [(BlockPhaseKind, Int)] = [(.accumulation, 3), (.intensification, 2), (.realization, 1), (.deload, 2)]
+        for (index, (kind, weeks)) in phases.enumerated() {
+            let phase = BlockPhase()
+            context.insert(phase)
+            phase.block = block
+            phase.orderIndex = index
+            phase.nameRaw = kind.rawValue
+            phase.weeks = weeks
+        }
+        return block
+    }
+
     /// One finished workout: three work sets of 5 at `weight`, three
     /// minutes apart.
     @MainActor
-    private static func log(_ exercise: Exercise, weight: Double, at start: Date, context: ModelContext) {
+    @discardableResult
+    private static func log(_ exercise: Exercise, weight: Double, at start: Date, context: ModelContext) -> Session {
         let workout = Session()
         context.insert(workout)
         workout.startedAt = start
@@ -132,6 +163,7 @@ enum WeeklyTonnageSeed {
             set.isComplete = true
             set.completedAt = start.addingTimeInterval(Double(index) * 180)
         }
+        return workout
     }
     #endif
 }
