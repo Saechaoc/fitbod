@@ -391,13 +391,25 @@ Also open: a look on the phone, including a pressed slab button, which no captur
 
 ### <a id="rm-013"></a>RM-013 — Redesign 2.1: opt-in review notice
 
-**P2 · Planned: opt-in notice and close acknowledgement.** End/reopen and acknowledgement-on-open shipped; opt-in notice/acknowledgement-on-close remain planned.
+**P2 · Done (2026-11-15).** Today opens no review by itself: a notice offers the last ended block's review, and its close records it once; built on `swarm/A4`.
 **Done when:** replace automatic review with a notice in every no-active-block state except T-RESUME, including T-DONE. Shared presenter retains the opened block through dismissal and acknowledges once, preserving first reviewedAt; failed save keeps notice and says “Couldn't save the review. Open it again to retry.” under the opening row. Start next acknowledges before its builder. Preserve origin/remove unused acknowledge path. Recap presents when due independently; review outranks advisory. Test first/second/failed close and relaunch at the persistence boundary.
 **Scope / sequence:** Shared review presenter → close acknowledgement/retry → recap coordination → persistence/relaunch checks. Past-recap browsing and broader analytics excluded.
 **Requires:** Existing end/review persistence and rollback; [RM-002](#rm-002) if its changed save path is affected.
 **Scheduled after:** [RM-012](#rm-012).
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
-**References:** D-06/O-4/O-5, redesign R-3/R-18/R-20/R-26; [review](../fitbod/Periodization/BlockReviewView.swift), [hierarchy](design-map/redesign/hierarchy.md), [review tests](../fitbodTests/BlockReviewMathTests.swift).
+**Evidence (2026-11-15, swarm/A4):** Today shows "WINTER BLOCK FINISHED · REVIEW ›" above the hero in T-READY, T-PICK, T-FIX, T-FIRST and T-DONE when no block is active; T-RESUME and an active block hide it, and it outranks the deload advisory (`TodayState.notice`).
+`BlockReviewPresenter` opens the review from the notice and from Block overview's END BLOCK and REVIEW ▸, keeps the opened block for the sheet's dismissal, and records `reviewedAt` once on any close, keeping the first date.
+A close that cannot save leaves the review pending and shows "Couldn't save the review. Open it again to retry." under the row that opened it, and the next close saves.
+Start next and Plan custom record the review before New block opens, the review no longer records itself on appear, and `acknowledgeIfNeeded` is gone after a GitNexus impact check rated it LOW, its two callers being the review's own.
+This week's recap still presents on its own when due (O-4).
+After a failed save on a disk store, `rollBack` left the refused date on the block, so `acknowledge` fetches the block once more; [RM-002](#rm-002)'s rollback fix `4cad5de0` makes that fetch redundant once the two meet on `main`.
+New DEBUG launch arguments: `-fitbod-seed-today-review`, `-fitbod-seed-today-fix` and `-fitbod-fail-review-save-once`.
+`BlockReviewTriggerTests` (first, second and failed close, the failed one on a read-only disk store), `RelaunchPersistenceTests.reviewCloseSurvivesRelaunches`, `TodayStateTests`, `TodayStatesSeedTests` and four review and design suites passed 88/88 (`fast-20261115-144050-64536`).
+`BlockReviewAfterEndUITests`, with new tests that a close records the review and that Start next records it before New block, `WeeklyRecapUITests`, `TodayStateRoutesUITests`, `BlockLifecycleEntryPointsUITests`, `BlockOverviewStatesUITests`, `ArchiveRoutineUITests` and `TodayHeroUITests` passed 28/28 (`fast-20261115-144311-66128`), and again on the final tree (`fast-20261115-145857-80052`).
+Light and dark 390pt captures of the notice in T-PICK, T-READY, T-DONE, T-FIX and T-FIRST, the failed-save line on Today and on Block overview, the notice gone after a retry, and the review were inspected.
+Side fixes: a section head right under a slab or an ink hero draws no top rule on Today, Program, the review and Block overview, Today's header sits flush on the week board, and the review sheet is paper; five review and design suites passed 40/40 (`fast-20261115-145535-76849`).
+Not changed, for their owners: Why this weight's head under its hero and Session detail's head under its PR band still draw their rule.
+Open: a look on the phone; the notice at accessibility sizes was not captured.
+**References:** D-06/O-4/O-5, redesign R-3/R-18/R-20/R-26; [review](../fitbod/Periodization/BlockReviewView.swift), [presenter](../fitbod/Periodization/BlockReviewPresenter.swift), [notice](../fitbod/Views/BlockReviewNotice.swift), [hierarchy](design-map/redesign/hierarchy.md), [review tests](../fitbodTests/BlockReviewMathTests.swift), [close tests](../fitbodTests/BlockReviewTriggerTests.swift).
 
 ### <a id="rm-014"></a>RM-014 — Redesign 2.2: next-session/day lines
 
