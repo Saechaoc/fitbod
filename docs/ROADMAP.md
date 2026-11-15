@@ -697,7 +697,7 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 
 ### <a id="rm-026"></a>RM-026 — Session/routine authoring without detours
 
-**P2 · Planned.** Supersets and unsaved duplication are delivered (2026-11-12); multi-exercise selection, block/hybrid progression and archived inspection remain.
+**P2 · Planned.** Supersets and unsaved duplication (2026-11-12) and ordered multi-select (2026-11-15) are delivered; block/hybrid progression and archived inspection remain.
 **Done when:** name supersets' acting exercise/partners/effect in one trip, including unsaved sessions; duplication preserves/confirms unsaved edits; multi-select adds the stated count in order. Progression eligibility reads active graph, not deprecated template.block. Inspect archived routines before restore. Preserve drafts/rollback/snapshots.
 **Scope / sequence:** Deliver supersets (partners/effect/unsaved rollback), then unsaved duplication, then ordered multi-select, then graph-based progression eligibility and archived inspection. Each is a bounded authoring delivery; applied per-set targets stay RM-040.
 **Requires:** [RM-002](#rm-002) for affected superset/editor writes; [RM-040](#rm-040) only before exposing applied per-set targets.
@@ -724,6 +724,18 @@ The session menu shows a plain Keep editing, since iOS 26 hides its cancel-role 
 The journey passed again on the iPhone 17e (`fast-20261112-150614`), and its 390pt light captures of the menu and the question were inspected: the question matches the shipped Discard changes? dialog, and both differ from the BRU dialog mock-up as every system dialog does until [RM-035](#rm-035).
 After the shared lift copy, `RoutineDuplicationTests` passed 10/10 and `SupersetDraftPersistenceTests` 14/14 with a new check that a copied lift keeps its warm-up setting and per-set targets in no superset (`fast-20261112-151814`), and `SlottedSessionDeleteUITests` passed 3/3 (`fast-20261112-151941`); no UI test duplicates an exercise.
 Not built: a choice that also saves the changes to the session being edited.
+Ordered multi-select, the third delivery (2026-11-15): + ADD EXERCISE in the session editor opens PICK EXERCISES, where a row tap checks or unchecks an exercise, so a session's lifts take one library trip, not one each (D-85).
+The footer reads SELECTED · n with the checked names, then CANCEL and ADD n EXERCISES ▸, which adds exactly that count, in the order they were checked, after every lift, so a superset stays together.
+Checks survive a new search or filter, a swipe-down cannot drop them, and a second tap on ADD while the sheet closes adds nothing more.
+Each row shows its logged count, as the mock-up does; the workout's add and swap still pick one exercise and close.
+The picker's check box and the superset sheet's are one `BRUCheckBox`, with the same pixels as before.
+`ExerciseLibraryPickerModeTests` gained a check that picks join in the order they were checked, after a superset, and save in that order, and the unit target passed 1,289 of 1,292 with 2 skipped and 1 expected failure (`fast-20261115-143506-59292`).
+`SessionEditorRowsUITests` passed 2/2, its superset journey now adding both lifts in one trip against the list's A to Z order and checking the stated count, the order and that no third lift appears (`fast-20261115-143611-60128`).
+In the same run, `MilestoneOneJourneyUITests` 1/1, `TimedSetUITests` 3/3 and `SessionHistoryBRUUITests.testCommaDecimalCorrectionSurvivesRelaunch` passed with an ADD tap after each pick, and `WorkoutSwapJourneyUITests` passed 4/4 unchanged, on iPhone 17/iOS 26.5.
+A throwaway check on the iPhone 17e showed that a swipe-down closes an empty picker and leaves one with a check open (`fast-20261115-144507-67023`).
+390pt light captures were compared with `phase-2--exercise-picker.png`: the check boxes, the row tint and the footer match.
+Kept differences: the app's header bar with + NEW in place of the mock-up's title block, the existing filter chips and match count, and the near-black check mark the superset sheet also uses.
+Captures before and after the shared check box are pixel-identical in the picker and in the superset sheet, its locked box included.
 No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
 
