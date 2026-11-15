@@ -1118,9 +1118,17 @@ T110-ext recorded an AX3 editor hang on the small iOS 26.5 phone: scroll EDIT PR
 **Requires:** Kept-test/helper reproduction or iteration-blocking slowdown.
 **Verify when:** On retained-test failures, necessary helper changes or iteration-blocking slowdowns.
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
-Reveal's swipe (2026-11-12): `UITestNavigation.swipeUp` picks the last hittable scroll view by its index, and XCUITest resolves that index again at the swipe.
+Reveal's swipe (2026-11-12): `UITestNavigation.swipeUp` picked the last hittable scroll view by its index, and XCUITest resolves that index again at the swipe.
 On a loaded Mac, RM-011's full tier (`full-20261112-124611`) and a rerun each failed one `SessionHistoryBRUUITests` case with "No matches found for Element at index 2 from input {( ScrollView )}", while three runs each of that branch and of `main`, swapped across two iPhone 17s, passed.
-Next: swipe by coordinates inside the picked scroll view's frame, then one full tier, since every UI class reaches `reveal`.
+It reproduced on `main` (`19eb6ae0`) while `NumberEntryUITests` ran on a second iPhone 17 from its own build: the two exercise-override journeys failed once in 20 runs, and `NumberEntryUITests.testExerciseSettingsTypeOver` once in 36, both with that message.
+The 2026-11-14 nightly ([run 43619791604](https://github.com/Saechaoc/fitbod/actions/runs/43619791604), `446021ac`, large iPhone) failed the same two tests the same way, at index 2 of a 440pt-wide detail.
+Cause: both swipe just after a tap pushes the Bench Press detail, while the Library's two scroll views are still in the tree, so the detail's is index 2.
+XCUITest waits for the app to idle before it finds the element to swipe, and by then those two had left: the failure's hierarchy holds only the detail's scroll view.
+Fix: `swipeUp` reads the picked scroll view's frame once, from a snapshot, and drags by screen coordinates, so nothing is found again at the swipe; when the scroll view has already left, it skips that swipe and the caller looks again.
+The drag is the old swipe's own path, 100pt each side of the frame's middle at 750pt/s: XCUITest recorded the same touch events for both, and the Library and the detail moved 522-545pt either way.
+With the fix, under the same load, `SessionHistoryBRUUITests` passed 10 iterations (60 of 60 runs, every swipe by coordinates) and `NumberEntryUITests` 36 of 36.
+On `main` `bbde2edd` with the fix, the full tier (`full-20261115-135753-25458`) passed on two iPhone 17s (1,401 run: 1,398 passed, 2 skipped, 1 expected failure, none failed).
+Seen once, cause unknown: the 2026-11-13 nightly ([run 43483934600](https://github.com/Saechaoc/fitbod/actions/runs/43483934600)) failed `EditorSwipeDismissUITests.testNewBlockBuilderKeepsEditsAndItsPickerCanSwipeAway` with "A swipe-down must not close a New Block builder with unsaved…", and passed in the next two nightlies.
 Typing helper (2026-11-11): in manual CI [run 42986732910](https://github.com/Saechaoc/fitbod/actions/runs/42986732910), `CustomExerciseEditorBRUUITests.testCardioSavesWithoutAMuscleAndKeepsItsTracking` typed "T62 Arc Trainer" and return in one go, and the field held "T62 Arc Traine".
 It did not fail that way again in 55 runs on the Mac, including with the keyboard daemon or the whole simulator slowed, or in 30 runs on GitHub's runner ([run 43047416342](https://github.com/Saechaoc/fitbod/actions/runs/43047416342)).
 `UITestNavigation.type` now presses return only once the field shows the whole text, which removes the race between the last letter and return; whether that race caused the failure is unproven.
