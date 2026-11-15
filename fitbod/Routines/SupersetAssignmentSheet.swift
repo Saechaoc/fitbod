@@ -101,18 +101,7 @@ public struct SupersetAssignmentSheet: View {
                     .monospacedDigit()
                     .foregroundStyle(Color.bruInk)
                     .accessibilityHidden(true)
-                Rectangle()
-                    .fill(isChecked ? Color.bruSignal : Color.clear)
-                    .frame(width: 24, height: 24)
-                    .overlay(Rectangle().strokeBorder(
-                        isChecked || canToggle ? Color.bruInk : Color.bruHair,
-                        lineWidth: BRUMetrics.Border.structural))
-                    .overlay {
-                        if isChecked {
-                            Text("✓").font(BRUFont.labelLarge).foregroundStyle(Color.bruOnSignal)
-                        }
-                    }
-                    .accessibilityHidden(true)
+                BRUCheckBox(isChecked: isChecked, isEnabled: canToggle)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name(of: lift))
                         .font(BRUFont.displayMedium)
@@ -131,7 +120,7 @@ public struct SupersetAssignmentSheet: View {
             .padding(.horizontal, BRUMetrics.Spacing.gutter)
             .padding(.vertical, BRUMetrics.Spacing.related)
             .frame(maxWidth: .infinity, minHeight: BRUMetrics.primaryActionHeight, alignment: .leading)
-            .background(isChecked ? Color.bruSignal.opacity(0.1) : Color.clear)
+            .background(isChecked ? BRUCheckBox.checkedRowFill : Color.clear)
             .contentShape(Rectangle())
         }
         // .bruRow draws a row it cannot toggle as is, readable, where .plain

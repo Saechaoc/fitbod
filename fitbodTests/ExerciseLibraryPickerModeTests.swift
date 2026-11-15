@@ -25,6 +25,7 @@
 //
 
 import Foundation
+import SwiftData
 import SwiftUI
 import Testing
 @testable import fitbod
@@ -58,6 +59,40 @@ struct ExerciseLibraryPickerModeTests {
         )
         onSelect(sample)
         #expect(box.fired?.id == sample.id)
+    }
+
+    /// RM-026: the session editor's picker adds what is checked, in the
+    /// order it was checked, after the session's lifts, so a superset
+    /// stays together, and Save stores them in that order.
+    @Test("Several picks join the session in the order they were checked")
+    func severalPicksJoinInTheOrderTheyWereChecked() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let template = try LoggerFixtures.template(
+            "Push", exercises: ["Bench", "Fly"].map { LoggerFixtures.exercise($0, in: ctx) }, in: ctx
+        )
+        let draft = RoutineDraft(routine: template)
+        draft.setSuperset(of: draft.exercises[0], partners: [draft.exercises[1]])
+        let (squat, curl, dip) = (
+            LoggerFixtures.exercise("Squat", in: ctx), LoggerFixtures.exercise("Curl", in: ctx),
+            LoggerFixtures.exercise("Dip", in: ctx)
+        )
+
+        var picks: [Exercise] = []
+        // A second tap unchecks Curl, and a third checks it again, last.
+        for exercise in [squat, curl, dip, curl, curl] { ExerciseLibraryView.toggle(exercise, in: &picks) }
+        #expect(picks.map(\.name) == ["Squat", "Dip", "Curl"])
+
+        for exercise in picks { draft.append(exercise: exercise) }
+        #expect(draft.exercises.map { $0.exercise?.name } == ["Bench", "Fly", "Squat", "Dip", "Curl"])
+        #expect(draft.exercises.map(\.orderIndex) == Array(0..<5))
+        #expect(draft.exercises[1].supersetGroupID == draft.exercises[0].supersetGroupID)
+        #expect(draft.exercises.suffix(3).allSatisfy { $0.supersetGroupID == nil })
+
+        try draft.persist(into: template, context: ctx)
+        let reader = ModelContext(ctx.container)
+        let saved = try #require(try reader.fetch(FetchDescriptor<SessionTemplate>()).first)
+        let stored = (saved.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+        #expect(stored.map { $0.exercise?.name } == ["Bench", "Fly", "Squat", "Dip", "Curl"])
     }
 
     @Test("defaultInitStillExists")

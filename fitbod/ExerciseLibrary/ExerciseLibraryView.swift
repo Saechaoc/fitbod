@@ -2,8 +2,8 @@
 //  ExerciseLibraryView.swift
 //  fitbod
 //
-//  The exercise library: Library tab (browse) and exercise picker (routine
-//  builder, logger add/swap).
+//  The exercise library: Library tab (browse) and exercise picker (the
+//  session editor checks several; the logger's add and swap pick one).
 //
 //  Composition: BRUHeaderBar · search field · ExerciseFilterBar chip row ·
 //  FilteredExerciseList (pinned letter sections of family lines and
@@ -28,11 +28,13 @@ import SwiftData
 ///
 /// Browse mode (`init()` / `init(path:)`) owns a NavigationStack and pushes
 /// `ExerciseDetailView`. Picker mode (`init(onSelect:)`) renders inside the
-/// caller's NavigationStack and fires `onSelect` on tap.
+/// caller's NavigationStack and fires `onSelect` on tap; several-pick mode
+/// (`init(onAdd:)`) checks rows and fires `onAdd` with them from its footer.
 public struct ExerciseLibraryView: View {
 
     // MARK: - State
 
+    @Environment(\.dismiss) private var dismiss
     @State private var filterState = FilterState()
     @State private var searchText: String = ""
     @State private var debouncedSearch: String = ""
@@ -53,6 +55,13 @@ public struct ExerciseLibraryView: View {
     /// Picker-mode closure. When non-nil, tapping an exercise row invokes
     /// this closure instead of pushing `ExerciseDetailView`.
     private var onSelect: ((Exercise) -> Void)?
+
+    /// Several-pick mode (RM-026): a row tap checks or unchecks it, and
+    /// ADD n EXERCISES ▸ passes the checked exercises to this closure.
+    private var onAdd: (([Exercise]) -> Void)?
+
+    /// Several-pick mode: the checked exercises, in the order they were checked.
+    @State private var picked: [Exercise] = []
 
     /// Picker mode only: whether to draw the CANCEL · ADD EXERCISE header.
     /// Hosts that draw their own header (swap sheet) pass false.
@@ -79,11 +88,23 @@ public struct ExerciseLibraryView: View {
         self.showsPickerHeader = showsPickerHeader
     }
 
+    /// Several-pick init (RM-026): rows check and uncheck, and ADD n
+    /// EXERCISES ▸ passes the checked exercises in the order they were checked.
+    public init(onAdd: @escaping ([Exercise]) -> Void) {
+        self.onAdd = onAdd
+    }
+
+    /// Checks `exercise` after the earlier picks, or unchecks it, so the
+    /// picks keep the order they were checked in.
+    static func toggle(_ exercise: Exercise, in picks: inout [Exercise]) {
+        if let index = picks.firstIndex(of: exercise) { picks.remove(at: index) } else { picks.append(exercise) }
+    }
+
     private var effectivePath: Binding<NavigationPath> {
         externalPath ?? $internalPath
     }
 
-    private var isPicker: Bool { onSelect != nil }
+    private var isPicker: Bool { onSelect != nil || onAdd != nil }
 
     // MARK: - Body
 
@@ -106,8 +127,9 @@ public struct ExerciseLibraryView: View {
         VStack(spacing: 0) {
             if !isPicker || showsPickerHeader {
                 BRUHeaderBar.slots(
-                    left: isPicker ? .cancel : nil,
-                    center: isPicker ? "Add exercise" : "Library",
+                    // Several picks close with CANCEL in the footer, beside ADD.
+                    left: isPicker && onAdd == nil ? .cancel : nil,
+                    center: onAdd != nil ? "Pick exercises" : isPicker ? "Add exercise" : "Library",
                     right: .action("+ New") { openNewCustom() }
                 )
             }
@@ -122,11 +144,15 @@ public struct ExerciseLibraryView: View {
                 hasActiveFilters: !filterState.isEmpty,
                 clearFiltersAction: filterState.clear,
                 createCustomAction: { openNewCustom(named: searchText) },
-                onSelect: onSelect
+                onSelect: onAdd == nil ? onSelect : { Self.toggle($0, in: &picked) },
+                picked: onAdd == nil ? nil : picked
             )
+            if onAdd != nil { pickFooter }
         }
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
+        // A swipe-down would drop the picks, so only CANCEL does that.
+        .interactiveDismissDisabled(!picked.isEmpty)
         .task(id: searchText) {
             // Debounce: wait 150 ms, then propagate the searchText.
             // `.task(id:)` auto-cancels the prior task when `searchText`
@@ -146,6 +172,53 @@ public struct ExerciseLibraryView: View {
                 CustomExerciseEditor(draft: draft)
             }
         }
+    }
+
+    // MARK: - Several picks (RM-026)
+
+    /// What is checked, then CANCEL and ADD n EXERCISES ▸, which adds
+    /// exactly the count it states.
+    private var pickFooter: some View {
+        VStack(spacing: 0) {
+            if !picked.isEmpty {
+                HStack(spacing: BRUMetrics.Spacing.group) {
+                    Text("Selected · \(picked.count)")
+                        .foregroundStyle(Color.bruPaper)
+                        .layoutPriority(1)
+                    Spacer(minLength: 0)
+                    // The latest pick stays in view; the earliest give way.
+                    Text(picked.map(\.name).joined(separator: ", "))
+                        .foregroundStyle(Color.bruSignalOnInk)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                }
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .padding(.horizontal, BRUMetrics.Spacing.gutter)
+                .padding(.vertical, BRUMetrics.Spacing.group)
+                .background(Color.bruInk)
+                .accessibilityElement(children: .combine)
+            }
+            BRUDivider(.ink)
+            HStack(spacing: 0) {
+                BRUButton("Cancel", kind: .ghost, size: .md) { dismiss() }
+                Rectangle()
+                    .fill(Color.bruInk)
+                    .frame(width: 2)
+                BRUButton(
+                    picked.isEmpty ? "Add exercises ▸" : "Add \(BRUCountLabel.text(picked.count, "exercise")) ▸",
+                    kind: .signal, size: .md
+                ) {
+                    onAdd?(picked)
+                }
+                .disabled(picked.isEmpty)
+                .accessibilityIdentifier("library.pick.add")
+            }
+            // The separator has no height of its own; see BottomActionBar.
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .background(Color.bruPaper.ignoresSafeArea(edges: .bottom))
     }
 
     // MARK: - New custom exercise
@@ -246,13 +319,17 @@ private struct FilteredExerciseList: View {
     /// Picker-mode closure; nil in browse mode.
     let onSelect: ((Exercise) -> Void)?
 
+    /// Several-pick mode: the checked exercises; nil in the other modes.
+    let picked: [Exercise]?
+
     init(
         filterState: FilterState,
         activeQuery: String,
         hasActiveFilters: Bool,
         clearFiltersAction: @escaping () -> Void,
         createCustomAction: @escaping () -> Void,
-        onSelect: ((Exercise) -> Void)? = nil
+        onSelect: ((Exercise) -> Void)? = nil,
+        picked: [Exercise]? = nil
     ) {
         self.filterState = filterState
         self.activeQuery = activeQuery
@@ -260,6 +337,7 @@ private struct FilteredExerciseList: View {
         self.clearFiltersAction = clearFiltersAction
         self.createCustomAction = createCustomAction
         self.onSelect = onSelect
+        self.picked = picked
     }
 
     private var isSearching: Bool {
@@ -336,7 +414,24 @@ private struct FilteredExerciseList: View {
     private func row(
         _ ex: Exercise, title: String? = nil, inset: CGFloat = 0, alias: String? = nil, loggedCount: Int
     ) -> some View {
-        if let onSelect {
+        if let onSelect, let picked {
+            let isPicked = picked.contains(ex)
+            Button {
+                onSelect(ex)
+            } label: {
+                HStack(spacing: 0) {
+                    BRUCheckBox(isChecked: isPicked)
+                        .padding(.leading, BRUMetrics.Spacing.gutter)
+                    ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount), matchedAlias: alias, title: title)
+                }
+                .padding(.leading, inset)
+                .background(isPicked ? BRUCheckBox.checkedRowFill : Color.clear)
+            }
+            .buttonStyle(.bruRow)
+            .accessibilityAddTraits(isPicked ? .isSelected : [])
+            .accessibilityHint(isPicked ? "Unchecks this exercise" : "Checks this exercise to add")
+            .accessibilityIdentifier("exercise.pick.\(ex.id.uuidString)")
+        } else if let onSelect {
             Button {
                 onSelect(ex)
             } label: {

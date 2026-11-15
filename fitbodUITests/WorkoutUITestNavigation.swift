@@ -45,6 +45,15 @@ extension UITestNavigation {
         XCTAssertTrue(disappears(wheel, within: 5), "\(label) must close the picker")
     }
 
+    /// Taps ADD n EXERCISES ▸ in the session editor's library picker once a
+    /// checked exercise enables it, and waits for the picker to close (RM-026).
+    static func addPicked(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let add = app.buttons["library.pick.add"]
+        XCTAssertTrue(waitUntil { add.exists && add.isEnabled }, "A checked exercise must enable ADD", file: file, line: line)
+        add.tap()
+        XCTAssertTrue(disappears(add), "ADD must close the picker", file: file, line: line)
+    }
+
     static func openEmptySessionBuilder() -> XCUIApplication {
         let app = launch(freshStore)
         let newRoutine = app.buttons["today.planRoutine"]

@@ -81,6 +81,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(pickedExercise))
         pickedExercise.tap()
+        UITestNavigation.addPicked(in: app)
         XCTAssertEqual(field("Session name").value as? String, "M1 Push A",
                        "Returning from the picker must preserve the unsaved name")
         tap("Add exercise")
@@ -279,6 +280,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(row))
         row.tap()
+        UITestNavigation.addPicked(in: app)
     }
 
     /// Types a name or a search the way a user does: tap the field, then

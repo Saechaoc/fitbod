@@ -11,17 +11,18 @@
 // Under its family a variant shows a shorter title, such as "Barbell" for
 // "Bench Press (Barbell)"; VoiceOver still reads the full name.
 //
-// The accessory is the logged count ("12× / LOGGED") in browse mode and a
-// signal "+ ADD" in picker mode, so the row tells you what a tap does.
+// The accessory is the logged count ("12× / LOGGED") in browse mode and in
+// the session editor's picker, whose rows check, and a signal "+ ADD" in the
+// workout's picker, so the row tells you what a tap does.
 
 import SwiftUI
 
 public struct ExerciseRow: View {
 
     public enum Accessory: Equatable {
-        /// Browse mode: how many workouts included this exercise.
+        /// Browse mode and checking rows: how many workouts included this exercise.
         case loggedCount(Int)
-        /// Picker mode: tapping adds the exercise.
+        /// The workout's picker: tapping adds the exercise.
         case add
     }
 

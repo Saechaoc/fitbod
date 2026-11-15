@@ -58,19 +58,19 @@ final class SessionEditorRowsUITests: XCTestCase {
 
     // MARK: - Supersets (RM-002, RM-026)
 
-    /// One trip pairs two lifts in a new session, the superset saves with
-    /// the session and survives a relaunch, and Discard after an edit keeps
-    /// it as saved.
+    /// One library trip adds two lifts in the order they were checked, one
+    /// trip pairs them in a new session, the superset saves with the session
+    /// and survives a relaunch, and Discard after an edit keeps it as saved.
     @MainActor
     func testOneTripSupersetSavesWithANewSessionAndDiscardKeepsIt() throws {
         let app = UITestNavigation.openEmptySessionBuilder()
         UITestNavigation.type("Superset Push", into: app.textFields["Session name"])
-        addExercise("Bench Press (Incline Dumbbell)", in: app)
-        addExercise("Push-Up (Incline)", in: app)
+        // Checked against the list's A to Z order, so the session shows the checked order.
+        addExercises(["Push-Up (Incline)", "Bench Press (Incline Dumbbell)"], in: app)
 
         openSuperset("Make superset…", in: app)
         let acting = app.staticTexts.matching(NSPredicate(
-            format: "label ==[c] %@", "Long-pressed: Bench Press (Incline Dumbbell)"
+            format: "label ==[c] %@", "Long-pressed: Push-Up (Incline)"
         )).firstMatch
         XCTAssertTrue(acting.exists, "The sheet must name the long-pressed lift")
         let pair = app.buttons["superset.pair"]
@@ -100,19 +100,37 @@ final class SessionEditorRowsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["superset.lift.2"].isSelected, "The sheet must check the saved partner")
     }
 
-    /// Adds `name` from the library picker, found by search.
+    /// Checks each of `names` in one library trip, each found by its own
+    /// search, and adds them: ADD states the count, and the session gets
+    /// exactly those lifts, in the order they were checked (RM-026).
     @MainActor
-    private func addExercise(_ name: String, in app: XCUIApplication) {
+    private func addExercises(_ names: [String], in app: XCUIApplication) {
         UITestNavigation.hittable(app.buttons, "Add exercise").tap()
         let search = app.textFields["library.search.picker"]
         XCTAssertTrue(UITestNavigation.appears(search))
-        UITestNavigation.type(name, into: search)
-        let row = app.buttons.matching(NSPredicate(
-            format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@", "exercise.pick.", name
-        )).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(row), "The picker must find \(name)")
-        row.tap()
-        XCTAssertTrue(UITestNavigation.disappears(search), "Picking must close the picker")
+        for name in names {
+            // The search field's trailing end is its clear button once it has text (F293).
+            let clear = app.buttons["Clear search"]
+            if clear.exists { clear.tap() }
+            UITestNavigation.type(name, into: search)
+            let row = app.buttons.matching(NSPredicate(
+                format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@", "exercise.pick.", name
+            )).firstMatch
+            XCTAssertTrue(UITestNavigation.appears(row), "The picker must find \(name)")
+            row.tap()
+            XCTAssertTrue(UITestNavigation.waitUntil { row.isSelected }, "A tap must check \(name)")
+        }
+        let add = app.buttons["library.pick.add"]
+        XCTAssertEqual(add.label, "Add \(names.count) exercises ▸", "ADD must state the count it adds")
+        UITestNavigation.addPicked(in: app)
+        for (index, name) in names.enumerated() {
+            let lift = app.descendants(matching: .any).matching(NSPredicate(
+                format: "identifier == %@ AND label BEGINSWITH[c] %@", "routine.exercise.name.\(index + 1)", name
+            )).firstMatch
+            XCTAssertTrue(UITestNavigation.appears(lift), "Lift \(index + 1) must be \(name), as checked")
+        }
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "routine.exercise.name.\(names.count + 1)")
+                        .firstMatch.exists, "ADD must add exactly \(names.count) lifts")
     }
 
     @MainActor

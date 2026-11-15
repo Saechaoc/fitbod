@@ -127,6 +127,7 @@ final class SessionHistoryBRUUITests: XCTestCase {
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(picked))
         picked.tap()
+        UITestNavigation.addPicked(in: app)
         tap("Save session ▸", in: app)
         let session = app.staticTexts["Locale session"].firstMatch
         XCTAssertTrue(UITestNavigation.appears(session))

@@ -44,7 +44,7 @@ reference screen. Use supplied exports, current approved layouts and native prev
 | State | Content and behavior |
 | --- | --- |
 | Loading | Preparation message while local catalog seeding runs. |
-| Populated | Search field, muscle/equipment/mechanic facets, letter sections and exercise rows. Tapping a row opens details; picker mode selects it and returns. |
+| Populated | Search field, muscle/equipment/mechanic facets, letter sections and exercise rows. Tapping a row opens details; the workout's picker selects it and returns, and the session editor's picker checks it, then adds the checked rows in the order they were checked. |
 | Filtered | Active facets are visible; Clear filters resets them. Search is debounced by 150 ms and composed with the filters in a SwiftData predicate. |
 | No matches | A clear empty-state explanation with actions to clear search/filters or create a custom exercise. |
 | Detail | Exercise name, equipment, muscles, instructions and previous completed performance. Custom records expose Edit; catalog records can be copied as custom. |

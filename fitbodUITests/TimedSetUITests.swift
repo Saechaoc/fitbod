@@ -77,6 +77,7 @@ final class TimedSetUITests: XCTestCase {
         sessionName.typeText("Cardio\n")
         tapButton("Add exercise", in: app)
         pick("Stair Climber", in: app)
+        UITestNavigation.addPicked(in: app)
 
         // A cardio row plans a time and the stair speed, not sets or rest.
         let row = app.buttons["routine.exercise.name.1"].firstMatch

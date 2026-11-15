@@ -221,11 +221,14 @@ public struct RoutineBuilderView: View {
                     .presentationDetents([.medium])
             }
         }
-        // Exercise library picker
+        // Exercise library picker: the checked exercises join after every
+        // lift, so a superset stays together, in the order they were checked (RM-026).
         .sheet(isPresented: $presentingLibraryPicker) {
             NavigationStack {
-                ExerciseLibraryView(onSelect: { exercise in
-                    draft.append(exercise: exercise)
+                ExerciseLibraryView(onAdd: { exercises in
+                    // A second tap on ADD while the sheet closes adds nothing more.
+                    guard presentingLibraryPicker else { return }
+                    for exercise in exercises { draft.append(exercise: exercise) }
                     presentingLibraryPicker = false
                 })
             }

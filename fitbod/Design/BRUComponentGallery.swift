@@ -12,6 +12,7 @@ struct BRUComponentGallery: View {
     @State private var plates = 2
     @State private var autoWarmup = true
     @State private var complete = false
+    @State private var checked = false
     @State private var units = "kg"
     @State private var selectedTab = BRUTab.today
     @State private var search = ""
@@ -104,6 +105,32 @@ struct BRUComponentGallery: View {
                         .accessibilityLabel(complete ? "Reopen example set" : "Complete example set")
                         .accessibilityValue(complete ? "Complete" : "Incomplete")
                         CalibratingProgressMeter(current: 8, threshold: 10, rangeText: "75–85 \(units)")
+                    }
+
+                    BRUSectionHead("Check boxes")
+                    samples {
+                        Button {
+                            checked.toggle()
+                            didTap(checked ? "Exercise checked" : "Exercise unchecked")
+                        } label: {
+                            HStack(spacing: 12) {
+                                BRUCheckBox(isChecked: checked)
+                                Text("Incline Dumbbell Press")
+                                    .font(BRUFont.bodyEmphasis)
+                                Spacer(minLength: 0)
+                            }
+                            .frame(minHeight: 44)
+                            .background(checked ? BRUCheckBox.checkedRowFill : Color.clear)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(checked ? .isSelected : [])
+                        HStack(spacing: 12) {
+                            BRUCheckBox(isChecked: false, isEnabled: false)
+                            Text("Locked: a fifth lift past the superset's four")
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruMuted)
+                        }
                     }
 
                     BRUSectionHead("Metrics and charts")
