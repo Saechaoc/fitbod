@@ -230,10 +230,12 @@ public enum SessionSetActions {
     /// leaves loaded models reading the discarded values after
     /// `rollback()` until they are fetched again, so the changed and
     /// deleted ones are fetched again here. Inserted ones are simply gone.
+    /// After a save that failed, the first fetch refreshes no loaded model,
+    /// whatever it fetches, so the first model is fetched twice (RM-002).
     static func rollBack(_ context: ModelContext) {
         let touched = context.changedModelsArray + context.deletedModelsArray
         context.rollback()
-        for model in touched { refetch(model, in: context) }
+        for model in touched.prefix(1) + touched { refetch(model, in: context) }
     }
 
     private static func refetch<T: PersistentModel>(_ model: T, in context: ModelContext) {
