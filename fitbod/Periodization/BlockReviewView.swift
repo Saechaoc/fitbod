@@ -663,17 +663,7 @@ public enum BlockReviewStatistics {
     ) throws {
         guard block.reviewedAt == nil else { return }
         block.reviewedAt = now
-        do {
-            try SessionSetActions.saveOrRollBack(context)
-        } catch {
-            // shortcut: after a save that fails on a disk store, `rollBack`'s
-            // refetch by persistentModelID leaves the discarded date showing,
-            // and a fetch by id reads the stored nil again (probed 2026-11-15).
-            // Drop this once `rollBack` refreshes such models itself.
-            let id = block.id
-            _ = try? context.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == id }))
-            throw error
-        }
+        try SessionSetActions.saveOrRollBack(context)
     }
 
     public static func formattedKg(_ value: Double) -> String {
