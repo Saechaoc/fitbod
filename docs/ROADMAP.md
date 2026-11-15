@@ -171,6 +171,7 @@ Fix: `rollBack` fetches the first touched model twice, so all of its callers get
 Unit target: 1,292 passed, 2 skipped, one expected failure (`fast-20261115-144908-69557`).
 A4's local `id` fetch in `BlockReviewStatistics.acknowledge` (RM-013) is now redundant and still to be removed; it was not on main yet when this fix was built.
 Only `rollBack` changed; paths that save with `try?` or restore values by hand were not checked.
+Two contexts on one container (probed 2026-11-15): a context that saved its older copy of a block overwrote another context's newer save, even of a field it never changed, and the main context's loaded block kept its old name after a `@ModelActor` saved, even half a second later; besides the main context, only the launch-time `ExerciseLibraryImporter` and `ExercisePhotoSanitizer` actors write today (`WeeklyRecaps`, export and backup contexts only read, and the rest are previews).
 **References:** [D-08](design-map/audit.md#d-08), [slot picker](../fitbod/Periodization/SplitDetailView.swift), [supersets](../fitbod/Routines/SupersetAssignmentSheet.swift), [plates](../fitbod/Settings/PlateInventoryEditor.swift), [targets](../fitbod/Settings/MuscleVolumeTargetEditor.swift), [rollback](../fitbod/Sessions/SessionSetActions.swift); `c3214985`, `dcd3cfcb`.
 
 ### <a id="rm-003"></a>RM-003 — Rendering missing volume targets never writes models

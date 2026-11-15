@@ -25,6 +25,7 @@ SwiftData throws the same error for every failed open, so `FitbodModelContainer`
 A store is incompatible only when Core Data reports that it cannot infer a migration (NSCocoaErrorDomain 134140).
 Every other failed open leaves all store files in place and throws `FitbodModelContainer.StoreOpenError`; the app shows a retry screen, and a later open uses the same store ([RM-001](docs/ROADMAP.md#rm-001)).
 A move-aside that fails partway puts the moved files back and throws.
+App writes go through the environment's main context: SwiftData keeps the last writer's values, and a context's loaded models keep their old values when another context saves, so a second context that saves an older copy of a model overwrites newer saves, even of fields it never changed; today the launch-time `ExerciseLibraryImporter` and `ExercisePhotoSanitizer` actors are the only other writers ([RM-002](docs/ROADMAP.md#rm-002)).
 
 | Entity | Role and relationships |
 |---|---|
