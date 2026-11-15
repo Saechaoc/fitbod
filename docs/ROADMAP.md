@@ -16,9 +16,9 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-014](#rm-014) redesign 2.2, next-session and next-day lines; [RM-023](#rm-023)'s comparable periods and sparse routes; and [RM-004](#rm-004)'s check that the launch-time photo and catalog writers' saves survive the main context's older copies.
+In flight: [RM-014](#rm-014) redesign 2.2, next-session and next-day lines; and [RM-023](#rm-023)'s comparable periods and sparse routes.
 Fixed on 2026-11-12: the first nightly run's two failures, a store test and a large-iPhone PR list test, were test races, now fixed in the tests ([RM-001](#rm-001), [RM-053](#rm-053)).
-Fixed on 2026-11-15: reveal's swipe, which failed twice in the 2026-11-14 nightly, now drags by coordinates ([RM-054](#rm-054)), and a failed save's rollback shows the saved values again for every caller, where a later save could write the refused edit ([RM-002](#rm-002)).
+Fixed on 2026-11-15: reveal's swipe, which failed twice in the 2026-11-14 nightly, now drags by coordinates ([RM-054](#rm-054)); a failed save's rollback shows the saved values again for every caller, where a later save could write the refused edit ([RM-002](#rm-002)); and saving an exercise's settings can no longer put a cleaned photo's location back or undo a catalog update ([RM-004](#rm-004)).
 Done on 2026-11-12: [RM-019](#rm-019) stalled exercises and [RM-020](#rm-020) past weekly recaps (on `main` 2026-11-15), which [RM-023](#rm-023) follows in the analytics stream; [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; [RM-012](#rm-012) redesign 1.6, Program's resume and discard; and [RM-013](#rm-013) redesign 2.1, the opt-in review notice (on `main` 2026-11-15), which [RM-014](#rm-014) follows in the redesign order.
 Delivered: [RM-026](#rm-026)'s first three deliveries, superset partners in one trip and unsaved duplication (2026-11-12) and ordered multi-select (2026-11-15); its fourth, progression eligibility from the active graph, follows.
 On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
@@ -46,7 +46,7 @@ Authoring, catalog, logging and calculator deliveries use their actual condition
 ## Needs input or device verification
 
 Only the named observation/decision is unavailable; this section does not pause unrelated work.
-Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `76a75038` (2026-11-15), whose store is on seed 10.
+Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `3451d3cd` (2026-11-15), whose store is on seed 10.
 
 | Owner | Missing input or proof | What depends on it |
 |---|---|---|
@@ -94,7 +94,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
 | [RM-005](#rm-005) | P1 · Done | Locale-safe load entry, unique positive plate additions and shared tempo validation; unit/failure/relaunch, 390pt and full-suite evidence in RM-005. | Units still relabel; correction/completion rules unchanged. |
-| [RM-004](#rm-004) | P1 · Done | Photo metadata removed at pick/save/upgrade/export/restore; original-preserving failures and pre-delete validation verified. Evidence in RM-004. | Static photos, full pixel dimensions within decode bounds; no schema change. |
+| [RM-004](#rm-004) | P1 · Done | Photo metadata removed at pick/save/upgrade/export/restore; original-preserving failures and pre-delete validation verified; since 2026-11-15 a later save of the exercise cannot put the metadata back. Evidence in RM-004. | Static photos, full pixel dimensions within decode bounds; no schema change. |
 | [RM-003](#rm-003) | P1 · Done | Both volume screens render missing targets without model writes; explicit creation rolls back and retries. Hosted before/after, units and 390pt route evidence in RM-003. | Unblocks RM-010; no schema or fatigue-math change. |
 | [RM-002](#rm-002) | P1 · Done | Failed slot additions/resets roll back and explain retry; superset drafts save with the session and Discard writes nothing. Unit/failure/relaunch evidence in RM-002. | Schema unchanged. |
 | [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. The 2026-11-12 nightly recurrence was a test race, fixed in the tests. | No schema change; populated recovery proof remains RM-029. |
