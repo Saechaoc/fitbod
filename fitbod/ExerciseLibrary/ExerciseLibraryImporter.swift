@@ -96,7 +96,8 @@ public actor ExerciseLibraryImporter {
     /// also follows a seed that stopped partway.
     @MainActor
     public static func seed(into context: ModelContext, bundle: Bundle = .main, defaults: sending UserDefaults = .standard) async throws {
-        guard seedIsPending(bundle: bundle, defaults: defaults) else { return }
+        // A missing or unreadable SEED_VERSION.txt throws, so the library shows its failure.
+        guard defaults.integer(forKey: seedVersionKey) < (try bundledSeedVersion(bundle: bundle)) else { return }
         defer { _ = try? context.fetch(FetchDescriptor<Exercise>()) }
         try await ExerciseLibraryImporter(modelContainer: context.container).seedIfNeeded(bundle: bundle, defaults: defaults)
     }

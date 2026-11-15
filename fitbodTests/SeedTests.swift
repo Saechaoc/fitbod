@@ -567,6 +567,17 @@ final class SeedTests {
         #expect(stored.unitOverride == .kg)
     }
 
+    @Test("A bundle without SEED_VERSION.txt fails the seed instead of leaving the library empty")
+    @MainActor
+    func seedWithoutAVersionFileThrows() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+        await #expect(throws: SeedError.self) {
+            try await ExerciseLibraryImporter.seed(
+                into: container.mainContext, bundle: Bundle(for: SeedTests.self), defaults: defaults
+            )
+        }
+    }
+
     @Test("A row curation hides stays listed while a logged workout or a routine uses it")
     @MainActor // LoggerFixtures is main-actor isolated.
     func hiddenRowsInUseStayListed() async throws {

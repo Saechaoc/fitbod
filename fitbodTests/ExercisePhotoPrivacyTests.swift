@@ -116,9 +116,9 @@ struct ExercisePhotoPrivacyTests {
         #expect(exercise.imageData == stored)
     }
 
-    /// A photo the main context changed after the sanitizer read the stored
-    /// one keeps the change; a later launch sanitizes what was saved.
-    @Test func sanitizingLeavesAPhotoChangedSinceItWasRead() async throws {
+    /// An unsaved photo change in the main context differs from the stored
+    /// photo the sanitizer reads, so it stays; a later launch sanitizes it once saved.
+    @Test func sanitizingKeepsAnUnsavedPhotoChange() async throws {
         let container = try FitbodModelContainer.make(inMemory: true)
         let ctx = container.mainContext
         let exercise = LoggerFixtures.exercise("Legacy photo", in: ctx)

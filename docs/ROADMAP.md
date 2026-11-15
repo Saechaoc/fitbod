@@ -199,10 +199,12 @@ SwiftData keeps the last writer's values, and the main context's loaded copy kee
 One main-context fetch of the exercises in between made the copy current and prevented it.
 Everyday main-context writes that save an exercise are its unit and plateau overrides in `ExerciseDetailView`, saved by autosave, and editing a custom exercise, which sanitizes its photo again; logging, planning and machine settings never save an exercise.
 So the case could only happen on the launch that finds a photo stored before 2026-11-10, if the exercise was loaded before the sanitizer saved it, its photo shown, and its settings changed before anything fetched it again.
-Fix: the sanitizer still reads and re-encodes off the main actor, but the main context now writes each replacement, skipping a photo that changed since it was read (`ExercisePhotoSanitizer.run(in:)`).
-`ExercisePhotoPrivacyTests` adds the settings-save case, which failed before the fix (`fast-20261115-151238-92124`), and the changed-photo case, which fails without its check (`fast-20261115-151644-96350`).
+Fix: the sanitizer still reads and re-encodes off the main actor, but the main context now writes each replacement, skipping a photo that changed since it was read and an exercise deleted meanwhile (`ExercisePhotoSanitizer.run(in:)`).
+`ExercisePhotoPrivacyTests` adds the settings-save case, which failed before the fix (`fast-20261115-151238-92124`), and the unsaved-photo-change case, which fails without its check (`fast-20261115-151644-96350`).
+Review fix: `seed(into:)` throws again for a missing or unreadable `SEED_VERSION.txt`, as `seedIfNeeded` did, so the library shows its failure instead of an empty catalog; `SeedTests` covers it and fails on the earlier guard (`fast-20261115-154912-13079`).
+After the review fixes, `ExercisePhotoPrivacyTests` and `SeedTests` passed 26/26 (`fast-20261115-154714-10886`).
 With RM-009's importer fix, the photo and importer suites passed 32/32 (`fast-20261115-151544-95565`), and the unit target passed 1,296 with 2 skipped and one expected failure (`fast-20261115-151723-96747`).
-`PhotoPrivacyUITests` and `ReseedRelaunchUITests`, which drive both launch paths, passed 2/2 (`fast-20261115-153803-2667`); the photo case's narrow launch window has no UI test of its own.
+`PhotoPrivacyUITests` and `ReseedRelaunchUITests`, which drive both launch paths, passed 2/2 (`fast-20261115-153803-2667`, and after the review fixes `fast-20261115-154950-13824`); the photo case's narrow launch window has no UI test of its own.
 **References:** [D-111](design-map/audit.md#d-111), [photo picker](../fitbod/ExerciseLibrary/CustomExerciseImagePicker.swift), [sanitizer](../fitbod/ExerciseLibrary/ExercisePhoto.swift).
 
 ### <a id="rm-005"></a>RM-005 — Numeric and tempo entry preserve the entered value

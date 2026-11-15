@@ -62,9 +62,13 @@ actor ExercisePhotoSanitizer {
         try modelContext.fetch(FetchDescriptor<Exercise>()).filter { $0.imageData != nil }.map(\.persistentModelID)
     }
 
-    /// The exercise's stored photo and its sanitized bytes, or nil when they are the same.
+    /// The exercise's stored photo and its sanitized bytes, or nil when they
+    /// are the same or the exercise is gone.
     func replacement(for id: PersistentIdentifier) throws -> (original: Data, sanitized: Data)? {
-        guard let exercise = modelContext.model(for: id) as? Exercise, let original = exercise.imageData else { return nil }
+        guard let exercise = try modelContext.fetch(FetchDescriptor<Exercise>(
+                  predicate: #Predicate { $0.persistentModelID == id }
+              )).first,
+              let original = exercise.imageData else { return nil }
         do {
             let sanitized = try ExercisePhoto.sanitized(original)
             return sanitized == original ? nil : (original, sanitized)
