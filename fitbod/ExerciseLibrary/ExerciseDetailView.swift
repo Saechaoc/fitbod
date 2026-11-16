@@ -95,8 +95,9 @@ struct ExerciseDetailView: View {
     /// The copy the editor saved, opened over this page (RM-027).
     @State private var savedCopy: Exercise?
 
-    /// Set when the editor deleted this exercise, so the page closes once
-    /// the editor has (RM-027).
+    /// Set when the editor deleted this exercise: the page stops reading it
+    /// and closes once the editor has (RM-027). Never reset, since the page
+    /// still shows while it pops.
     @State private var wasDeleted = false
 
     @Environment(\.dismiss) private var dismiss
@@ -114,6 +115,39 @@ struct ExerciseDetailView: View {
     }
 
     var body: some View {
+        // A ZStack, not a Group, so the sheet keeps its place when the page
+        // goes: after a delete nothing reads the deleted exercise, and blank
+        // paper shows until the page closes behind the editor (RM-027).
+        ZStack {
+            if wasDeleted {
+                Color.bruPaper.ignoresSafeArea()
+            } else {
+                page
+            }
+        }
+        .navigationBarHidden(true)
+        // Number pads have no return key (T39).
+        .keyboardDone()
+        // The page leaves after the sheet, not with it: it presents the sheet.
+        .sheet(item: $editorDraft, onDismiss: { if wasDeleted { dismiss() } }) { draft in
+            // Wrap the editor in its own NavigationStack so it owns its
+            // toolbar (Save / Cancel). The editor dismisses itself on
+            // save / discard / delete.
+            NavigationStack {
+                CustomExerciseEditor(
+                    draft: draft,
+                    onCreated: { savedCopy = $0 },
+                    onDeleted: { wasDeleted = true }
+                )
+            }
+        }
+        // Not on the Library's path, so a restored path would not hold the copy.
+        .navigationDestination(item: $savedCopy) { copy in
+            ExerciseDetailView(exercise: copy)
+        }
+    }
+
+    private var page: some View {
         VStack(spacing: 0) {
             BRUHeaderBar.slots(
                 left: .back,
@@ -151,25 +185,6 @@ struct ExerciseDetailView: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .background(Color.bruPaper.ignoresSafeArea())
-        .navigationBarHidden(true)
-        // Number pads have no return key (T39).
-        .keyboardDone()
-        // The page leaves after the sheet, not with it: it presents the sheet.
-        .sheet(item: $editorDraft, onDismiss: { if wasDeleted { dismiss() } }) { draft in
-            // Wrap the editor in its own NavigationStack so it owns its
-            // toolbar (Save / Cancel). The editor dismisses itself on
-            // save / discard / delete.
-            NavigationStack {
-                CustomExerciseEditor(
-                    draft: draft,
-                    onCreated: { savedCopy = $0 },
-                    onDeleted: { wasDeleted = true }
-                )
-            }
-        }
-        .navigationDestination(item: $savedCopy) { copy in
-            ExerciseDetailView(exercise: copy)
-        }
     }
 
     /// Copy (built-in) or edit (custom) through the custom-exercise editor.

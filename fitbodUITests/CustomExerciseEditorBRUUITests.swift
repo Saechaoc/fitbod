@@ -97,6 +97,59 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         XCTAssertEqual(app.buttons["customExercise.family"].value as? String, "Chest Press")
     }
 
+    /// RM-027: Delete in EDIT closes the editor and the deleted exercise's
+    /// page onto the Library, and a search no longer finds the exercise.
+    @MainActor
+    func testDeleteReturnsToTheLibraryWithoutTheExercise() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        let exerciseName = "T27 Deleted Lift"
+        openNewExercise(in: app)
+        UITestNavigation.type(exerciseName, into: app.textFields["customExercise.name"])
+        addMuscle("chest", in: app)
+        saveOpensExercise(exerciseName, in: app)
+
+        UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
+        let delete = app.buttons.labeled("Delete exercise")
+        UITestNavigation.reveal(delete, in: app)
+        delete.tap()
+        // An alert, so it keeps its Cancel; Delete confirms.
+        let alert = app.alerts["Delete \"\(exerciseName)\"?"]
+        XCTAssertTrue(UITestNavigation.appears(alert), "Delete exercise must ask first")
+        alert.buttons["Delete"].tap()
+
+        let search = app.textFields["library.search.browser"]
+        XCTAssertTrue(UITestNavigation.appears(search), "Delete must return to the Library")
+        XCTAssertFalse(app.buttons.labeled("Edit").exists, "The deleted exercise's page must close")
+        UITestNavigation.type(exerciseName, into: search, replacing: false, pressingReturn: false)
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("Create Custom Exercise")),
+                      "A search for the deleted exercise must find nothing")
+        XCTAssertFalse(app.staticTexts[exerciseName].exists, "The deleted exercise must be gone")
+    }
+
+    /// RM-027: SAVE of a built-in's copy opens the copy's page, and Back
+    /// returns to the built-in.
+    @MainActor
+    func testCopyOpensTheCopyAndBackReturnsToTheBuiltIn() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        let builtIn = "Bench Press (Barbell)"
+        UITestNavigation.selectTab("Library", in: app)
+        UITestNavigation.type(builtIn, into: app.textFields["library.search.browser"], replacing: false, pressingReturn: false)
+        let row = app.staticTexts[builtIn]
+        XCTAssertTrue(UITestNavigation.appears(row), "The built-in must be in the Library")
+        row.tap()
+        let copy = app.buttons.labeled("Copy as Custom Exercise")
+        UITestNavigation.reveal(copy, in: app)
+        copy.tap()
+        let name = app.textFields["customExercise.name"]
+        XCTAssertTrue(UITestNavigation.appears(name), "COPY AS CUSTOM EXERCISE must open the editor")
+        XCTAssertEqual(name.value as? String, "\(builtIn) (Copy)")
+
+        saveOpensExercise("\(builtIn) (Copy)", in: app)
+        UITestNavigation.hittable(app.buttons, "Back", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("Copy")), "Back must return to the built-in")
+        XCTAssertTrue(app.staticTexts[builtIn].exists, "The page must be the built-in's")
+    }
+
     // MARK: - Helpers
 
     /// SAVE closes the editor onto the new exercise's page (RM-027).
@@ -105,6 +158,7 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
         XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
         XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("Edit")), "SAVE must open the new exercise")
+        XCTAssertTrue(app.staticTexts.labeled("Exercise").exists, "SAVE must open an exercise's page")
         XCTAssertTrue(app.staticTexts[exerciseName].exists, "The page must be the new exercise's")
     }
 

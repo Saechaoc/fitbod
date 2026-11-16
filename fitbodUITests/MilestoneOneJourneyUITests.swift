@@ -42,10 +42,12 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(chest))
         chest.tap()
         tap("Save")
-        // SAVE opens the new exercise's page (RM-027).
+        // SAVE opens the new exercise's page over the Library (RM-027).
+        let librarySearch = app.textFields["library.search.browser"]
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts[exerciseName]))
+        XCTAssertTrue(UITestNavigation.disappears(librarySearch, within: 5), "SAVE must leave the Library for the new exercise")
         tap("Back")
-        XCTAssertTrue(UITestNavigation.appears(app.textFields["library.search.browser"]))
+        XCTAssertTrue(UITestNavigation.appears(librarySearch))
         XCTAssertTrue(UITestNavigation.appears(app.buttons["Today"]))
         app.buttons["Today"].tap()
         UITestNavigation.reveal(app.buttons["today.planRoutine"], in: app)
