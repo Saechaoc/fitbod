@@ -10,19 +10,17 @@ import SwiftData
 import SwiftUI
 
 public struct BlockBuilderView: View {
-    /// The tab that opened the builder. The back control names it.
+    /// The tab that opened the builder, also over a block review opened
+    /// there. The back control names it.
     enum Origin {
         case program
         case today
-        /// Opened over a block review by Plan custom or Start next.
-        case review
 
-        /// "< PROGRAM", as the mock shows, "< TODAY", or "< REVIEW".
+        /// "< PROGRAM", as the mock shows, or "< TODAY".
         var backLabel: String {
             switch self {
             case .program: return "< PROGRAM"
             case .today:   return "< TODAY"
-            case .review:  return "< REVIEW"
             }
         }
     }

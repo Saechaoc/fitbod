@@ -475,12 +475,21 @@ Open: a look on the phone.
 
 ### <a id="rm-016"></a>RM-016 — Redesign 2.4: review origin/end consequences
 
-**P2 · Planned: shared origin and retry.** Review reopening/end-to-review exist; shared close/retry/origin behavior remains.
+**P2 · Done (2026-11-15).** End block says what ending does before it acts, and New block over a review names the tab the review opened from and goes back there; built on `swarm/A7`.
 **Done when:** End explains its consequence; past review opens from Program in three taps and its builder returns to PROGRAM; opening through Today returns to TODAY. Failed acknowledgement appears under the launching row.
 **Scope / sequence:** Explain End → carry origin through review/builder → expose close retry → verify return paths. Undo End excluded.
 **Requires:** [RM-011](#rm-011) Program origin and [RM-013](#rm-013) close/retry behavior.
 **Scheduled after:** [RM-015](#rm-015).
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence (2026-11-15, swarm/A7):** The End block? alert reads "Ends Live Block and saves its plan to history. New workouts will not count toward it.", the copy in the Program layouts.
+The review takes the tab it opened on, `.today` from Today's notice and Today's Block overview and `.program` from Program's, and New block from Start next or Plan custom reads "< TODAY" or "< PROGRAM".
+Closing that New block by any route, saved or not, closes the review too, so the lifter lands on Today or on the block's overview on Program.
+This replaces New block's "< REVIEW" of 2026-11-05, whose CANCEL went back to the review, and `BlockBuilderView.Origin.review` is gone.
+Program reaches a past review in three taps: PAST BLOCKS ›, the block, REVIEW ▸.
+A save that fails at Start next or Plan custom is retried by that close, and a close that fails shows "Couldn't save the review. Open it again to retry." under the row that opened the review, through RM-013's presenter; the review's own "Couldn't save review. Try again." line, which New block covered, is gone.
+`BlockReviewHeroLayoutTests`, `BlockReviewPRMarkTests`, `BlockReviewTriggerTests`, `NewBlockBuilderFidelityTests` and `BlockOverviewScreenWeekCarouselTests` passed 21/21 (`fast-20261115-203502-17649`).
+`BlockReviewAfterEndUITests`, with a new test of both return paths and the three taps, `BlockLifecycleEntryPointsUITests`, whose CANCEL now lands on Today's Block overview, `BlockOverviewStatesUITests` and `ArchiveRoutineUITests` passed 16/16 (`fast-20261115-203946-21099`).
+Light and dark 390pt captures of the End alert, New block from Today's notice, Today's Block overview and Program, each return, and the failed-close line under REVIEW ▸ on Program were inspected.
+Open: a look on the phone.
 **References:** D-40; [overview](../fitbod/Periodization/BlockOverviewScreen.swift), [layouts](design-map/redesign/program-layouts.md).
 
 ### <a id="rm-017"></a>RM-017 — Redesign 2.5: readable volume without seventeen empty rows

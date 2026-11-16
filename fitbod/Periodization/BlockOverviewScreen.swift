@@ -190,7 +190,7 @@ public struct BlockOverviewScreen: View {
 
     private let block: Block
     /// The tab whose stack pushed the overview: `.today` or `.program`.
-    /// The review's next-block builder is to name it (RM-013).
+    /// New block over the block's review names it and returns there (RM-016).
     let origin: BlockBuilderView.Origin
     private let onEdit: @MainActor () -> Void
     /// Runs once DELETE BLOCK has deleted the block, so the screen leaves
@@ -366,9 +366,10 @@ public struct BlockOverviewScreen: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Its plan is frozen and its review opens.")
+            // The consequence, before it happens (P-9).
+            Text("Ends \(block.programName) and saves its plan to history. New workouts will not count toward it.")
         }
-        .blockReviewSheet($review)
+        .blockReviewSheet($review, origin: origin)
         // The message names no block: it can redraw while the deleted
         // block's alert goes away.
         .alert("Delete block?", isPresented: $presentingDeleteConfirm) {

@@ -19,22 +19,23 @@ public struct BlockReviewView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public let block: Block
+    /// The tab the review opened from. New block over it names that tab
+    /// on its back control and goes back there (RM-016).
+    let origin: BlockBuilderView.Origin
 
     /// Every block, for the block number.
     @Query private var allBlocks: [Block]
 
     /// The New block Plan custom or Start next opens over the review.
     @State private var nextBlock: NextBlock? = nil
-    /// The draft last opened there; its id is set once it saved.
-    @State private var openedDraft: BlockDraft? = nil
-    @State private var acknowledgeError: String? = nil
     @State private var exportError: String? = nil
     /// The block's PRs, counted once when the review opens: the count
     /// replays the lifter's whole history of the block's lifts.
     @State private var prs: BlockReviewPRs? = nil
 
-    public init(block: Block) {
+    init(block: Block, origin: BlockBuilderView.Origin) {
         self.block = block
+        self.origin = origin
     }
 
     // MARK: - Body
@@ -65,7 +66,7 @@ public struct BlockReviewView: View {
                         heroBand(blockStart: blockStart, blockEnd: blockEnd)
                         e1RMSection(blockStart: blockStart, blockEnd: blockEnd)
                         recommendedNextBand(nextTemplate: nextTemplate)
-                        if let message = acknowledgeError ?? exportError {
+                        if let message = exportError {
                             Text(message)
                                 .font(BRUFont.labelSmall)
                                 .foregroundStyle(Color.bruSignalText)
@@ -90,12 +91,11 @@ public struct BlockReviewView: View {
         }
         // The draft rides in the item: a sheet built from separate state
         // opened empty on the first tap, before that state reached it.
-        .sheet(item: $nextBlock, onDismiss: {
-            // A next block saved from here: the review is done too.
-            if openedDraft?.id != nil { dismiss() }
-        }) { next in
+        // New block's back control names the tab the review opened from,
+        // so closing New block by any route closes the review too.
+        .sheet(item: $nextBlock, onDismiss: { dismiss() }) { next in
             NavigationStack {
-                BlockBuilderView(draft: next.draft, origin: .review)
+                BlockBuilderView(draft: next.draft, origin: origin)
             }
         }
     }
@@ -409,18 +409,12 @@ public struct BlockReviewView: View {
     /// New block over the review: Start next with the recommended preset,
     /// Plan custom with the default phases and no name. Both keep the
     /// ended block's routine, scheduling and days (decided 2026-11-05), and
-    /// record the review before the builder opens (RM-013); a failed save
-    /// is tried again when the review closes.
+    /// record the review before the builder opens (RM-013).
     private func openNextBlock(template: BlockTemplate?) {
-        do {
-            try BlockReviewStatistics.acknowledge(block: block, context: ctx)
-            acknowledgeError = nil
-        } catch {
-            acknowledgeError = "Couldn't save review. Try again."
-        }
-        let draft = BlockDraft.next(after: block, template: template)
-        openedDraft = draft
-        nextBlock = NextBlock(draft: draft)
+        // A failed save is tried again when the review closes with New
+        // block, and the row that opened the review says if that fails too.
+        try? BlockReviewStatistics.acknowledge(block: block, context: ctx)
+        nextBlock = NextBlock(draft: BlockDraft.next(after: block, template: template))
     }
 }
 

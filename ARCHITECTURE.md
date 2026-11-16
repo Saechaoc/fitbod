@@ -128,6 +128,8 @@ Today opens no block review by itself; the weekly recap still shows on its own o
 Without an active block or an open workout, the last ended block's pending review (`BlockReviewStatistics.pendingReviewBlocks`) is Today's one notice, ahead of the deload advice (`TodayState.notice`).
 Today's notice and Block overview's END BLOCK and REVIEW ▸ open a review through `BlockReviewPresenter`, which keeps the opened block and, when the sheet closes by any route, records `reviewedAt` once, keeping the first date; Start next and Plan custom record it before New block opens.
 A close that cannot save rolls back, leaves the review pending, and shows "Couldn't save the review. Open it again to retry." under the row that opened it until a later close saves.
+The review knows the tab it opened on, `.today` from Today's notice and Today's Block overview and `.program` from Program's, and New block over it names that tab on its back control ([RM-016](docs/ROADMAP.md#rm-016)).
+Closing that New block by any route, saved or not, closes the review too, so the lifter lands where the review opened, and that close retries a save that failed at Start next or Plan custom.
 Block creation stays on Program and the review's next-block flow. Today retains existing-block editing; its only empty-workout start is first-run's.
 Today's week board (`TodayWeek`) shows the user's calendar week: each day's counted workouts and their `countsAsWork` sets, so open, empty and warm-up work never count.
 It is counted in a `.task(id:)` keyed on the finished workout IDs, the week start and `HistoryEdits.version`, never per render; the full per-muscle model runs only when Volume opens from the board or Progress.

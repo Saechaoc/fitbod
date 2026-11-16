@@ -202,7 +202,7 @@ public struct TodayView: View {
                 onRetry: startBlock,
                 onOpen: { navigationPath.append(BlockOverviewRoute.summary(blockID: $0.id)) }
             ))
-            .blockReviewSheet($review)
+            .blockReviewSheet($review, origin: .today)
             // Phase 5 plan 04 — fatigue signal detail sheet.
             .sheet(isPresented: $presentingSignalSheet) {
                 if let advisory = currentAdvisory,

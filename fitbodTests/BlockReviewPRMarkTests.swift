@@ -121,7 +121,7 @@ struct BlockReviewPRMarkTests {
     /// The review of `block` in a window the small phone's width, once it
     /// shows its PRS value and its e1RM rows.
     private func showReview(of block: Block, in container: ModelContainer) throws -> UIWindow {
-        let window = try HostedAccessibility.show(BlockReviewView(block: block).modelContainer(container))
+        let window = try HostedAccessibility.show(BlockReviewView(block: block, origin: .today).modelContainer(container))
         HostedAccessibility.waitUntil { prsValue(in: window) != nil }
         return window
     }

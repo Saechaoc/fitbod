@@ -102,7 +102,7 @@ struct BlockReviewHeroLayoutTests {
         window.frame = CGRect(x: 0, y: 0, width: 390, height: 1_200)
         window.overrideUserInterfaceStyle = .light
         window.rootViewController = UIHostingController(
-            rootView: BlockReviewView(block: block)
+            rootView: BlockReviewView(block: block, origin: .today)
                 .modelContainer(container)
                 .environment(\.dynamicTypeSize, size)
         )

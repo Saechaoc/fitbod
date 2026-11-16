@@ -65,19 +65,21 @@ struct BlockReviewPresenter {
 
 extension View {
     /// The block review `presenter` opens, as a sheet whose close records
-    /// the review (RM-013).
-    func blockReviewSheet(_ presenter: Binding<BlockReviewPresenter>) -> some View {
-        modifier(BlockReviewSheet(presenter: presenter))
+    /// the review (RM-013). `origin` is the tab this view is on, which New
+    /// block over the review names and returns to (RM-016).
+    func blockReviewSheet(_ presenter: Binding<BlockReviewPresenter>, origin: BlockBuilderView.Origin) -> some View {
+        modifier(BlockReviewSheet(presenter: presenter, origin: origin))
     }
 }
 
 private struct BlockReviewSheet: ViewModifier {
     @Binding var presenter: BlockReviewPresenter
+    let origin: BlockBuilderView.Origin
     @Environment(\.modelContext) private var ctx
 
     func body(content: Content) -> some View {
         content.sheet(item: $presenter.showing, onDismiss: { presenter.close(in: ctx) }) { block in
-            BlockReviewView(block: block)
+            BlockReviewView(block: block, origin: origin)
                 .presentationDetents([.large])
         }
     }

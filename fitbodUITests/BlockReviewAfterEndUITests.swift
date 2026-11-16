@@ -58,6 +58,39 @@ final class BlockReviewAfterEndUITests: XCTestCase {
                        "Start next must record the review before New block opens")
     }
 
+    // MARK: - RM-016
+
+    /// New block over the review names the tab the review opened from, and
+    /// its back control goes back there, closing the review too: from
+    /// Today's notice to Today, and from Program's Past blocks, three taps
+    /// from Program, to the block's overview there.
+    @MainActor
+    func testNewBlockReturnsToTheTabTheReviewOpenedFrom() throws {
+        let app = openEndedBlocksReview()
+        let newBlock = app.staticTexts.labeled("NEW BLOCK")
+        UITestNavigation.hittable(app.buttons, "Start next ▸").tap()
+        XCTAssertTrue(UITestNavigation.appears(newBlock), "Start next must open New block")
+        UITestNavigation.hittable(app.buttons, "< TODAY", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(newBlock), "< TODAY must close New block")
+        XCTAssertTrue(UITestNavigation.disappears(reviewTitle(in: app)), "< TODAY must close the review too")
+        // Nothing covers Today: its Settings button takes a tap.
+        UITestNavigation.hittable(app.buttons, "Settings")
+        XCTAssertFalse(reviewNotice(in: app).exists, "Start next must have recorded the review")
+
+        UITestNavigation.openPastBlocks(in: app)
+        UITestNavigation.hittable(app.buttons, "DONE block: Live Block").tap()
+        UITestNavigation.hittable(app.buttons, "REVIEW ▸").tap()
+        assertReviewOpens(in: app, "Past blocks must reopen the review in three taps from Program")
+        UITestNavigation.hittable(app.buttons, "Start next ▸").tap()
+        XCTAssertTrue(UITestNavigation.appears(newBlock), "Start next must open New block")
+        UITestNavigation.hittable(app.buttons, "< PROGRAM", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(newBlock), "< PROGRAM must close New block")
+        XCTAssertTrue(UITestNavigation.disappears(reviewTitle(in: app)), "< PROGRAM must close the review too")
+        // Nothing covers the block's overview: its REVIEW ▸ takes a tap.
+        UITestNavigation.hittable(app.buttons, "REVIEW ▸")
+        XCTAssertTrue(UITestNavigation.tab("Program", in: app).isSelected, "< PROGRAM must land on Program")
+    }
+
     // MARK: - Helpers
 
     /// The review's header title.
