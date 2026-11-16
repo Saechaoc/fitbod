@@ -307,20 +307,11 @@ struct Phase3BRUSurfacesTests {
 
     // MARK: - PlateCalculatorSheet (Plan 03.2-07)
 
-    @Test("PlateCalculatorSheet instantiates with seeded barbell inventory")
+    @Test("PlateCalculatorSheet instantiates for the barbell")
     func plateCalculatorSheetInstantiates() throws {
-        // Proves: public init(equipment:inventory:) compiles and the view conforms to
-        // View. All BRU token + font references (bruInk, bruBg2, bruSignal, bruMuted,
-        // bruPaper, bruBg, bruHair, BRUFont.labelSmall, BRUFont.displayLarge) and
-        // Wave 1 primitives (PlateStackViz, PlateTallyRow, BRUHeaderBar, BRUSectionHead,
-        // BRUChip, BRUButton) must resolve at compile time.
-        // Zero Form/Section/plateColor/weightToWidth/plateRect in the rewritten surface.
-        let inv = PlateInventory()
-        inv.equipmentKind = .barbell
-        inv.barWeight = 45
-        inv.availablePlates = PlateInventoryDefaults.make(for: .barbell, unitSystem: .lb)
-
-        let sheet = PlateCalculatorSheet(equipment: .barbell, inventory: inv)
+        // Proves: public init(equipment:target:barWeight:) compiles and the view
+        // conforms to View. The sheet reads the inventories itself (RM-025).
+        let sheet = PlateCalculatorSheet(equipment: .barbell, target: 225)
         let _: any View = sheet
         #expect(Bool(true), "PlateCalculatorSheet instantiated successfully")
     }

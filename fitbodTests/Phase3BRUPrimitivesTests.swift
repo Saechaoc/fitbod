@@ -102,4 +102,12 @@ struct Phase3BRUPrimitivesTests {
         let _: any View = viz
         #expect(Bool(true), "PlateTallyRow(2.5 kg, count=0) instantiated in muted-opacity state")
     }
+
+    /// A lifter can record more of a plate than its four boxes show (D-119).
+    @Test("PlateTallyRow's count menu runs from none to 20 and keeps a larger saved count")
+    @MainActor
+    func plateTallyRowCountMenu() {
+        #expect(PlateTallyRow.counts(including: 3) == Array(0...20))
+        #expect(PlateTallyRow.counts(including: 24) == Array(0...20) + [24])
+    }
 }

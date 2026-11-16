@@ -34,7 +34,7 @@ Read a component's file header before using it: each one documents its contract 
 | `BRUToggleStyle` | `.toggleStyle(.bru)`: square switch | Off: paper track, ink knob. On: signal track, constant ink knob. Respects Reduce Motion. | System toggle style | Exercise detail, session builder cards | `phase-6--settings.png` |
 | `BRUSearchField` | 56pt search row: ⌕, the query in mono, × to clear, 2pt ink rule; a tap anywhere on the row focuses the query | Empty with the muted prompt, or with text and ×; return puts the keyboard away and commits the query | `.searchable`, a bare `TextField` | Library and its pickers, the custom exercise editor's family list | `phase-1--library.png` |
 | `BRUChip` | Square label for tags and filters | Outline or filled, any token color, uppercase or as typed | Capsule tags | About 26 screens | `phase-1--library.png` |
-| `PlateTallyRow` | Plate inventory row whose tally boxes are the input | Counts 0 to the maximum, "None" | `Stepper` | Plate calculator, plate inventory | `phase-3--plate-calc.png` |
+| `PlateTallyRow` | Plate inventory row whose tally boxes are the input; its "×4 ▾" count opens a menu that goes past four | Counts 0 to 20, "None" | `Stepper` | Plate inventory; the plate calculator lists counts as read-only text | `phase-3--plate-calc.png` |
 
 ## Data display
 

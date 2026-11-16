@@ -51,6 +51,8 @@ public struct SetRow: View {
     public let onUncomplete: () -> Void
     /// A weight or reps field finished editing: persist now.
     public let onEditCommitted: () -> Void
+    /// The set's actions asked for the plate calculator (RM-025).
+    public let onOpenPlates: (PlateCalculatorSheet) -> Void
     /// The set its exercise does next, once the exercise is under way: it
     /// offers START, so the lifter can mark when the set began (RM-062).
     public let startsNext: Bool
@@ -101,6 +103,7 @@ public struct SetRow: View {
         onTapEmptyCell: @escaping () -> Void,
         onUncomplete: @escaping () -> Void = {},
         onEditCommitted: @escaping () -> Void = {},
+        onOpenPlates: @escaping (PlateCalculatorSheet) -> Void = { _ in },
         startsNext: Bool = false
     ) {
         self.entry = entry
@@ -113,6 +116,7 @@ public struct SetRow: View {
         self.onTapEmptyCell = onTapEmptyCell
         self.onUncomplete = onUncomplete
         self.onEditCommitted = onEditCommitted
+        self.onOpenPlates = onOpenPlates
         self.startsNext = startsNext
     }
 
@@ -658,6 +662,10 @@ public struct SetRow: View {
             Button(entry.notes?.isEmpty == false ? "Edit set note" : "Add set note") {
                 presentingSetNote = true
             }
+            if let plates = plateCalculator {
+                Button("Plate calculator") { onOpenPlates(plates) }
+                    .accessibilityIdentifier("set.plates.\(identifierSuffix)")
+            }
             if !entry.isComplete, let suggested = explanation?.suggestedWeight {
                 Button("Use \(NumberText.weight(suggested)) \(unit.rawValue)") {
                     UIApplication.shared.sendAction(
@@ -694,6 +702,12 @@ public struct SetRow: View {
         .accessibilityLabel("Set \(displayNumber) actions")
         .accessibilityValue(SetTypeChip.label(for: entry.setType))
         .accessibilityIdentifier("set.type.\(identifierSuffix)")
+    }
+
+    /// The plate calculator on this set's weight and its exercise's bar and
+    /// unit, or nil when the exercise loads no plates.
+    private var plateCalculator: PlateCalculatorSheet? {
+        .forSet(entry, exercise: sessionExercise.exercise, offeredWeight: suggestion.weight)
     }
 
     /// The exercise's rep range for Why-this-weight, such as 5...8, or nil

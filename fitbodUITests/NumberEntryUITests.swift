@@ -171,6 +171,51 @@ final class NumberEntryUITests: XCTestCase {
         XCTAssertEqual(bottom.value as? String, "1")
     }
 
+    // MARK: - Plate calculator
+
+    /// RM-025: a working set's actions open the plate calculator on the
+    /// set's weight, and 315 typed over TARGET loads three 45s a side. The
+    /// keyboard rising once rebuilt the sheet and threw the typing away,
+    /// when the set's row showed it. The header's Done returns to the logger
+    /// at the same set, its weight untouched.
+    @MainActor
+    func testPlateCalculatorTargetTypeOverFromSet() throws {
+        let app = UITestNavigation.openSeededWorkout()
+        let weight = app.textFields["set.weight.1.S1"]
+        UITestNavigation.revealInLogger(weight, in: app)
+        XCTAssertEqual(UITestNavigation.enter("225", into: weight), "225 lb")
+        closeKeyboard(in: app)
+
+        let actions = app.buttons["set.type.1.S1"]
+        UITestNavigation.revealInLogger(actions, in: app)
+        actions.tap()
+        let plates = app.buttons["set.plates.1.S1"]
+        XCTAssertTrue(plates.waitForExistence(timeout: 5), "A barbell set's actions must offer the plate calculator")
+        plates.tap()
+
+        let target = app.buttons["plateCalculator.target"]
+        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertEqual(target.value as? String, "225 lb", "The calculator must open on the set's weight")
+        target.tap()
+        let field = app.textFields["plateCalculator.targetField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "A tap on TARGET must open its field")
+        // The field takes focus itself and selects its weight, so the keys replace it.
+        UITestNavigation.assertKeyboardFocus(field)
+        field.typeText("315")
+        XCTAssertEqual(field.value as? String, "315", "315 typed over 225 must replace it")
+        let stack = app.otherElements.matching(NSPredicate(
+            format: "label CONTAINS %@", "Plates each side: 3 45"
+        )).firstMatch
+        XCTAssertTrue(stack.waitForExistence(timeout: 5), "315 lb must load three 45s a side")
+        closeKeyboard(in: app)
+        XCTAssertEqual(target.value as? String, "315 lb", "TARGET must keep the typed weight")
+
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertTrue(target.waitForNonExistence(timeout: 5), "Done must close the calculator")
+        XCTAssertTrue(weight.isHittable, "The logger must still show set 1")
+        XCTAssertEqual(weight.value as? String, "225 lb", "The calculator must leave the set's weight as it was")
+    }
+
     // MARK: - Plate Inventory
 
     /// 20 typed over the bar's 45 reads 20, while Done ▸ steps aside for the

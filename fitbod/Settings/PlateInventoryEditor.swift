@@ -19,6 +19,9 @@
 //  T39: the bar weight and Add Plate's weight select their number as they take focus,
 //  so a typed weight replaces it, both number pads get a DONE, and Done ▸ steps aside
 //  while the keyboard is up.
+//  RM-025: the tabs and the bar weight row are 44pt targets, the row's label focuses
+//  its field, a plate's count menu goes past four, and a note says each change saves
+//  and a unit switch only relabels.
 //
 //  UI-SPEC §PlateInventoryEditor (verbatim copy in all labels / alerts / empty states).
 //  Pattern: PATTERNS.md @Query + @Bindable write-through (SettingsView analog).
@@ -114,10 +117,7 @@ public struct PlateInventoryEditor: View {
         // Number pads have no return key (T39).
         .keyboardDone()
         .sheet(isPresented: $showCalculatorSheet) {
-            if let inv = activeInventory {
-                PlateCalculatorSheet(equipment: activeTab, inventory: inv)
-                    .presentationDetents([.medium])
-            }
+            PlateCalculatorSheet(equipment: activeTab)
         }
         .sheet(isPresented: $showAddPlateSheet) {
             if let inv = activeInventory {
@@ -236,6 +236,8 @@ public struct PlateInventoryEditor: View {
                 // Fills its cell, which a taller tab in its row can stretch.
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.vertical, 10)
+                // A 44pt tab at default text, not 34.7pt (D-117).
+                .frame(minHeight: BRUMetrics.touchTarget)
                 .background(isActive ? Color.bruInk : Color.bruPaper)
         }
         .buttonStyle(.plain)
@@ -291,6 +293,11 @@ public struct PlateInventoryEditor: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        // The whole row, its label too, focuses the field, which is drawn
+        // only a line tall (D-118).
+        .frame(minHeight: BRUMetrics.touchTarget)
+        .contentShape(Rectangle())
+        .onTapGesture { barWeightFocused = true }
 
         // 2pt bruInk bottom rule beneath bar weight row
         Rectangle()
@@ -323,7 +330,7 @@ public struct PlateInventoryEditor: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruSignal)
+                        .foregroundStyle(Color.bruSignalText)
                 }
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity, minHeight: 44)
@@ -357,7 +364,7 @@ public struct PlateInventoryEditor: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruSignal)
+                    .foregroundStyle(Color.bruSignalText)
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity, minHeight: 44)
@@ -376,6 +383,17 @@ public struct PlateInventoryEditor: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity, minHeight: 44)
+
+            // No save button remains, and a unit switch keeps these numbers
+            // (D-121), so the screen says both.
+            Text("Each change saves as you make it. Switching units relabels these weights without converting them. RESET TO DEFAULTS loads the standard \(unitLabel) set for this tab.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+                .accessibilityIdentifier("plateInventory.note")
         }
     }
 
@@ -457,7 +475,7 @@ public struct PlateInventoryEditor: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruSignal)
+                    .foregroundStyle(Color.bruSignalText)
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity, minHeight: 44)

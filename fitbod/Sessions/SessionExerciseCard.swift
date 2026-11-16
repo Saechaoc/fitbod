@@ -47,6 +47,8 @@ public struct SessionExerciseCard: View {
     public let onDeleteSet: (SetEntry) -> Void
     public let onAddSet: (SessionExercise) -> Void
     public let onEditCommitted: () -> Void
+    /// A set's actions asked for the plate calculator (RM-025).
+    public let onOpenPlates: (PlateCalculatorSheet) -> Void
 
     // MARK: - Phase 3 state
 
@@ -89,7 +91,8 @@ public struct SessionExerciseCard: View {
         onUncompleteSet: @escaping (SetEntry) -> Void = { _ in },
         onDeleteSet: @escaping (SetEntry) -> Void = { _ in },
         onAddSet: @escaping (SessionExercise) -> Void = { _ in },
-        onEditCommitted: @escaping () -> Void = {}
+        onEditCommitted: @escaping () -> Void = {},
+        onOpenPlates: @escaping (PlateCalculatorSheet) -> Void = { _ in }
     ) {
         self.sessionExercise = sessionExercise
         self.engine = engine
@@ -102,6 +105,7 @@ public struct SessionExerciseCard: View {
         self.onDeleteSet = onDeleteSet
         self.onAddSet = onAddSet
         self.onEditCommitted = onEditCommitted
+        self.onOpenPlates = onOpenPlates
     }
 
     public var body: some View {
@@ -256,6 +260,7 @@ public struct SessionExerciseCard: View {
                                 onTapEmptyCell: onTapEmptyCell,
                                 onUncomplete: { onUncompleteSet(set) },
                                 onEditCommitted: onEditCommitted,
+                                onOpenPlates: onOpenPlates,
                                 startsNext: set.id == nextSetID
                             )
                             // A swap, Undo or machine change resets the inputs

@@ -3,7 +3,8 @@
 //
 // BRU primitive — tally-mark inventory row for plate counts.
 // The tally-mark boxes ARE the input affordance — no Stepper inside this component.
-// Consumed by: PlateInventoryEditor (03.2-06), PlateCalculatorSheet (03.2-07).
+// Consumed by: PlateInventoryEditor (03.2-06). The plate calculator shows
+// counts as text rows of its own, since it cannot change them (RM-025).
 //
 // Visual reference: bru-screens/plate-calc.jsx lines 101-128
 // Spec: 03-UI-SPEC.md lines 49, 270, 442, 503
@@ -25,6 +26,10 @@
 //   Each box takes taps in a 44pt band, 12pt above and below the drawn box
 //   (T107). Beside the weight the band reaches into the row's padding without
 //   moving anything; on its own line it is the line's height.
+//
+// COUNT MENU (RM-025, D-119): the "×{count} ▾" readout opens every count from
+//   none to `maxCount`, so a lifter who owns more of a plate than the four boxes
+//   show can record them; above four, all four boxes are filled.
 //
 // ZERO RoundedRectangle — every shape is a plain Rectangle (BRU design language).
 // ZERO Capsule — BRU has no rounded shapes.
@@ -52,6 +57,9 @@ public struct PlateTallyRow: View {
     public let weight: Double
     @Binding public var count: Int
     public let unitLabel: String
+
+    /// The most plates per side the count menu and VoiceOver offer.
+    static let maxCount = 20
 
     /// The weight number's 68pt share of the 90pt column, scaled like its
     /// 20pt type, so a weight such as "1.25" stays on one line at
@@ -89,7 +97,7 @@ public struct PlateTallyRow: View {
             .accessibilityAdjustableAction { direction in
                 switch direction {
                 case .increment:
-                    if count < 4 { count += 1 }
+                    if count < Self.maxCount { count += 1 }
                 case .decrement:
                     count = max(count - 1, 0)
                 default:
@@ -171,17 +179,37 @@ public struct PlateTallyRow: View {
         }
     }
 
-    /// Column 3: "×{count}" or "NONE" count label.
+    /// Column 3: "×{count}" or "NONE", which opens the count menu.
     private var countColumn: some View {
-        Text(count > 0 ? "×\(count)" : "NONE")
-            .font(BRUFont.bodyDefault)
-            .fontWeight(.semibold)
-            .foregroundStyle(count > 0 ? Color.bruInk : Color.bruMuted)
-            .multilineTextAlignment(.trailing)
+        Menu {
+            Picker("Per side", selection: $count) {
+                ForEach(Self.counts(including: count), id: \.self) { option in
+                    Text(option == 0 ? "None" : "×\(option)").tag(option)
+                }
+            }
+        } label: {
+            HStack(spacing: 2) {
+                Text(count > 0 ? "×\(count)" : "NONE")
+                    .font(BRUFont.bodyDefault)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(count > 0 ? Color.bruInk : Color.bruMuted)
+                Text("▾")
+                    .font(BRUFont.labelMicro)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            // The whole column opens the menu, in the boxes' 44pt band.
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .bruHitArea(horizontal: 0, vertical: 12)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Helpers
 
+    /// The counts the menu offers: none to `maxCount`, and a larger saved one.
+    static func counts(including count: Int) -> [Int] {
+        Array(0...maxCount) + (count > maxCount ? [count] : [])
+    }
 }
 
 // MARK: - TallyBox

@@ -68,6 +68,11 @@ public struct SessionLoggerView: View {
     @State private var pendingRemove: SessionExercise?
     @State private var presentingWorkoutNotes = false
     @State private var pendingPinnedNote: SessionExercise?
+    /// The plate calculator a set's actions opened (RM-025). The logger shows
+    /// it: shown from the set's row, it was rebuilt as TARGET's keyboard
+    /// rose, which threw the typing away.
+    @State private var plates: PlateCalculatorSheet?
+    @State private var presentingPlates = false
     @State private var presentingSummary = false
     @State private var saveFailure: String?
 
@@ -94,7 +99,11 @@ public struct SessionLoggerView: View {
                         onUncompleteSet: { uncompleteSet($0) },
                         onDeleteSet: { deleteSet($0) },
                         onAddSet: { SessionSetActions.addSet(to: $0, context: ctx) },
-                        onEditCommitted: { try? ctx.save() }
+                        onEditCommitted: { try? ctx.save() },
+                        onOpenPlates: {
+                            plates = $0
+                            presentingPlates = true
+                        }
                     )
                 }
                 Section {
@@ -207,6 +216,8 @@ public struct SessionLoggerView: View {
                 se.pinnedNote = $0
             }
         }
+        // Closing it returns to the logger at the set it came from; it writes nothing.
+        .sheet(isPresented: $presentingPlates) { plates }
         // Remove-exercise destructive confirmation
         .alert(
             "Remove \"\(pendingRemove?.displayName ?? "")\"?",                  // UI-SPEC verbatim
