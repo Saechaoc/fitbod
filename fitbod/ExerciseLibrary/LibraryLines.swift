@@ -76,12 +76,19 @@ enum LibraryLines {
         exercise.variantLabel ?? exercise.name
     }
 
-    /// Rows with no variant label first (a standard version or a custom
-    /// exercise), then by title.
+    /// The standard version, the catalog row with no variant label, first,
+    /// then every other row A to Z by title, custom exercises included
+    /// (RM-022, 2026-11-11).
     private static func variantOrder(_ lhs: Exercise, _ rhs: Exercise) -> Bool {
-        if (lhs.variantLabel == nil) != (rhs.variantLabel == nil) { return lhs.variantLabel == nil }
+        if isStandard(lhs) != isStandard(rhs) { return isStandard(lhs) }
         let order = variantTitle(lhs).localizedCaseInsensitiveCompare(variantTitle(rhs))
         return order == .orderedSame ? lhs.id.uuidString < rhs.id.uuidString : order == .orderedAscending
+    }
+
+    /// A custom exercise has no variant label either, but it is never the
+    /// standard version.
+    private static func isStandard(_ exercise: Exercise) -> Bool {
+        !exercise.isCustom && exercise.variantLabel == nil
     }
 
     private static func section(for title: String) -> String {

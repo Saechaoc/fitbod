@@ -13,10 +13,11 @@ import Testing
 @Suite("Library lines")
 struct LibraryLinesTests {
 
-    private func exercise(_ name: String, family: String? = nil, variant: String? = nil) -> Exercise {
+    private func exercise(_ name: String, family: String? = nil, variant: String? = nil, isCustom: Bool = false) -> Exercise {
         let exercise = Exercise(
             name: name, canonicalName: name.lowercased(),
-            equipmentRaw: Equipment.barbell.rawValue, mechanicRaw: Mechanic.compound.rawValue
+            equipmentRaw: Equipment.barbell.rawValue, mechanicRaw: Mechanic.compound.rawValue,
+            isCustom: isCustom
         )
         exercise.familyName = family
         exercise.variantLabel = variant
@@ -71,5 +72,21 @@ struct LibraryLinesTests {
             return
         }
         #expect(variants.map(LibraryLines.variantTitle) == ["Pull-Up", "Band-Assisted", "Weighted"])
+    }
+
+    @Test("A custom exercise sorts by its name among the variants, after the standard version")
+    func customExercisesSortWithTheVariants() throws {
+        let line = try #require(LibraryLines.sections([
+            exercise("Pull-Up (Weighted)", family: "Pull-Up", variant: "Weighted"),
+            exercise("Mixed-Grip Pull-Up", family: "Pull-Up", isCustom: true),
+            exercise("Pull-Up", family: "Pull-Up"),
+            exercise("Archer Pull-Up", family: "Pull-Up", isCustom: true),
+            exercise("Pull-Up (Band-Assisted)", family: "Pull-Up", variant: "Band-Assisted"),
+        ]).first?.lines.first)
+        guard case .family(_, let variants) = line else {
+            Issue.record("Pull-Up must fold into a family line")
+            return
+        }
+        #expect(variants.map(LibraryLines.variantTitle) == ["Pull-Up", "Archer Pull-Up", "Band-Assisted", "Mixed-Grip Pull-Up", "Weighted"])
     }
 }
