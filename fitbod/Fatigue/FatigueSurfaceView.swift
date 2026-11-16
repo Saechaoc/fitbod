@@ -151,7 +151,7 @@ public struct FatigueSurfaceView: View {
     /// month. It replaced "W44 / 53", which read like a block's week (D-344).
     static func weekRange(weekStart: Date, calendar: Calendar = .current) -> String {
         let lastDay = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
-        return TodayWeek.rangeLabel([weekStart, lastDay])
+        return TodayWeek.rangeLabel([weekStart, lastDay], calendar: calendar)
     }
 
     /// Zone map for BodySilhouetteView — all muscles, not just the listed

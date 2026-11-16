@@ -66,7 +66,11 @@ struct VolumeListTests {
         ]
     )
     func weekRange(year: Int, month: Int, day: Int, expected: String) throws {
-        let calendar = Calendar.current
+        // New York has daylight saving, so the clock-change case proves the
+        // day math on any machine: Pacific here, where its midnight falls the
+        // evening before, or UTC on CI.
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "America/New_York"))
         let weekStart = try #require(calendar.date(from: DateComponents(year: year, month: month, day: day)))
         #expect(FatigueSurfaceView.weekRange(weekStart: weekStart, calendar: calendar) == expected)
     }

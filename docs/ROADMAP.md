@@ -510,6 +510,7 @@ The bars keep one axis that counts the folded muscles too, so opening the row ne
 The heatmap head reads the week the list counts, "NOV 9–15", in the range format of Today's week board, in place of "W46 / 53" (D-344).
 No set total or its wording changed, so [RM-038](#rm-038) is not affected.
 `VolumeListTests` (the fold rule, and the week's dates across a month, from a Sunday and over the US clock change) with `VolumeRenderingTests`, `MuscleVolumeBarBRUTests`, `BodySilhouetteViewBRUTests` and `TodayWeekTests` passed 28/28 (`fast-20261115-212714-50485`).
+The date cases pin a New York calendar, and `TodayWeek.rangeLabel` now reads dates in the calendar it is given, the device's by default, so the clock-change case holds on any machine; `VolumeListTests`, `TodayWeekTests` and `ThisWeekTests` then passed 28/28 (`fast-20261115-214954-65814`).
 The unit target ran 1,350 tests: 1,347 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261115-212858-52759`).
 `PerMuscleDetailUITests` gains a test that the row starts folded, opens, the neck's bar opens its screen, Back keeps the row open and a second tap folds it; the class passed 2/2 (`fast-20261115-214104-60314`), and the new test failed, as it should, against a row that starts open.
 Light and dark 390pt captures were inspected: a fresh week, closed and open; mid-week with 2 of 4 hamstring sets from an uncommitted seed tweak; and the heatmap.

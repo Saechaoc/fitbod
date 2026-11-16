@@ -35,12 +35,13 @@ struct TodayWeek: Equatable {
     /// "NOV 9–15", or "OCT 26–NOV 1" across a month boundary.
     var rangeLabel: String { Self.rangeLabel(days.map(\.date)) }
 
-    /// The range label of a week's days, in order; Program's This week heads itself with it too.
-    static func rangeLabel(_ dates: [Date]) -> String {
-        let en = Locale(identifier: "en_US")
+    /// The range label of a week's days, in order, read in `calendar`'s zone;
+    /// Program's This week and Volume's heatmap head themselves with it too.
+    static func rangeLabel(_ dates: [Date], calendar: Calendar = .current) -> String {
         guard let first = dates.first, let last = dates.last else { return "" }
-        let month = { (date: Date) in date.formatted(.dateTime.locale(en).month(.abbreviated)).uppercased() }
-        let day = { (date: Date) in date.formatted(.dateTime.locale(en).day()) }
+        let style = Date.FormatStyle(locale: Locale(identifier: "en_US"), calendar: calendar, timeZone: calendar.timeZone)
+        let month = { (date: Date) in date.formatted(style.month(.abbreviated)).uppercased() }
+        let day = { (date: Date) in date.formatted(style.day()) }
         return month(first) == month(last)
             ? "\(month(first)) \(day(first))–\(day(last))"
             : "\(month(first)) \(day(first))–\(month(last)) \(day(last))"
