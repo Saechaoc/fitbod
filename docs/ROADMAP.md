@@ -811,7 +811,13 @@ Eight unit suites passed 51 of 51 (`fast-20261115-205542`), with the prefill, re
 With the fix it passed, and `WhyThisWeightControlUITests`, `NumberEntryUITests`, `SwipeBackUITests` and `NonBarbellWhyUITests` passed 12 of 12 (`fast-20261115-210343`, iPhone 17, iOS 26.5); the new check passed again on the final source (`fast-20261115-211118`).
 390pt light captures of the set's menu, the calculator from a set, a typed TARGET, the equipment menu, the trap bar, the return to the set, and the inventory's count menu, label focus and note were inspected.
 They differ from `plate-calc.jsx` only where earlier decisions moved inventory editing and saving out of the calculator.
-Not checked: dark mode, accessibility text sizes and VoiceOver.
+A review the same day found that a plate count or a delete whose save failed stayed on screen, unsaved, for the calculator to plan with.
+Now such a change is rolled back through `SessionSetActions.rollBack`, the row shows the saved count again and an alert, "Couldn't save inventory", says so; adding a plate saves the same way.
+`PlateEntryTests.failedCountChangeOrDeleteKeepsTheSavedPlates` checks a failed count change, a failed delete and a retry.
+TARGET's band now keeps a full line at rest, so its rule no longer moves about 3pt when typing starts; at 390pt and the large detent it sits on the same rows in both states.
+On the review's final source, seven unit suites passed 50 of 50 (`fast-20261115-213334-55656`), and `NumberEntryUITests`, `SwipeBackUITests` and `WhyThisWeightControlUITests` passed 11 of 11 (`fast-20261115-213400-55876`, iPhone 17, iOS 26.5).
+390pt dark captures of the calculator from a set, a typed TARGET, the equipment menu and the inventory's note were inspected.
+Not checked: accessibility text sizes and VoiceOver; the count menu's VoiceOver reach waits for [RM-044](#rm-044).
 **References:** D-12/D-14/D-114–D-121; [plate workflow](design-map/workflows/plates-and-the-calculator.md), logger-plate-calculator/typed-target/equipment-switch/plate-inventory-saved-note.
 
 ### <a id="rm-026"></a>RM-026 — Session/routine authoring without detours
