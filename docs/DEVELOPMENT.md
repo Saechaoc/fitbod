@@ -64,6 +64,8 @@ The full runner pins its simulators to default text/light mode; it does not prov
 Fix lint or a flaky test when it blocks your change or sits in code you are already changing.
 Otherwise note it in one line and move on.
 The same holds for visual flaws on screens you are not working on.
+Record every UI bug you see and do not fix in the roadmap in the same session, not only in a chat report.
+If the [design audit](design-map/audit.md) already lists it, its D-row and owner are the record; otherwise add a dated "Found" line to [RM-035](ROADMAP.md#rm-035) for look and copy, or to [RM-044](ROADMAP.md#rm-044) for accessibility and layout.
 
 ## Deferred work
 

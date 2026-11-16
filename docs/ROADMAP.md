@@ -1052,6 +1052,11 @@ Measured 2026-11-15 under [RM-022](#rm-022): the logger's set card works out a l
 **Verify when:** At approved screen implementation; [RM-044](#rm-044) accessibility refinement at stability.
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
 Found 2026-11-15 under [RM-013](#rm-013): in dark mode the header bar's rule draws an off-white line right above Program's and Block overview's slab, which `phase-2--program.png` does not have; Session detail without PRs and Why this weight with its changed-since-start line draw a doubled 4pt rule under their head; `RoutineBuilderView` and `ExerciseHistoryView` keep the default header inset spacing, unchecked.
+Found 2026-11-12 under [RM-012](#rm-012), still in the code on 2026-11-16: Today's week board outlines today's tile in `bruSignal` in every state, so with a workout open the LIVE tile sits beside RESUME ▸; the design system keeps signal for the one primary action, completed sets, records and upward trends, and the user's 2026-11-11 decision says only "today outlined".
+Found 2026-11-15 under [RM-018](#rm-018): New Block's Routine band heading is sentence case where PHASES · 3 is uppercase, beside the band's [D-275](design-map/audit.md#d-275) to [D-277](design-map/audit.md#d-277).
+Seen again on 2026-11-15 at 390pt under [RM-023](#rm-023): Compare's wrapped "+10.6 e1RM lb" ([D-205](design-map/audit.md#d-205)) and an exercise history's cut intent chips ([D-245](design-map/audit.md#d-245)).
+Found 2026-11-16 under [RM-026](#rm-026): a past block's line gives the plan's length beside the dates the block ran, so a block ended on its first day reads "4 weeks · Nov 16 - Nov 16", in Program's Past blocks and on an archived routine's page.
+Found 2026-11-16: "No prior data" copy takes an em dash in Why this weight and a hyphen in the progression strategies, so "No prior data - starting at prescribed weight." shows in both forms; Compare's em dash is [D-206](design-map/audit.md#d-206).
 **References:** [audit](design-map/audit.md), [BRU rules](design-system/principles.md); T43/T120/T127, archived New Block flags.
 
 ### <a id="decisions"></a>Product decisions
@@ -1201,6 +1206,7 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
 Fixed 2026-11-15 under [RM-023](#rm-023): the shared filter chip carries the selected trait and no longer tells VoiceOver "hidden" ([D-180](design-map/audit.md#d-180)); not yet heard with VoiceOver on a device.
 Found 2026-11-15 under [RM-025](#rm-025): a plate stack's spoken label ends "Total: 270" for a 315 load, the plates without the bar, wherever a stack shows; and VoiceOver reaches Plate Inventory's ×N count menu only through the row's adjustable action.
+Seen again on 2026-11-15 under [RM-023](#rm-023): [D-77](design-map/audit.md#d-77) still holds; at 390pt the exercise chart's date ticks skip the first workout and cut the newest date to "N…".
 **References:** [audit](design-map/audit.md), [accessibility](design-system/accessibility.md), [stability](DEVELOPMENT.md#stages), redesign R-14/R-15, F57/F202/F225/F284/F289/F344/F357/F360/F368.
 
 ### <a id="rm-045"></a>RM-045 — FT-16: heatmap reach on small/large phones
