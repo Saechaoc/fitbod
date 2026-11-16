@@ -110,6 +110,8 @@ Empty shared routines show repair.
 TodayState derives precedence using the environment calendar and refreshes on foreground/significant time change.
 Every start goes through `WorkoutStarter.start(_:in:)` with the routine it came from, and the pure `StartSlot` picks the slot at the tap ([RM-006](docs/ROADMAP.md#rm-006)).
 NEXT is the resolver's slot in a rotation block; in a fixedWeekly block it is today's slot until a counted workout starts today, then the next training day's.
+The next training day is the first later day in `trainingDays` (`StartSlot.nextTrainingDate`), with the slot the resolver gives that day; T-DONE and T-REST end with a line naming NEXT, adding that day's name in a fixedWeekly block.
+Block overview's week strip calls the same `nextTrainingDate` with only its own week's days, and on rotation every day trains there, so its NEXT cell can differ from Today's line.
 With no block, a routine's NEXT follows its newest counted slotted workout, wraps and skips sessions with no exercises.
 A start credits NEXT when NEXT holds the session, otherwise the session's first slot after NEXT, so a session slotted twice never moves the rotation backwards.
 A start from no routine, an archived routine or a routine other than the active block's is unslotted.

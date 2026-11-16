@@ -488,30 +488,15 @@ public struct BlockOverviewScreen: View {
     }
 
     /// The first day after today in this week's strip that the block
-    /// trains on.
+    /// trains on. Only this week's days count, and on rotation every day
+    /// trains, so it can differ from the day Today's next line names.
     private var nextTrainingDay: Date? {
-        Self.nextTrainingDay(
+        StartSlot.nextTrainingDate(
             after: todayDate,
             in: (0..<7).compactMap { Calendar.current.date(byAdding: .day, value: $0, to: weekStart) },
             mode: block.schedulingMode,
             trainingDays: block.trainingDays
         )
-    }
-
-    /// The first of `days` after `today` that trains: any day on rotation,
-    /// whose sessions follow one another, or a day in `trainingDays`
-    /// (Calendar weekdays, 1 = Sunday) on fixed weekly.
-    static func nextTrainingDay(
-        after today: Date,
-        in days: [Date],
-        mode: SchedulingMode,
-        trainingDays: [Int],
-        calendar: Calendar = .current
-    ) -> Date? {
-        days.first { day in
-            day > today && !calendar.isDate(day, inSameDayAs: today)
-                && (mode == .rotation || trainingDays.contains(calendar.component(.weekday, from: day)))
-        }
     }
 
     /// Returns the routine name for the session logged on a given day, if any.

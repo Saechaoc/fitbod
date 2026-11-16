@@ -60,14 +60,8 @@ public struct DoneTodaySlab: View {
             }
 
             if let upNext {
-                Text(upNext)
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                TodayNextLine(text: upNext)
                     .padding(.top, 8)
-                    .accessibilityIdentifier("doneToday.upNext")
             }
 
         }
@@ -93,5 +87,20 @@ public struct DoneTodaySlab: View {
             parts.append(BRUCountLabel.text(prCount, "PR"))
         }
         return parts.joined(separator: " · ")
+    }
+}
+
+/// The line at the foot of T-DONE's and T-REST's slab that names NEXT.
+struct TodayNextLine: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruMuted)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityIdentifier("today.upNext")
     }
 }

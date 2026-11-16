@@ -54,6 +54,9 @@ struct TodayStatesSeedTests {
             #expect(session.name == TodayStatesSeed.emptySessionName)
         case (.done, .done(let workouts)):
             #expect(workouts.map(\.displayName) == ["Pull A", "Push A"])
+        case (.doneWeekly, .done(let workouts)):
+            #expect(workouts.map(\.displayName) == ["Push A"])
+            #expect(workouts.first?.block?.schedulingMode == .fixedWeekly)
         case (.pick, .pick(let suggestion)):
             // Push A was trained two days ago, so the routine's NEXT is Pull A.
             #expect(suggestion.session.name == "Pull A")

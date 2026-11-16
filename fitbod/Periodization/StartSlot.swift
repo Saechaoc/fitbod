@@ -46,7 +46,39 @@ enum StartSlot {
            block.schedulingMode == .rotation || doneToday(finished, now: now, calendar: calendar).isEmpty {
             return slot
         }
-        return TodayResolver.nextTrainingDay(block: block, after: now, calendar: calendar)?.slot
+        return nextTrainingDay(in: block, after: now, calendar: calendar)?.slot
+    }
+
+    /// A weekly block's next training day after `date` and the slot the
+    /// resolver gives that day: what its NEXT moves on to, and the day
+    /// T-DONE and T-REST name. Nil on rotation, whose NEXT the resolver
+    /// gives, and when no day in the coming week trains.
+    static func nextTrainingDay(in block: Block, after date: Date, calendar: Calendar) -> (day: Date, slot: SplitSessionSlot)? {
+        guard block.schedulingMode == .fixedWeekly else { return nil }
+        let start = calendar.startOfDay(for: date)
+        let week = (1...7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+        guard let day = nextTrainingDate(
+            after: date, in: week, mode: .fixedWeekly, trainingDays: block.trainingDays, calendar: calendar),
+              case .session(let slot) = TodayResolver.resolveFixedWeekly(block: block, today: day, calendar: calendar)
+        else { return nil }
+        return (day, slot)
+    }
+
+    /// The first of `days` after `today` that trains: any day on rotation,
+    /// whose sessions follow one another, or a day in `trainingDays`
+    /// (Calendar weekdays, 1 = Sunday) on fixed weekly. Block overview
+    /// passes its week strip's days and marks the answer NEXT there.
+    static func nextTrainingDate(
+        after today: Date,
+        in days: [Date],
+        mode: SchedulingMode,
+        trainingDays: [Int],
+        calendar: Calendar = .current
+    ) -> Date? {
+        days.first { day in
+            day > today && !calendar.isDate(day, inSameDayAs: today)
+                && (mode == .rotation || trainingDays.contains(calendar.component(.weekday, from: day)))
+        }
     }
 
     /// NEXT in a routine no block runs: the first slot at or after the anchor

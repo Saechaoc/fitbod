@@ -62,7 +62,7 @@ struct BlockOverviewStatesTests {
     @MainActor
     @Test("on rotation every day trains, so tomorrow is the next training day")
     func rotationTrainsTomorrow() {
-        let next = BlockOverviewScreen.nextTrainingDay(
+        let next = StartSlot.nextTrainingDate(
             after: Self.wednesdayNoon, in: Self.week, mode: .rotation, trainingDays: [], calendar: Self.utc
         )
         #expect(next == Self.week[3])
@@ -72,11 +72,11 @@ struct BlockOverviewStatesTests {
     @Test("on fixed weekly the next training day is this week's next training weekday, if any")
     func fixedWeeklyTrainsOnItsDays() {
         // Calendar weekdays: 2 is Monday, 4 Wednesday and 6 Friday.
-        let friday = BlockOverviewScreen.nextTrainingDay(
+        let friday = StartSlot.nextTrainingDate(
             after: Self.wednesdayNoon, in: Self.week, mode: .fixedWeekly, trainingDays: [2, 4, 6], calendar: Self.utc
         )
         #expect(friday == Self.week[4])
-        let none = BlockOverviewScreen.nextTrainingDay(
+        let none = StartSlot.nextTrainingDate(
             after: Self.wednesdayNoon, in: Self.week, mode: .fixedWeekly, trainingDays: [2, 4], calendar: Self.utc
         )
         #expect(none == nil)

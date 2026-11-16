@@ -316,14 +316,19 @@ public struct TodayView: View {
             ) { navigationPath.append(BlockOverviewRoute.summary(blockID: block.id)) }
             if canChooseSession { chooseSessionRow("Choose another session") }
         case .rest:
-            Text("Rest day")
-                .font(BRUFont.condensedHeading)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.bruInk)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .overlay { Rectangle().strokeBorder(Color.bruInk, lineWidth: 2) }
-                .padding(16)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Rest day")
+                    .font(BRUFont.condensedHeading)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruInk)
+                if let upNext = upNextLabel(resolution, finished: finished) {
+                    TodayNextLine(text: upNext)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .overlay { Rectangle().strokeBorder(Color.bruInk, lineWidth: 2) }
+            .padding(16)
             chooseSessionRow("Start a workout anyway")
         case .today(let block, let slot):
             if let session = slot.sessionTemplate {
@@ -487,19 +492,32 @@ public struct TodayView: View {
         return TodayResolver.resolve(block: block, context: ctx, today: now, calendar: calendar)
     }
 
-    /// The same NEXT the sheet marks, with the schedule/routine context the done slab needs.
     private func upNextLabel(_ resolution: TodayResolution, finished: [Session]) -> String? {
-        if let block = activeBlocks.first {
+        Self.upNextLabel(
+            block: activeBlocks.first, resolution: resolution, finished: finished,
+            liveRoutines: routines, sessions: sessionTemplates, now: now, calendar: calendar)
+    }
+
+    /// The line T-DONE and T-REST end with, naming the NEXT the session
+    /// sheet marks: "Next: Pull A · Saturday" for a weekly block, whose NEXT
+    /// is then the next training day's slot, "Next up: Pull A" on rotation,
+    /// and "Next up: Pull A · Push Pull Legs" with no block. Nil when NEXT
+    /// names no session with exercises.
+    static func upNextLabel(
+        block: Block?, resolution: TodayResolution, finished: [Session],
+        liveRoutines: [Split], sessions: [SessionTemplate], now: Date, calendar: Calendar
+    ) -> String? {
+        if let block {
             guard let slot = StartSlot.next(
                 in: block, resolution: resolution, finished: finished, now: now, calendar: calendar),
                   StartSlot.hasExercises(slot.sessionTemplate), let session = slot.sessionTemplate else { return nil }
-            if block.schedulingMode == .fixedWeekly,
-               let next = TodayResolver.nextTrainingDay(block: block, after: now, calendar: calendar) {
-                return "Next: \(session.name) · \(next.day.formatted(.dateTime.weekday(.wide)))"
+            if let next = StartSlot.nextTrainingDay(in: block, after: now, calendar: calendar) {
+                let weekday = Date.FormatStyle(calendar: calendar, timeZone: calendar.timeZone).weekday(.wide)
+                return "Next: \(session.name) · \(next.day.formatted(weekday))"
             }
             return "Next up: \(session.name)"
         }
-        guard let pick = StartSlot.suggestion(liveRoutines: routines, sessions: sessionTemplates, finished: finished) else {
+        guard let pick = StartSlot.suggestion(liveRoutines: liveRoutines, sessions: sessions, finished: finished) else {
             return nil
         }
         if let routine = pick.slot?.split { return "Next up: \(pick.session.name) · \(routine.name)" }

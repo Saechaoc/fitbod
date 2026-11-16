@@ -14,6 +14,10 @@
 //                               session, "Push B", has no exercises.
 //    -fitbod-seed-today-done    T-DONE: an active block with Push A and then
 //                               Pull A finished today.
+//    -fitbod-seed-today-done-weekly
+//                               T-DONE in a weekly block that trains today
+//                               and every other day after it, with Push A
+//                               finished today.
 //    -fitbod-seed-today-rest    T-REST: an active weekly block whose training
 //                               days leave today out.
 //    -fitbod-seed-today-attach  T-ATTACH: an active block whose routine is
@@ -63,7 +67,7 @@ enum TodayStatesSeed {
 
     #if DEBUG
     enum State: String, CaseIterable {
-        case ready, empty, done, rest, attach, pick, fix
+        case ready, empty, done, doneWeekly = "done-weekly", rest, attach, pick, fix
 
         var launchArgument: String { "-fitbod-seed-today-\(rawValue)" }
     }
@@ -120,6 +124,11 @@ enum TodayStatesSeed {
         func makeBlock(_ name: String) -> Block {
             BlockStatesSeed.makeBlock(name, phases: phases, split: split, in: context)
         }
+        /// Weekly training days `offsets` days after today, in the locale's week order.
+        func weekdays(_ offsets: [Int]) -> [Int] {
+            let today = Calendar.current.component(.weekday, from: now)
+            return TrainingDaysWriter.sort(weekdays: offsets.map { (today - 1 + $0) % 7 + 1 })
+        }
         switch state {
         case .ready:
             // A block's startDate is its creation date until it starts (O-14).
@@ -127,21 +136,26 @@ enum TodayStatesSeed {
             makeBlock(laterReadyBlockName).startDate = now.addingTimeInterval(-2 * day)
         case .empty:
             start(makeBlock(blockName), at: now, in: context)
-        case .done:
+        case .done, .doneWeekly:
             let block = makeBlock(blockName)
+            if state == .doneWeekly {
+                block.schedulingMode = .fixedWeekly
+                block.trainingDays = weekdays([0, 2, 4])
+            }
             start(block, at: now, in: context)
             let midnight = Calendar.current.startOfDay(for: now)
             let sinceMidnight = now.timeIntervalSince(midnight)
             finish(slots[0], block: block, startedAt: midnight.addingTimeInterval(sinceMidnight * 0.2),
                    duration: min(47 * 60, sinceMidnight * 0.25), in: context)
-            finish(slots[1], block: block, startedAt: midnight.addingTimeInterval(sinceMidnight * 0.6),
-                   duration: min(35 * 60, sinceMidnight * 0.25), in: context)
+            if state == .done {
+                finish(slots[1], block: block, startedAt: midnight.addingTimeInterval(sinceMidnight * 0.6),
+                       duration: min(35 * 60, sinceMidnight * 0.25), in: context)
+            }
         case .rest:
             let block = makeBlock(blockName)
             block.schedulingMode = .fixedWeekly
             // One training day per session, none of them today: tomorrow, then every other day.
-            let today = Calendar.current.component(.weekday, from: now)
-            block.trainingDays = TrainingDaysWriter.sort(weekdays: [1, 3, 5].map { (today - 1 + $0) % 7 + 1 })
+            block.trainingDays = weekdays([1, 3, 5])
             start(block, at: now, in: context)
         case .attach:
             let block = makeBlock(blockName)

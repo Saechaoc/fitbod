@@ -427,13 +427,21 @@ Open: a look on the phone; the notice at accessibility sizes was not captured.
 
 ### <a id="rm-014"></a>RM-014 — Redesign 2.2: next-session/day lines
 
-**P2 · Planned.** T-DONE/T-REST name the same NEXT as the sheet.
+**P2 · Done (2026-11-15).** T-DONE and T-REST end with a line naming the NEXT the session sheet marks; built on `swarm/A5`.
 **Done when:** weekday uses next training date and its resolved slot; rotation retains NEXT after unslotted workouts. Move overview's next-training-date helper into StartSlot without changing its distinct week-strip NEXT marker. Done has no orange action. Cover rest/trained-today/rotation/overview cases.
 **Scope / sequence:** Extract date helper into StartSlot → Done/Rest next lines → compare overview behavior. Preserve overview week-strip semantics; no scheduling-model expansion.
 **Requires:** [RM-006](#rm-006) StartSlot.
 **Scheduled after:** [RM-013](#rm-013).
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
-**References:** redesign R-27; [Today layouts](design-map/redesign/today-layouts.md), [overview](../fitbod/Periodization/BlockOverviewScreen.swift), TodayResolverTests/BlockOverviewStatesTests.
+**Evidence (2026-11-15, swarm/A5):** Block overview's date helper is now `StartSlot.nextTrainingDate`, contract unchanged, and the week strip still calls it with only its own week's days, so its NEXT cell is unchanged.
+`StartSlot.nextTrainingDay` replaces `TodayResolver.nextTrainingDay`: that date and the slot the resolver gives it, which a weekly block's NEXT moves to on a rest day and once a counted workout started today.
+T-REST now reads "REST DAY" over "NEXT: PUSH A · MONDAY"; T-DONE reads "NEXT: PULL A · TUESDAY" in a weekly block and "NEXT UP: LEGS A" on rotation, and has no orange action.
+Both lines come from `TodayView.upNextLabel`, which names the weekday in the calendar's time zone.
+New DEBUG launch argument: `-fitbod-seed-today-done-weekly`, T-DONE in a weekly block.
+`StartSlotTests` (rotation keeps NEXT after an unslotted or other-routine workout; the next training day and its slot) and `TodaySlabSummaryTests` (the line names the sheet's NEXT on a rest day, once trained, after an unslotted rotation workout and with no block) passed with `BlockOverviewStatesTests`, `TodayResolverTests`, `TodayStatesSeedTests`, `SessionSheetContentTests`, `WorkoutStarterTests` and `TodayStateTests`, 88/88 (`fast-20261115-155238-16528`).
+The unit target with `TodayStateRoutesUITests` and `BlockOverviewStatesUITests` passed 1,312 of 1,315, the rest being 2 store-rehearsal skips and 1 expected failure (`fast-20261115-155642-21362`).
+Light and dark 390pt captures of T-DONE on rotation and in a weekly block, and of T-REST, match today-layouts.md; a rotation block has no rest day to capture.
+Open: a look on the phone.
+**References:** redesign R-27; [Today layouts](design-map/redesign/today-layouts.md), [StartSlot](../fitbod/Periodization/StartSlot.swift), [overview](../fitbod/Periodization/BlockOverviewScreen.swift), StartSlotTests/TodaySlabSummaryTests/BlockOverviewStatesTests.
 
 ### <a id="rm-015"></a>RM-015 — Redesign 2.3: Program's This week agrees with Today
 

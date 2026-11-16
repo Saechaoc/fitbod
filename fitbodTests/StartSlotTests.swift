@@ -37,6 +37,17 @@ struct StartSlotTests: ProgramFixtures {
         #expect(try next(in: block) == slots[1])
     }
 
+    @Test("rotation block: an unslotted workout today, or one in another routine, leaves NEXT where it was")
+    func rotationNextAfterAnUnslottedWorkout() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A", "Legs A"])
+        let (_, otherSlots) = makeRoutine("Other", sessions: ["Arms"])
+        let block = makeBlock(on: routine)
+        makeWorkout(in: slots[0], daysAgo: 1, block: block)
+        makeWorkout(in: nil, daysAgo: 0, block: block)
+        makeWorkout(in: otherSlots[0], daysAgo: 0, block: block)
+        #expect(try next(in: block) == slots[1])
+    }
+
     @Test("weekly block: today's slot until a counted workout starts today, then the next training day's")
     func weeklyNext() throws {
         let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"])
@@ -55,6 +66,19 @@ struct StartSlotTests: ProgramFixtures {
         let block = makeBlock(on: routine, weekly: [3, 5])
         #expect(try next(in: block, at: now.addingTimeInterval(day)) == slots[1])     // Wednesday: Thursday's
         #expect(try next(in: block, at: now.addingTimeInterval(3 * day)) == slots[0]) // Friday: next Tuesday's
+    }
+
+    @Test("weekly block: the next training day is the first training weekday after today, with the resolver's slot for it")
+    func nextTrainingDay() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"])
+        let block = makeBlock(on: routine, weekly: [3, 5]) // Tuesday, Thursday
+        let thursday = try #require(StartSlot.nextTrainingDay(in: block, after: now, calendar: calendar))
+        #expect(thursday.day == calendar.startOfDay(for: now.addingTimeInterval(2 * day)))
+        #expect(thursday.slot == slots[1])
+        let tuesday = try #require(StartSlot.nextTrainingDay(in: block, after: thursday.day, calendar: calendar))
+        #expect(tuesday.day == calendar.startOfDay(for: now.addingTimeInterval(7 * day)))
+        #expect(tuesday.slot == slots[0])
+        #expect(StartSlot.nextTrainingDay(in: makeBlock(on: routine), after: now, calendar: calendar) == nil)
     }
 
     @Test("weekly block: the only training day comes round again, and no training day gives no NEXT")
