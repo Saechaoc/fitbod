@@ -103,6 +103,24 @@ struct SiblingEstimateTests {
             == "Estimated 52.5 kg from Row (Dumbbell)")
     }
 
+    @Test("A done drop, failure or rest-pause set keeps the estimate, since the offers never start from one",
+          arguments: [SetType.drop, .failure, .restPause])
+    func setTheOffersSkipKeepsTheEstimate(type: SetType) throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let paused = lift("Bench Press (Paused)", family: "Bench Press", in: ctx)
+        try workout(lift("Bench Press (Barbell)", family: "Bench Press", in: ctx), daysAgo: 7, sets: [100], in: ctx)
+        let template = try LoggerFixtures.template("Push", exercises: [paused], in: ctx)
+        let log = try #require(try SessionFactory.start(template: template, context: ctx).exercises?.first)
+        let sets = SessionSetActions.ordered(log)
+        sets[0].setTypeRaw = type.rawValue
+        sets[0].weight = 80
+        sets[0].reps = 8
+        #expect(try SessionSetActions.complete(sets[0], context: ctx))
+
+        #expect(!SiblingEstimate.liftDone(in: log))
+        #expect(WorkoutSetSuggestions(exercise: log, prior: [], estimatedWeight: 100).offers()[sets[1].id]?.weight == 100)
+    }
+
     @Test("An accepted estimate logs as an ordinary set, and only then is the variant's own history")
     func acceptedEstimateIsAnOrdinarySet() throws {
         let ctx = try LoggerFixtures.makeContext()

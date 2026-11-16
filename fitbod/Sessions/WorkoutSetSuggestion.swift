@@ -192,7 +192,9 @@ struct WorkoutSetSuggestions {
         return nil
     }
 
-    private static func isWorking(_ entry: SetEntry) -> Bool {
+    /// A set the offers can start from. `SiblingEstimate.liftDone` reads it
+    /// too, so a set that gives no offer never hides the estimate.
+    static func isWorking(_ entry: SetEntry) -> Bool {
         !entry.isWarmup && entry.setType == .working
     }
 

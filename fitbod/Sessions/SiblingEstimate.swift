@@ -80,11 +80,13 @@ struct SiblingEstimate: Equatable {
     }
 
     /// `log`'s lift has a working set done in its workout, in this log or
-    /// another, so it has a load of its own and shows no estimate.
+    /// another, so it has a load of its own and shows no estimate. A done
+    /// drop, failure or rest-pause set does not count, since the offers
+    /// never start from one.
     static func liftDone(in log: SessionExercise) -> Bool {
         let id = log.exercise?.id
         return (log.session?.exercises ?? []).contains { other in
-            other.exercise?.id == id && (other.sets ?? []).contains { $0.isComplete && !$0.isWarmup }
+            other.exercise?.id == id && (other.sets ?? []).contains { $0.isComplete && WorkoutSetSuggestions.isWorking($0) }
         }
     }
 }
