@@ -582,8 +582,9 @@ struct CustomExerciseEditor: View {
 /// `search`, a field above the list narrows it, as the family list's does
 /// (RM-022).
 struct ChoicePickerSheet<Value: Hashable>: View {
-    /// The field's prompt and identifier, and the options a query finds,
-    /// in the order the list shows them.
+    /// The field's prompt and identifier, and the options to list for a
+    /// typed query, in order. For a query that is no search, such as one of
+    /// punctuation only, `find` gives every option back.
     struct Search {
         let prompt: String
         let identifier: String
@@ -668,7 +669,7 @@ struct ChoicePickerSheet<Value: Hashable>: View {
 /// lists only the families whose names it finds, best first, the way the
 /// Library finds exercises (`ExerciseSearch`). It reads the store only
 /// while it is open.
-private struct FamilyPickerSheet: View {
+struct FamilyPickerSheet: View {
     @Binding var selection: String?
     @Query private var exercises: [Exercise]
 
@@ -676,12 +677,21 @@ private struct FamilyPickerSheet: View {
         let families = Set(exercises.compactMap(\.familyName))
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
         ChoicePickerSheet(
-            title: "Family", options: [nil] + families.map { Optional($0) }, selection: $selection,
+            title: "Family", options: Self.options(for: "", in: families), selection: $selection,
             name: { $0 ?? "None" }, identifier: { "customExercise.family.\($0 ?? "none")" },
-            search: .init(prompt: "Search families", identifier: "customExercise.familySearch") { query in
-                ExerciseSearch.results(query, in: families) { ExerciseSearch.Row(name: $0) }.map { Optional($0.item) }
+            search: .init(prompt: "Search families", identifier: "customExercise.familySearch") {
+                Self.options(for: $0, in: families)
             }
         )
+    }
+
+    /// The list for `query` over `families`, sorted A to Z. A query with no
+    /// words, such as "" or "-", is no search: None, then every family.
+    /// Otherwise the families whose names it finds, best first, without None.
+    /// Plain text work, so it needs no main actor, though the view has one.
+    nonisolated static func options(for query: String, in families: [String]) -> [String?] {
+        guard !ExerciseSearch.words(in: query).isEmpty else { return [nil] + families.map { Optional($0) } }
+        return ExerciseSearch.results(query, in: families) { ExerciseSearch.Row(name: $0) }.map { Optional($0.item) }
     }
 }
 
