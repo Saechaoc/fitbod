@@ -25,10 +25,12 @@
 //      │  BRUDivider(.ink)
 //      ├─ SeriesToggleChipRow (4-segment BRU bar, one ProgressChartMetric selected)
 //      │  BRUDivider(.ink)
-//      └─ Chart content area (bruBg background)
-//           Branch A: < 2 workouts with a value → a note: what the period
-//                     and intent hold, and why no line (ProgressChartSelection.gapNote)
-//           Branch B: otherwise                → BRU-styled chart + legend
+//      ├─ Chart content area (bruBg background)
+//      │    Branch A: < 2 workouts with a value → a note: what the period
+//      │              and intent hold, and why no line (ProgressChartSelection.gapNote)
+//      │    Branch B: otherwise                → BRU-styled chart + legend
+//      └─ View all history › and, once a set counts for a record, View
+//         records ›: the exercise's history and records (RM-023, D-80)
 //
 //  ## Comparable workouts (RM-023)
 //
@@ -115,7 +117,7 @@ public struct ExerciseProgressView: View {
                 left: HeaderAction("‹ Back") { dismiss() },
                 center: "Progress"
             )
-            nameRow
+            ExerciseNameRow(name: exercise.name)
             BRUDivider(.hair)
 
             ProgressChartHost(
@@ -125,18 +127,22 @@ public struct ExerciseProgressView: View {
                 intent: $intent,
                 reduceMotion: reduceMotion
             )
-
-            Spacer()
         }
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
     }
 
-    /// The exercise's whole name in the bar's title style. The bar gives
-    /// its title a third of the row, so the name gets the full width here
-    /// and wraps instead of being cut short.
-    private var nameRow: some View {
-        Text(exercise.name)
+}
+
+/// An exercise's whole name in the header bar's title style, on its own
+/// row under the bar: the chart's, and its records' (RM-023). The bar gives
+/// its title a third of the row, so the name gets the full width here and
+/// wraps instead of being cut short.
+struct ExerciseNameRow: View {
+    let name: String
+
+    var body: some View {
+        Text(name)
             .font(BRUFont.labelSmall)
             .tracking(1.5)
             .textCase(.uppercase)
@@ -398,6 +404,16 @@ private struct ProgressChartHost: View {
                     reduceMotion ? nil : .smooth(duration: 0.18),
                     value: metric
                 )
+
+                // Every workout of the exercise, and its records (RM-023).
+                ExerciseLinkRow("View all history") {
+                    ExerciseHistoryView(exercise: exercise)
+                }
+                if sessionExercises.contains(where: { ($0.sets ?? []).contains(where: PRDetector.isWorkingSet) }) {
+                    ExerciseLinkRow("View records") {
+                        ExercisePRsView(scope: .forExercise(exercise.id, name: exercise.name))
+                    }
+                }
             }
         }
         .background(Color.bruBg)

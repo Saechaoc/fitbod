@@ -1487,8 +1487,10 @@ final class DesignTourMainUITests: XCTestCase {
             _ = app.buttons["ALL"].waitForNonExistence(timeout: 5)
         }
         DesignTour.step("compare") {
-            // Compare unlocks once two workouts count; the seed has four.
-            TourProgressLibrary.openRow("This week vs last week", in: app)
+            // Compare opens while the newest workout has an earlier one of
+            // its session and intent 14 days back at most (RM-023); the
+            // seed's newest strength workout is 14 days after the last.
+            TourProgressLibrary.tapRevealed(app.buttons["progress.compare"], in: app)
             DesignTour.expect(app.staticTexts["Δ"], "Compare")
             DesignTour.shot(app, "compare")
             DesignTour.tap(app.buttons, "Back", exact: true)
@@ -1696,7 +1698,7 @@ final class DesignTourStatesUITests: XCTestCase {
             UITestNavigation.selectTab("Progress", in: app)
             DesignTour.reveal(app.staticTexts["Compare"], in: app)
             DesignTour.scrollDown(app)
-            let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "This week vs last week")).firstMatch
+            let row = app.buttons["progress.compare"]
             DesignTour.expect(row, "Compare row")
             DesignTour.reveal(row, in: app)
             row.tap()

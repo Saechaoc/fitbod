@@ -19,7 +19,9 @@
 //    1. prior.exercise?.id          == current.exercise?.id
 //    2. prior.session?.intentRaw    == current.session?.intentRaw
 //    3. prior.session?.sourceRoutineID == current.session?.sourceRoutineID
-//    4. currentSession.startedAt - prior.session.startedAt ∈ (0, 14d)
+//    4. currentSession.startedAt - prior.session.startedAt ∈ (0, 14d]:
+//       started before it, 14 days earlier at most
+//       (`SessionComparatorTests.offeredAtFourteenDays`)
 //    5. prior.session counts as a session: finished and not empty
 //       (`SessionSetActions.countedWorkouts`, decision 6)
 //    6. prior.machine?.id == current.machine?.id: loads compare only
@@ -205,9 +207,18 @@ public enum SessionComparator {
         return rows
     }
 
+    /// The start of the earlier workout `rows` compare with, as the screen's
+    /// column header dates it: the first row's with an earlier top set. Nil
+    /// when no exercise has a top set in both workouts, so Compare has
+    /// nothing to show and Progress does not offer it (RM-023).
+    public static func earlierStart(of rows: [SessionComparisonRow]) -> Date? {
+        guard rows.contains(where: { $0.thisWeekTopSet != nil && $0.lastWeekTopSet != nil }) else { return nil }
+        return rows.first { $0.lastWeekTopSet != nil }?.lastWeekTopSet?.sessionStartedAt
+    }
+
     /// Find the most-recent prior workout matching the
-    /// `(sourceRoutineID, exerciseID, intent)` triple within the
-    /// strict 14-day window (> 0 days, < windowDays days), and return
+    /// `(sourceRoutineID, exerciseID, intent)` triple that started before
+    /// `currentSession`, `windowDays` days earlier at most, and return
     /// every log of the exercise on `machineID` in it, in workout order
     /// (`orderIndex`). A workout with the exercise only on another machine
     /// is passed over (RM-066).

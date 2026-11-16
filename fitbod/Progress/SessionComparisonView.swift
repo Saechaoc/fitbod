@@ -5,11 +5,13 @@
 //  Wave-4 plan 06-07 — 3-column per-exercise diff between the current
 //  anchor session and its most-recent intent + sourceRoutineID matching
 //  prior session per the corrected D-22 rule (PROG-07 + CONTEXT
-//  D-22..D-24).
+//  D-22..D-24): the latest workout that counts, against the last workout
+//  of the same session and intent, 14 days before it at most (`rule`).
+//  Progress opens it only when an exercise has a top set in both (RM-023).
 //
 //  ## Layout (Phase 6.1 BRU reskin — 06.1-03)
 //
-//  BRUHeaderBar(left: "‹ Back", center: "This week vs last week")
+//  BRUHeaderBar(left: "‹ Back", center: the workout's name, such as "Push A")
 //  Column header row (dates + Δ) — BRUFont.labelMicro .bruMuted uppercase
 //  BRUDivider(.ink)
 //  ScrollView → LazyVStack per-exercise 3-column rows
@@ -28,14 +30,16 @@
 //  An e1RM change rounds to one decimal ("+2.8 e1RM lb"), a whole one
 //  shows none ("+5 e1RM lb"), and one that rounds to zero shows "—".
 //
-//  ## Empty state (UI-SPEC verbatim)
+//  ## Empty state
 //
 //    Heading: "No comparable session"
-//    Body:    "Log this routine again next week to compare."
+//    Body:    `rule`, which Progress's Compare note shows too
 //
 //  ## Navigation title
 //
-//    "This week vs last week" (UI-SPEC verbatim)
+//    The workout's name; the column headers date both workouts. "This week
+//    vs last week" named neither, and the pair is often not those weeks
+//    (D-48).
 //
 //  [CITED: CONTEXT D-22/D-23/D-24 + UI-SPEC § SessionComparisonView
 //   row styling + PROG-07]
@@ -60,7 +64,7 @@ public struct SessionComparisonView: View {
         VStack(spacing: 0) {
             BRUHeaderBar(
                 left: HeaderAction("‹ Back") { dismiss() },
-                center: "This week vs last week",
+                center: anchorSession.displayName,
                 right: nil
             )
 
@@ -131,10 +135,15 @@ public struct SessionComparisonView: View {
         return "—"
     }
 
-    /// A workout's day as the column headers write it, such as "Nov 9".
-    private static func dayLabel(_ date: Date) -> String {
+    /// A workout's day as the column headers and Progress's Compare row
+    /// write it, such as "Nov 9".
+    static func dayLabel(_ date: Date) -> String {
         date.formatted(.dateTime.month(.abbreviated).day())
     }
+
+    /// The rule that picks the earlier workout (`SessionComparator`), for
+    /// the notes shown when there is nothing to compare (RM-023).
+    static let rule = "Compare needs an earlier workout of the same session and intent within 14 days of your latest one."
 
     // MARK: - Per-Row Body
 
@@ -273,7 +282,7 @@ public struct SessionComparisonView: View {
             Text("No comparable session")
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruInk)
-            Text("Log this routine again next week to compare.")
+            Text(Self.rule)
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
                 .multilineTextAlignment(.center)

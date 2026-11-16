@@ -22,6 +22,11 @@
 //    8. orderIndexPreserved — output sort matches current.exercises
 //       orderIndex asc
 //
+//  RM-023: when Progress offers Compare (`earlierStart(of:)`): for an
+//  earlier workout of the same session and intent exactly 14 days back,
+//  not a second more, not for another session's workout, and not when
+//  the shared exercise has no top set in the latest workout.
+//
 
 import Foundation
 import SwiftData
@@ -318,5 +323,58 @@ struct SessionComparatorTests {
         #expect(rows.count == 2)
         #expect(rows[0].exerciseID == bench.id)
         #expect(rows[1].exerciseID == squat.id)
+    }
+
+    // MARK: - When Progress offers Compare (RM-023)
+
+    /// The day Progress's Compare row names for a latest strength bench at
+    /// `now`, after `earlier` ran `daysBack` days before it.
+    private func offeredEarlierStart(
+        daysBack: TimeInterval,
+        earlierRoutineID: UUID? = nil,
+        latestSets: [(weight: Double, reps: Int)] = [(weight: 100, reps: 5)]
+    ) throws -> (offered: Date?, earlier: Date) {
+        let ctx = try makeContext()
+        let bench = seedBench(in: ctx)
+        let routineID = UUID()
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let earlier = now.addingTimeInterval(-daysBack * 86_400)
+        try seedSession(
+            in: ctx, startedAt: earlier, sourceRoutineID: earlierRoutineID ?? routineID,
+            intentRaw: Intent.strength.rawValue,
+            exercisesAndSets: [(bench, [(weight: 95, reps: 5)])]
+        )
+        let latest = try seedSession(
+            in: ctx, startedAt: now, sourceRoutineID: routineID,
+            intentRaw: Intent.strength.rawValue,
+            exercisesAndSets: [(bench, latestSets)]
+        )
+        let rows = SessionComparator.compare(current: latest, context: ctx)
+        return (SessionComparator.earlierStart(of: rows), earlier)
+    }
+
+    @Test("Compare is offered for the same session and intent exactly 14 days back")
+    func offeredAtFourteenDays() throws {
+        let result = try offeredEarlierStart(daysBack: 14)
+        #expect(result.offered == result.earlier, "14 days back is inside the rule")
+    }
+
+    @Test("Compare is not offered a second past 14 days")
+    func notOfferedPastFourteenDays() throws {
+        let result = try offeredEarlierStart(daysBack: 14 + 1.0 / 86_400)
+        #expect(result.offered == nil)
+    }
+
+    @Test("Compare is not offered for another session's workout, as two workouts used to be (D-130)")
+    func notOfferedForAnotherSession() throws {
+        let result = try offeredEarlierStart(daysBack: 3, earlierRoutineID: UUID())
+        #expect(result.offered == nil)
+    }
+
+    @Test("Compare is not offered when the shared exercise has no top set in the latest workout")
+    func notOfferedWithoutBothTopSets() throws {
+        // A bodyweight set has no weight, so it is no top set.
+        let result = try offeredEarlierStart(daysBack: 3, latestSets: [(weight: 0, reps: 12)])
+        #expect(result.offered == nil, "Compare would show only the earlier side")
     }
 }

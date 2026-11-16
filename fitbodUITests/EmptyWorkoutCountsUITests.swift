@@ -74,12 +74,11 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
         UITestNavigation.selectTab("Progress", in: app)
         scrollToCompare(in: app)
 
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["No comparable session yet"]), "Compare must show its locked state")
         XCTAssertFalse(
             compareRow(in: app).exists,
-            "With one logged workout there is nothing to compare, but Compare offers This week vs last week"
+            "With one logged workout there is nothing to compare, but Compare offers a comparison"
         )
-        XCTAssertTrue(app.staticTexts["No comparable session yet"].exists, "Compare must show its locked state")
-        XCTAssertTrue(app.staticTexts["Log a routine twice to compare."].exists, "Compare must show its locked state")
     }
 
     @MainActor
@@ -115,7 +114,7 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
         UITestNavigation.selectTab("Progress", in: app)
         scrollToCompare(in: app)
         let row = compareRow(in: app)
-        XCTAssertTrue(row.exists, "Two logged workouts must unlock Compare")
+        XCTAssertTrue(UITestNavigation.appears(row), "Two logged workouts must unlock Compare")
         row.tap()
 
         let latest = headerDate(daysAgo: 1, since: launchedAt, in: app)
@@ -140,10 +139,10 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
         UITestNavigation.waitUntil(timeout: timeout) { element.exists && predicate.evaluate(with: element) }
     }
 
-    /// Progress's "This week vs last week" row.
+    /// Progress's Compare row, named for the latest logged workout.
     @MainActor
     private func compareRow(in app: XCUIApplication) -> XCUIElement {
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "This week vs last week")).firstMatch
+        app.buttons["progress.compare"]
     }
 
     /// Scrolls Progress down until its Compare section sits above the tab

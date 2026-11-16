@@ -15,24 +15,25 @@
 //  Section 2 — Trends: "Weekly Tonnage", "Personal Records" and "Stalled"
 //  rows; Stalled counts the stalled exercises (RM-019).
 //
-//  Section 3 — Compare: "This week vs last week" row anchored on the
-//  latest workout that counts as a session; locked until two count.
+//  Section 3 — Compare: the latest workout that counts as a session, named
+//  with its day and the earlier workout's, when Compare has an exercise to
+//  set against an earlier workout of the same session and intent, 14 days
+//  before it at most; otherwise a note that says so (RM-023).
 //
 //  ## Navigation routes
 //
 //  Two enums route into the Wave 2 surfaces:
-//    ExerciseRoute: .progress(Exercise) → ExerciseProgressView
-//                   .prs(Exercise)      → ExercisePRsView(.forExercise(...))
+//    ExerciseRoute: .progress(Exercise) → ExerciseProgressView, which
+//                   opens the exercise's history and records itself
 //    ProgressRoute: .weeklyTonnage       → WeeklyTonnageView
 //                   .allPRs              → ExercisePRsView(.allExercises)
 //                   .stalled             → StalledExercisesView
 //                   .sessionComparison(Session) → SessionComparisonView
 //
 //  `.sessionHistoryDestinations()` registers SessionHistoryRoute: the
-//  Workouts row's history, and the workout summary a History row or a
-//  Personal Records row opens. `.weeklyRecapDestinations()` registers
-//  WeeklyRecapRoute: the Weekly recaps row's week list, and the past
-//  recap a row of it reopens (RM-020).
+//  Workouts row's history, and the workout summary a History row opens.
+//  `.weeklyRecapDestinations()` registers WeeklyRecapRoute: the Weekly
+//  recaps row's week list, and the past recap a row of it reopens (RM-020).
 //
 //  ## NavigationStack ownership
 //
@@ -60,7 +61,6 @@ public enum ExerciseProgressRoute: Hashable, Sendable {
     /// The exercise's chart, on `intent` when given, else on its newest
     /// workout's (RM-023).
     case progress(UUID, intent: Intent? = nil)
-    case prs(UUID)
 }
 
 public enum ProgressHomeRoute: Hashable, Sendable {
@@ -125,6 +125,23 @@ public struct ProgressHomeView: View {
     /// found when the finished workouts or a History correction change,
     /// never per render. Nil until first found.
     @State private var stalls: [ExerciseStall]?
+    /// What the Compare row offers, found with the stalls, never per render:
+    /// nil while the latest workout that counts has nothing to compare.
+    @State private var comparison: Comparison?
+    /// Whether `comparison` has been found, so the section shows neither
+    /// the row nor the locked note until it knows which one is true.
+    @State private var compared = false
+
+    /// The latest workout that counts as a session, and the start of the
+    /// earlier workout Compare sets it against (RM-023). Values, not the
+    /// model: a workout deleted in History must not be read before the task
+    /// finds Compare again.
+    private struct Comparison {
+        let workoutID: UUID
+        let name: String
+        let start: Date
+        let earlierStart: Date
+    }
 
     public init(path: Binding<NavigationPath>) {
         self._path = path
@@ -204,11 +221,24 @@ public struct ProgressHomeView: View {
             stalls = userSettingsList.first.map {
                 StalledExercises.find(in: ctx, settings: $0, logs: recentSessionExercises)
             } ?? []
+            // Compare anchors on the latest workout that counts (decision 6).
+            comparison = SessionSetActions.countedWorkouts(completedSessions).first.flatMap { latest in
+                SessionComparator.earlierStart(of: SessionComparator.compare(current: latest, context: ctx))
+                    .map {
+                        Comparison(
+                            workoutID: latest.id,
+                            name: latest.displayName,
+                            start: latest.startedAt,
+                            earlierStart: $0
+                        )
+                    }
+            }
+            compared = true
         }
     }
 
-    /// What the stalls are found again on: the finished workouts and the
-    /// History corrections, as Today's week board is counted.
+    /// What the stalls and Compare are found again on: the finished workouts
+    /// and the History corrections, as Today's week board is counted.
     private struct StallsKey: Equatable {
         let finished: [PersistentIdentifier]
         let edits: Int?
@@ -301,22 +331,28 @@ public struct ProgressHomeView: View {
         BRUDivider(.ink)
     }
 
-    /// Compare — single "This week vs last week" row anchored on the
-    /// latest workout that counts as a session. Empty state until two
-    /// count, since an empty workout is never compared (decision 6).
+    /// Compare — one row for the latest workout that counts as a session,
+    /// named with its day and the earlier workout's, while Compare has an
+    /// exercise to set against that earlier workout. Otherwise a note that
+    /// states the rule, so a pair of other sessions never opens a screen of
+    /// "no prior data" rows (RM-023, D-130).
     @ViewBuilder
     private var compareSection: some View {
         BRUSectionHead("Compare")
 
-        let latest = latestCountedWorkouts
-        if latest.count == 2, let anchor = latest.first {
-            progressRow(title: "This week vs last week", subtitle: compareSubLabel) {
-                path.append(ProgressHomeRoute.sessionComparison(anchor.id))
+        if let comparison {
+            progressRow(
+                title: comparison.name,
+                subtitle: "\(SessionComparisonView.dayLabel(comparison.start)) vs "
+                    + SessionComparisonView.dayLabel(comparison.earlierStart),
+                identifier: "progress.compare"
+            ) {
+                path.append(ProgressHomeRoute.sessionComparison(comparison.workoutID))
             }
-        } else {
+        } else if compared {
             bruEmptyState(
                 heading: "No comparable session yet",
-                body: "Log a routine twice to compare."
+                body: SessionComparisonView.rule
             )
         }
 
@@ -334,8 +370,6 @@ public struct ProgressHomeView: View {
             } else {
                 Text("Exercise not found")
             }
-        case .prs(let id):
-            ExercisePRsView(scope: .forExercise(id))
         }
     }
 
@@ -420,18 +454,6 @@ public struct ProgressHomeView: View {
     private func countsAsSession(_ session: Session) -> Bool {
         guard session.completedAt != nil else { return false }
         return emptyWorkoutIDs.isEmpty || !emptyWorkoutIDs.contains(session.persistentModelID)
-    }
-
-    /// The latest two workouts that count as sessions, newest first, by the
-    /// shared rule. It stops at the second, so it reads only the newest
-    /// workouts' sets.
-    private var latestCountedWorkouts: [Session] {
-        var latest: [Session] = []
-        for workout in SessionSetActions.countedWorkouts(completedSessions) {
-            latest.append(workout)
-            if latest.count == 2 { break }
-        }
-        return latest
     }
 
     /// Top-10 most-recently-trained Exercise rows from workouts that count
@@ -527,10 +549,6 @@ public struct ProgressHomeView: View {
         case 0:  return "Finish a workout to set your first records."
         default: return "Records for \(BRUCountLabel.text(trained, "exercise"))"
         }
-    }
-
-    private var compareSubLabel: String {
-        "Compare to a routine you've logged twice."
     }
 
     /// How many exercises have stalled, as the Stalled screen's band counts.

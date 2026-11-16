@@ -16,7 +16,8 @@
 //   BRUDivider(.hair)
 //   one ExerciseHistoryRow per workout, newest first; the row carries the date
 //   and opens that workout's summary, where it can be corrected
-//   PRStripFooter at bottom
+//   PRStripFooter at bottom, then View records › to the exercise's records
+//   (RM-023)
 //
 // ## Empty states (UI-SPEC verbatim; "bouts" for cardio, RM-062)
 //   All filter + no sets: "No logged sets yet" / "Log this exercise in a workout to see history."
@@ -230,6 +231,12 @@ private struct FilteredHistoryContent: View {
                     topReps: prFooter.topReps,
                     volPR: prFooter.volPR
                 )
+            }
+            // Every record of the exercise, past the footer's three (RM-023).
+            if completed.contains(where: { PRDetector.isWorkingSet($0.setEntry) }) {
+                ExerciseLinkRow("View records") {
+                    ExercisePRsView(scope: .forExercise(exercise.id, name: exercise.name))
+                }
             }
         }
     }

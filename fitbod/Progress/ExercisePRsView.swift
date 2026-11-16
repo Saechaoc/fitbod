@@ -7,7 +7,10 @@
 //
 //  ## Scope (CONTEXT D-13)
 //
-//    .forExercise(UUID) — single exercise PR detail
+//    .forExercise(UUID, name:) — single exercise PR detail, opened by
+//                         View records › on the exercise's page, history
+//                         and chart (RM-023); the name shows once, in the
+//                         chart's name row, and the rows leave it out
 //    .allExercises      — all-exercises feed (consumed by
 //                         ProgressHomeView's "Personal Records" row)
 //
@@ -50,9 +53,10 @@
 //
 //  ## Row tap → the workout's summary
 //
-//  A PR row pushes `SessionHistoryRoute.summary(sessionID:)` for the
-//  workout its set was logged in: the summary a History row opens, with
-//  its ‹ BACK. ProgressHomeView's stack registers that route.
+//  A PR row pushes `SessionSummaryDestination` for the workout its set was
+//  logged in: the summary a History row opens, with its ‹ BACK. It pushes
+//  the view, as an exercise history row does, so the row works on any
+//  tab's stack and above the views the exercise screens push.
 //
 //  [CITED: CONTEXT D-10..D-13 + UI-SPEC § ExercisePRsView + PROG-05]
 //
@@ -64,7 +68,9 @@ import UIKit
 // MARK: - Scope + IntentFilter
 
 public enum ExercisePRsViewScope: Hashable, Sendable {
-    case forExercise(UUID)
+    /// One exercise's records, named once under the header rather than on
+    /// every row, as its chart shows its name.
+    case forExercise(UUID, name: String)
     case allExercises
 }
 
@@ -110,6 +116,11 @@ public struct ExercisePRsView: View {
                 // The range this screen covers, not a control.
                 right: .text("ALL TIME")
             )
+
+            if case .forExercise(_, let name) = scope {
+                ExerciseNameRow(name: name)
+                BRUDivider(.hair)
+            }
 
             // 3-segment inverted-active intent toggle bar
             intentToggle
@@ -212,7 +223,7 @@ private struct PRsHost: View {
     private var scopedSets: [SetEntry] {
         let working = sets.filter { PRDetector.isWorkingSet($0) }
         switch scope {
-        case .forExercise(let exerciseID):
+        case .forExercise(let exerciseID, _):
             return working.filter { $0.sessionExercise?.exercise?.id == exerciseID }
         case .allExercises:
             return working
@@ -307,7 +318,13 @@ private struct PRsHost: View {
             let bucketID = PRBucketID(kind: kind, bucket: bucket)
             ForEach(rows.map { PRRowItem(id: bucketID.rowID($0), entry: $0) }) { item in
                 let entry = item.entry
-                NavigationLink(value: summaryRoute(of: entry)) {
+                // A view, not a route: the list also opens from an
+                // exercise's page, history and chart, on Library's stack
+                // too, where a route above a pushed view breaks Back.
+                // `body` lists only sets that have a workout.
+                NavigationLink {
+                    SessionSummaryDestination(sessionID: entry.sessionExercise?.session?.id ?? UUID())
+                } label: {
                     prRow(kind: kind, entry: entry)
                 }
                 .buttonStyle(.bruRow)
@@ -319,13 +336,6 @@ private struct PRsHost: View {
                 }
             }
         }
-    }
-
-    /// The summary of the workout the set was logged in, the screen a
-    /// History row opens. `body` lists only sets that have a workout; a set
-    /// without one would leave its row's link disabled.
-    private func summaryRoute(of entry: SetEntry) -> SessionHistoryRoute? {
-        entry.sessionExercise?.session.map { .summary(sessionID: $0.id) }
     }
 
     // MARK: - PR Row (exercise name over the 3-column BRU layout per bru-screens/progress-chart.jsx)
@@ -345,10 +355,13 @@ private struct PRsHost: View {
             : AnyLayout(HStackLayout(spacing: 10))
 
         return VStack(alignment: .leading, spacing: 4) {
-            Text(PRBucketRanking.exerciseName(entry))
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruInk)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // One exercise's list names it once, under the header.
+            if scope == .allExercises {
+                Text(PRBucketRanking.exerciseName(entry))
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             columns {
                 // (a) Leading ~110pt fixed — kind label

@@ -196,14 +196,11 @@ struct ExerciseDetailView: View {
     private var recentPerformanceSection: some View {
         VStack(spacing: 0) {
             RecentPerformanceList(exercise: exercise, unit: unit)
-            NavigationLink {
+            ExerciseLinkRow("View all history") {
                 ExerciseHistoryView(exercise: exercise)
-            } label: {
-                linkRow("View all history")
             }
-            .buttonStyle(.bruRow)
-            // Phase 6 plan 06-05 — progress chart deep link, hidden while
-            // nothing is logged (avoids an empty chart).
+            // Phase 6 plan 06-05 — progress chart deep link, and the
+            // records (RM-023), hidden while there is nothing to show.
             ProgressEntryRow(exercise: exercise)
             BRUDivider(.ink)
         }
@@ -282,22 +279,6 @@ struct ExerciseDetailView: View {
             .padding(16)
             BRUDivider(.ink)
         }
-    }
-
-    private func linkRow(_ title: String) -> some View {
-        HStack {
-            Text(title)
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruInk)
-            Spacer()
-            Text("›")
-                .font(BRUFont.displayMedium)
-                .foregroundStyle(Color.bruMuted)
-        }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 52)
-        .contentShape(Rectangle())
-        .overlay(alignment: .top) { BRUDivider(.hair) }
     }
 
     /// Primary (`role == "primary"`) first, then secondary; within each
@@ -567,10 +548,11 @@ struct ExerciseDetailView: View {
 
 // MARK: - Progress entry row (Phase 6 plan 06-05)
 
-/// Conditional "View progress" navigation row — hidden when the
-/// exercise has zero logged working SetEntries to avoid pushing
-/// the user into an empty chart. Lives inside ExerciseDetailView's
-/// History section.
+/// Conditional "View progress chart" and "View records" rows: the chart
+/// hidden while the exercise has no logged sets, to avoid pushing the user
+/// into an empty chart, and the records while it has no set that a record
+/// counts (`PRDetector.isWorkingSet`, RM-023). Lives inside
+/// ExerciseDetailView's History section.
 private struct ProgressEntryRow: View {
     let exercise: Exercise
     @Query private var loggedExercises: [SessionExercise]
@@ -590,24 +572,14 @@ private struct ProgressEntryRow: View {
 
     var body: some View {
         if hasLoggedSets {
-            NavigationLink {
+            ExerciseLinkRow("View progress chart") {
                 ExerciseProgressView(exercise: exercise)
-            } label: {
-                HStack {
-                    Text("View progress chart")
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruInk)
-                    Spacer()
-                    Text("›")
-                        .font(BRUFont.displayMedium)
-                        .foregroundStyle(Color.bruMuted)
-                }
-                .padding(.horizontal, 16)
-                .frame(minHeight: 52)
-                .contentShape(Rectangle())
-                .overlay(alignment: .top) { BRUDivider(.hair) }
             }
-            .buttonStyle(.bruRow)
+        }
+        if loggedExercises.contains(where: { ($0.sets ?? []).contains(where: PRDetector.isWorkingSet) }) {
+            ExerciseLinkRow("View records") {
+                ExercisePRsView(scope: .forExercise(exercise.id, name: exercise.name))
+            }
         }
     }
 }

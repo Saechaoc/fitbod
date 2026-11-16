@@ -202,6 +202,7 @@ Correcting history can change an ended review without changing archived configur
 
 Comparable performances share exercise/session intent/machine and finished workouts.
 Progression also requires completed non-warmup positive reps/weight; records add rep bucket/kind; Compare adds template identity and a 14-day window.
+Compare sets each exercise of the latest workout that counts against its last workout of the same template, intent and machine that started at most 14 days earlier; Progress offers Compare only while an exercise has a top set in both (`SessionComparator.earlierStart`, [RM-023](docs/ROADMAP.md#rm-023)).
 Progression kind is not a comparability key.
 Do not widen one reader alone.
 The exercise chart's every chip, hero and stall band read `ProgressChartSelection`: the finished workouts of one intent, picked or else the newest workout's, that started in the chosen period, across machines ([RM-023](docs/ROADMAP.md#rm-023)).
