@@ -608,7 +608,9 @@ Limits: the times on the phone are not measured.
 
 ### <a id="rm-022"></a>RM-022 — Catalog curation and safe import
 
-**P1 · Planned: slice 8 of the complete catalog (user decision 2026-11-10).** Slices 1–7 are delivered, the coverage fill (slice 7) on 2026-11-15; the phone's store is on seed 10, and seed 11 reaches it with the next install.
+**P1 · Implemented; verification pending (user decision 2026-11-10).** Slices 1–8 are delivered, the sibling estimate (slice 8) on 2026-11-15; the phone's store is on seed 10, and seed 11 reaches it with the next install.
+Unproven, all on the phone: History keeps logged names, Library lists Low Cable Triceps Extension and "side lateral raise" finds Lateral Raise (Dumbbell) (families), Bench Press folds into one line (grouped list), seed 11 runs and "hike" finds Outdoor Walk (slice 7), and a first-time variant shows its sibling's estimate at once and logs it (slice 8).
+Open for the user: whether the family search also matches the aliases of a family's rows, so "rdl" finds Romanian Deadlift.
 Stable-ID incremental import exists; FT-05 Single-Leg Kneeling Leg Curl (hamstrings/machine) shipped at seed v3 (`0892c2cf`).
 Seed v4 adds `curation.json`, a local overlay keyed by upstream ID; it retags 39 bodyweight and 6 weighted-bodyweight moves whose upstream equipment was blank or "other", so dips, chins, muscle-ups and inverted rows log at zero added weight.
 Seed v5 carries tracking through the same overlay: 9 holds and carries log a time and the band-assisted pull-up logs assistance; it also retags the 20 Smith machine rows and Bodyweight Flyes, and gives EZ-bar and medicine-ball rows their own equipment.
@@ -693,6 +695,23 @@ Inspected at 390pt, light mode: the family list, "press" with and without the ke
 The family list has no approved reference; its search row is the Library's, and the Library's row still matches its design-map capture.
 Open for slice 7: VoiceOver, larger text and dark mode are unchecked, and the family search reads family names only, not the aliases of a family's rows, so "rdl" finds nothing there.
 Verify on the phone after the next install: seed 11 runs, and "hike" finds Outdoor Walk in the Library.
+Sibling estimate (slice 8, 2026-11-15): a lift that progresses load, with no finished workout of its own at the workout's intent and no set done in this one, is offered the top working set of the newest finished matching-intent workout of a sibling with its family, equipment, loading, tracking and unit.
+The card says so where "Choose a starting weight" stood ("Target 6–8 reps · Target RPE 8 · Estimated 110 lb from Bench Press (Barbell)"), and every pending set offers that weight.
+Equipment that takes a machine (machine, Smith machine, cable, cardio machine) gets no estimate, since loads compare only within one machine ([RM-066](#rm-066), the user's answer of 2026-11-12); a sibling in another unit gives none, since units relabel and never convert; two siblings in one workout give the lighter top set.
+Any load of the lift's own wins over it (a block target, an earlier set in this workout, its last workout), and it stops showing once a working set of the lift is done.
+It is computed when shown and never stored, so there is no schema or backup change; it is not a record, progression history or Last time, and a set logged from it is an ordinary set that becomes the lift's own history.
+Timing on [RM-019](#rm-019)'s four-year history (iPhone 17 simulator), for a first-time variant whose three barbell siblings have 139 logged workouts each: the read takes about 66 ms (max 68 ms), 14 to 19 ms per long-history sibling.
+So the card reads it once per lift and machine, in a context of its own off the main actor (69 ms, same result), and keeps it in state; each draw then only checks whether a set is done (at most 1.1 ms), and a lift with a workout of its own never reads it, so its card does not draw again.
+Noted, not changed: a card whose lift has the four-year history spends about 35 ms per draw on its existing prescription, against 1 ms for a first-time variant.
+Unit: `SiblingEstimateTests` (6) cover the sibling choice (family, equipment, loading, the newest matching-intent workout, the read off the main actor), the lighter top set in one workout, no comparable sibling keeping today's prompt (a kg sibling among them), no estimate for a machine variant or a variant with a workout of its own, the label, and an accepted estimate logging as an ordinary set that the next workout prescribes from.
+`SiblingEstimateTests` and `WorkoutSetSuggestionsTests` passed 12 of 12 (`fast-20261115-223151-93801`); since GitNexus rated the card's `headerDetails` CRITICAL, the unit target ran 1,366: 1,363 passed, 2 skipped, 1 expected failure (`fast-20261115-223301-94193`).
+UI: `CalibratingWeightUITests.testFirstTimeVariantLogsItsSiblingsTopSet` swaps the calibrating bench workout's lift to Bench Press (Paused), takes set 1's offer, and finds 110 lb, the barbell bench's top set, logged after a relaunch.
+With the card's read removed it failed (`fast-20261115-223916-97613`); restored, the class passed 3 of 3 (`fast-20261115-224009-98165`).
+Inspected at 390pt, light mode (iPhone 17e): Bench Press (Paused)'s first set offering the estimate, the accepted set, and a dumbbell variant with no comparable sibling keeping "Choose a starting weight"; the logger has no approved 390pt reference, and the estimate uses the guidance line's existing style.
+A screen recording of the swap showed no "Choose a starting weight" before the estimate: the closing swap sheet covers the card until the estimate is in place.
+Found, not changed: a first-time dumbbell lift swapped into a workout gets a warm-up ramp at 0 lb, since `WarmupRamp.shouldGenerate` skips its light-weight check when the bar weighs nothing, so a top weight of 0 passes.
+Open for slice 8: the estimate builds no warm-up ramp; VoiceOver, larger text and dark mode are unchecked.
+Verify on the phone after the next install: a never-logged variant of a lift with history, such as Bench Press (Paused), shows its estimate on the first set at once, and Done logs that weight.
 **References:** LIB-01–06/FT-05; [importer](../fitbod/ExerciseLibrary/ExerciseLibraryImporter.swift), [seed source](../fitbod/Resources/ExerciseSeed/SOURCE.md).
 
 ### <a id="rm-062"></a>RM-062 — Tracking types, cardio and set duration
