@@ -787,13 +787,14 @@ On `main` the Library change left `UICopyRulesTests` failing: the history's "No 
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 
-**P2 · Planned: Compare and older-record routes.** The first delivery (2026-11-15) compares one intent over a chosen period, explains sparse and empty charts, and makes the phase chips filter.
-Charts, PR replay, comparison, weekly tonnage and PR workout detail exist; Compare, older records and weekly muscle-set history remain.
+**P2 · Planned: weekly muscle-set history.** The first delivery (2026-11-15) compares one intent over a chosen period, explains sparse and empty charts, and makes the phase chips filter.
+The second (2026-11-15) offers Compare only when it has an earlier workout to set against, and opens an exercise's history and records from its chart, history and page.
+Charts, PR replay, Compare, weekly tonnage, PR workout detail and the routes to an exercise's history and records exist; weekly muscle-set history remains as its own delivery.
 **Done when:** selected periods/intent/units give comparable series and sparse/empty explanations; phase chips actually filter; Compare appears for eligible histories/describes the real 14-day rule; older lifts and exercise records are reachable from history/chart/detail. Add weekly muscle-set history against landmarks. Reconcile aggregates to sets and resolve overlapping stacks before claiming additive totals.
 **Scope / sequence:** Deliver comparable period/intent/sparse routes, then eligible Compare/older-record routes. Mixed-unit series require RM-021; additive stacks require RM-041. Weekly muscle-set history returns after these and stalls/recaps as a separate bounded analytics delivery.
 **Requires:** [RM-021](#rm-021) for mixed-unit series; [RM-041](#rm-041) before additive stacks. Neither blocks same-unit navigation fixes.
 **Scheduled after:** [RM-019](#rm-019), [RM-020](#rm-020) before broader analytics screens.
-**Evidence:** First delivery on `swarm/C3a` (`e304e637`, review fixes `b4bd3abb`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5; Compare, older records and weekly muscle-set history have no passing acceptance yet.
+**Evidence:** First delivery on `main` (`91063401`, review fixes `68157e6b`), second on `main` (`af4e9615`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5; weekly muscle-set history has no passing acceptance yet.
 An exercise's chart has LAST 8 WK, LAST 26 WK and ALL TIME (the default), and an intent row when the exercise has workouts at more than one intent.
 Every chip, the hero and the stall bands read one `ProgressChartSelection`: the finished workouts of one intent that started in the period, across machines ([RM-066](#rm-066)), so a workout in progress never plots.
 The chart opens on the newest workout's intent, and a Stalled row opens it on its stall's intent.
@@ -808,7 +809,18 @@ The period, intent and phase chips carry the selected trait instead of reading "
 `ProgressChartSelectionTests` and `WeeklyTonnagePhaseFilterTests` cover the period and its exact lower bound, intent, an open workout, the PR rule (`bestE1RM`), the notes and the phase filter, including a workout before its block; with the chart, series, stall, copy-rule and tonnage suites they passed 60/60 (`fast-20261115-160518-26641`).
 `EmptyWorkoutCountsUITests`, `PRListAndSeriesUITests` and `WeeklyTonnageUITests`, with its new phase-chip check, passed 10/10 on the rebased branch (`fast-20261115-155631-20978`) and 10/10 after the review fixes (`fast-20261115-160600-27447`).
 390pt light captures on the iPhone 17e were inspected: one-workout notes at ALL TIME and LAST 8 WK, both intents of a two-intent exercise, the stalled chart from its row, and Weekly Tonnage with no block, all phases, Deload, a deload week and an empty Peak.
+Progress offers Compare only when an exercise of the latest workout that counts has a top set in it and in the last workout of the same session, intent and machine that started at most 14 days earlier (`SessionComparator.earlierStart`), so two workouts of different sessions no longer open a screen of "no prior data" rows ([D-130](design-map/audit.md#d-130)).
+Otherwise Compare's note states that rule, and neither the row nor the note shows until Compare has been checked.
+The row names the workout over both days, such as "Bench & Squat" over "Nov 8 vs Oct 25", and the Compare screen's header names the workout instead of "This week vs last week" ([D-48](design-map/audit.md#d-48)).
+The window counts 14 × 24 hours, so a workout 14 calendar days back at a later time of day is out, although the note says "within 14 days"; whether to count calendar days is a product question.
+An exercise's chart ends with View all history and View records, its history with View records, and its page adds View records under View progress chart, so the exercise's older workouts and its records open from all three ([D-80](design-map/audit.md#d-80), [D-135](design-map/audit.md#d-135)).
+The records screen names the exercise once under its header, and a record opens its workout's summary on the Progress and Library tabs, with Back returning to the records.
+`SessionComparatorTests` checks Compare at exactly 14 days, one second past, for another session and without a top set in both workouts; the unit target passed 1,361 of 1,364 with 2 skipped and 1 expected failure (`fast-20261115-225254-7670`).
+With Compare offered for a single workout, `testCompareStaysLockedWithOneLoggedWorkout` failed as it should (`fast-20261115-225122-6555`).
+`EmptyWorkoutCountsUITests`, `PRRowOpensWorkoutUITests`, `ExerciseHistoryRowsUITests`, `PRListAndSeriesUITests` and `SwipeBackUITests` passed 11/11 (`fast-20261115-225420-9371`); after the last layout and state fixes, `PRListAndSeriesUITests` passed 2/2 (`fast-20261115-230015-13541`) and `EmptyWorkoutCountsUITests` 4/4 (`fast-20261115-230312-16455`).
+390pt light captures on the iPhone 17e were inspected: Compare shown and hidden, the Compare screen, the chart's links, the records from the chart, history and page, an older record's workout from each, and Back to the records.
 Still open: the hero shows e1RM on VOLUME and AVG RPE ([D-74](design-map/audit.md#d-74)), exercise history counts an open workout ([D-72](design-map/audit.md#d-72)), and at 390pt the phase row scrolls with Deload off screen ([D-182](design-map/audit.md#d-182), [RM-044](#rm-044)).
+Also still open: a lift outside Recent's ten reaches its chart only through the Library ([D-132](design-map/audit.md#d-132)), every row of a records list reads as a PR ([D-134](design-map/audit.md#d-134)), and the chart does not link to the exercise's page ([D-80](design-map/audit.md#d-80)).
 **References:** PROG-01–08, D-28/D-48/D-72/D-74–D-80/D-130/D-132/D-134–D-135, F318/F341/F342; [workflow](design-map/workflows/check-progress.md).
 
 ### <a id="rm-024"></a>RM-024 — Compact logging preserves context and reach
