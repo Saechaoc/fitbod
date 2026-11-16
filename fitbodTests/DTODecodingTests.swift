@@ -73,7 +73,7 @@ struct DTODecodingTests {
         )
         let raw = try String(contentsOf: url, encoding: .utf8)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        #expect(Int(trimmed) == 10, "Stair machines and treadmills were retagged at SEED_VERSION=10 (RM-062), got: \(trimmed)")
+        #expect(Int(trimmed) == 11, "Outdoor Walk gained the alias \"hike\" at SEED_VERSION=11 (RM-022), got: \(trimmed)")
     }
 
     // MARK: - Equipment mapping (LIB-06)

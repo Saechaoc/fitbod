@@ -5565,6 +5565,7 @@
     "tracking": "duration_distance",
     "aliases": [
       "outdoor walking",
+      "hike",
       "hiking"
     ]
   },

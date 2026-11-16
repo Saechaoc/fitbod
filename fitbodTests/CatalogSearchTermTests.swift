@@ -390,6 +390,7 @@ struct CatalogSearchTermTests {
         ("ski erg", "SkiErg"),
         ("skierg", "SkiErg"),
         ("outdoor run", "Outdoor Run"),
+        ("hike", "Outdoor Walk"),
         ("cycling", "Cycling"),
         ("bike ride", "Cycling"),
         ("swim", "Swimming"),
