@@ -2,7 +2,10 @@
 //  RoutineBlockLinkageTests.swift
 //  fitbodTests
 //
-//  Phase 4 coverage for RoutineDraft.blockID materialization.
+//  How a session links to a block for its progression (RM-026): only through
+//  the program graph, a slot in the active block's routine. The deprecated
+//  `SessionTemplate.block` stays stored, and the editor neither reads nor
+//  writes it.
 //
 
 import Foundation
@@ -18,190 +21,116 @@ struct RoutineBlockLinkageTests {
         return ModelContext(container)
     }
 
-    private func makeExercise() -> Exercise {
-        Exercise(
+    /// A session with one lift, in a slot of `routine` when one is given.
+    private func makeSession(_ name: String, in routine: Split? = nil, context: ModelContext) -> SessionTemplate {
+        let exercise = Exercise(
             name: "Barbell Bench Press",
             canonicalName: "barbell bench press",
             equipmentRaw: Equipment.barbell.rawValue,
             mechanicRaw: Mechanic.compound.rawValue
         )
+        context.insert(exercise)
+        let session = SessionTemplate()
+        session.name = name
+        context.insert(session)
+        let lift = SessionExerciseTemplate()
+        context.insert(lift)
+        lift.sessionTemplate = session
+        lift.exercise = exercise
+        if let routine {
+            let slot = SplitSessionSlot()
+            context.insert(slot)
+            slot.split = routine
+            slot.sessionTemplate = session
+        }
+        return session
     }
 
-    private func makeValidDraft(blockID: UUID? = nil) -> RoutineDraft {
-        let draft = RoutineDraft()
-        draft.name = "Push Day"
-        draft.blockID = blockID
-        draft.append(exercise: makeExercise())
-        return draft
-    }
-
-    private func fetchRoutine(_ routineID: UUID, context: ModelContext) throws -> SessionTemplate {
-        let targetID = routineID
-        let descriptor = FetchDescriptor<SessionTemplate>(
-            predicate: #Predicate<SessionTemplate> { $0.id == targetID }
-        )
-        return try #require(try context.fetch(descriptor).first)
-    }
-
-    @Test("RoutineDraft blockID defaults nil")
-    func routineDraftBlockIDDefaultsNil() {
-        let draft = RoutineDraft()
-
-        #expect(draft.blockID == nil)
-    }
-
-    @Test("RoutineDraft init from SessionTemplate populates blockID")
-    func routineDraftInitFromRoutinePopulatesBlockID() throws {
-        let context = try makeContext()
-        let block = Block()
-        block.name = "Peak"
-        context.insert(block)
-
-        let routine = SessionTemplate()
-        routine.name = "Bench"
-        routine.block = block
+    /// The active block, its routine, and a block that ended on another routine.
+    private func makeGraph(in context: ModelContext) throws -> (routine: Split, active: Block, ended: Block) {
+        let routine = Split()
+        routine.name = "Upper Lower"
         context.insert(routine)
+        let active = Block()
+        active.name = "Spring Block"
+        context.insert(active)
+        active.isActive = true
+        active.split = routine
+        let ended = Block()
+        ended.name = "Winter Block"
+        context.insert(ended)
+        ended.endDate = .now
         try context.save()
-
-        let draft = RoutineDraft(routine: routine)
-
-        #expect(draft.blockID == block.id)
+        return (routine, active, ended)
     }
 
-    @Test("RoutineDraft save materializes SessionTemplate.block")
-    func routineDraftSaveMaterializesRoutineBlock() throws {
+    @Test("Eligibility reads the active graph, not the deprecated block")
+    func eligibilityReadsTheActiveGraph() throws {
         let context = try makeContext()
-        let block = Block()
-        block.name = "Peak"
-        context.insert(block)
-
-        let routine = SessionTemplate()
-        context.insert(routine)
-
-        let draft = makeValidDraft(blockID: block.id)
-        draft.save(into: routine, context: context)
+        let graph = try makeGraph(in: context)
+        let slotted = makeSession("Upper A", in: graph.routine, context: context)
+        let linkedOnly = makeSession("Upper B", context: context)
+        linkedOnly.block = graph.active
         try context.save()
 
-        let fetched = try fetchRoutine(routine.id, context: context)
-        #expect(fetched.block?.id == block.id)
+        #expect(RoutineDraft(routine: slotted).isOnActiveBlock)
+        #expect(!RoutineDraft(routine: linkedOnly).isOnActiveBlock)
+        // A new session is in no routine until it saves.
+        #expect(!RoutineDraft().isOnActiveBlock)
     }
 
-    @Test("RoutineDraft save with nil blockID nullifies SessionTemplate.block")
-    func routineDraftSaveWithNilBlockIDNullifiesRoutineBlock() throws {
+    @Test("A session on the active block saves Block Periodized and Hybrid, and its deprecated block stays")
+    func sessionOnTheActiveBlockSavesBlockProgression() throws {
         let context = try makeContext()
-        let block = Block()
-        block.name = "Peak"
-        context.insert(block)
-
-        let routine = SessionTemplate()
-        routine.name = "Bench"
-        routine.block = block
-        context.insert(routine)
-        try context.save()
-
-        let draft = RoutineDraft(routine: routine)
-        draft.blockID = nil
-        draft.save(into: routine, context: context)
-        try context.save()
-
-        let fetched = try fetchRoutine(routine.id, context: context)
-        #expect(fetched.block == nil)
-    }
-
-    @Test("RoutineDraft save with unknown blockID leaves SessionTemplate.block nil")
-    func routineDraftSaveWithUnknownBlockIDLeavesRoutineBlockNil() throws {
-        let context = try makeContext()
-        let routine = SessionTemplate()
-        context.insert(routine)
-
-        let draft = makeValidDraft(blockID: UUID())
-        draft.save(into: routine, context: context)
-        try context.save()
-
-        let fetched = try fetchRoutine(routine.id, context: context)
-        #expect(fetched.block == nil)
-    }
-
-    @Test("RoutineDraft round trip preserves block linkage across saves")
-    func routineDraftRoundTripPreservesBlockLinkageAcrossSaves() throws {
-        let context = try makeContext()
-        let block = Block()
-        block.name = "Peak"
-        context.insert(block)
-
-        let routine = SessionTemplate()
-        context.insert(routine)
-
-        let firstDraft = makeValidDraft(blockID: block.id)
-        firstDraft.save(into: routine, context: context)
-        try context.save()
-
-        let secondDraft = RoutineDraft(routine: routine)
-        secondDraft.name = "Bench Day"
-        secondDraft.save(into: routine, context: context)
-        try context.save()
-
-        let fetched = try fetchRoutine(routine.id, context: context)
-        #expect(fetched.name == "Bench Day")
-        #expect(fetched.block?.id == block.id)
-    }
-
-    @Test("SessionTemplate linked to block can save block-required progression")
-    func routineLinkedToBlockCanSaveBlockRequiredProgression() throws {
-        let context = try makeContext()
-        let block = Block()
-        block.name = "Peak"
-        context.insert(block)
+        let graph = try makeGraph(in: context)
 
         for kind in [ProgressionKind.block, .hybrid] {
-            let routine = SessionTemplate()
-            context.insert(routine)
-
-            let draft = makeValidDraft(blockID: block.id)
-            draft.progressionKind = kind
-            draft.save(into: routine, context: context)
+            let session = makeSession("Upper A", in: graph.routine, context: context)
+            session.block = graph.ended
             try context.save()
 
-            let fetched = try fetchRoutine(routine.id, context: context)
-            #expect(fetched.block?.id == block.id)
-            #expect(fetched.progressionKind == kind)
+            let draft = RoutineDraft(routine: session)
+            #expect(RoutineDraft.availableProgressionKinds(hasBlock: draft.isOnActiveBlock).contains(kind))
+            draft.progressionKind = kind
+            try draft.persist(into: session, context: context)
+
+            #expect(session.progressionKind == kind)
+            #expect(session.block?.id == graph.ended.id)
         }
     }
 
-    @Test("SessionTemplate without block falls back from block-required progression")
-    func routineWithoutBlockFallsBackFromBlockRequiredProgression() throws {
+    @Test("A session off the active block falls back to Double Progression, and its deprecated block stays")
+    func sessionOffTheActiveBlockFallsBackToDouble() throws {
         let context = try makeContext()
+        let graph = try makeGraph(in: context)
 
         for kind in [ProgressionKind.block, .hybrid] {
-            let routine = SessionTemplate()
-            context.insert(routine)
-
-            let draft = makeValidDraft(blockID: nil)
-            draft.progressionKind = kind
-            draft.save(into: routine, context: context)
+            let session = makeSession("Upper B", context: context)
+            session.block = graph.active
             try context.save()
 
-            let fetched = try fetchRoutine(routine.id, context: context)
-            #expect(fetched.block == nil)
-            #expect(fetched.progressionKind == .double)
+            let draft = RoutineDraft(routine: session)
+            draft.progressionKind = kind
+            try draft.persist(into: session, context: context)
+
             #expect(draft.progressionKind == .double)
+            #expect(session.progressionKind == .double)
+            #expect(session.block?.id == graph.active.id)
         }
     }
 
-    @Test("SessionTemplate with unresolved block falls back from block-required progression")
-    func routineWithUnresolvedBlockFallsBackFromBlockRequiredProgression() throws {
+    @Test("A copy of a session on the active block keeps Block Periodized and no deprecated block")
+    func copyKeepsBlockProgression() throws {
         let context = try makeContext()
-        let routine = SessionTemplate()
-        context.insert(routine)
-
-        let draft = makeValidDraft(blockID: UUID())
-        draft.progressionKind = .hybrid
-        draft.save(into: routine, context: context)
+        let graph = try makeGraph(in: context)
+        let session = makeSession("Upper A", in: graph.routine, context: context)
+        session.progressionKindRaw = ProgressionKind.block.rawValue
+        session.block = graph.ended
         try context.save()
 
-        let fetched = try fetchRoutine(routine.id, context: context)
-        #expect(fetched.block == nil)
-        #expect(fetched.progressionKind == .double)
-        #expect(draft.progressionKind == .double)
+        let copy = try RoutineDuplicator.duplicate(RoutineDraft(routine: session), context: context)
+
+        #expect(copy.progressionKind == .block)
+        #expect(copy.block == nil)
     }
 }

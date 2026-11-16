@@ -391,6 +391,59 @@ struct SessionFactoryTests {
         #expect(session.block == nil, "ad-hoc session with activeBlock=nil must have nil block")
     }
 
+    @Test("blockProgressionFollowsTheActiveGraph — a session whose deprecated block disagrees with the graph")
+    func blockProgressionFollowsTheActiveGraph() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+        // The active block, in its deload week, runs the routine that holds the session.
+        let active = try makeDeloadBlock(ctx: ctx)
+        let split = Split()
+        split.name = "Test Split"
+        ctx.insert(split)
+        let slot = SplitSessionSlot()
+        ctx.insert(slot)
+        slot.split = split
+        slot.sessionTemplate = routine
+        active.split = split
+        // The deprecated edge names another block, in its accumulation phase.
+        let deprecated = Block()
+        deprecated.name = "Deprecated Block"
+        ctx.insert(deprecated)
+        let accumulation = BlockPhase()
+        ctx.insert(accumulation)
+        accumulation.block = deprecated
+        routine.block = deprecated
+        try ctx.save()
+
+        // The editor offers Block Periodized from the graph (RM-026).
+        let draft = RoutineDraft(routine: routine)
+        #expect(draft.isOnActiveBlock)
+        draft.progressionKind = .block
+        try draft.persist(into: routine, context: ctx)
+        #expect(routine.progressionKind == .block)
+        #expect(routine.block?.id == deprecated.id, "the deprecated edge stays as stored")
+
+        guard case .started(let session) = WorkoutStarter.start(routine, in: split, context: ctx) else {
+            Issue.record("The workout did not start")
+            return
+        }
+        #expect(session.progressionKind == .block)
+        #expect(session.block?.id == active.id)
+        let first = try #require((session.exercises ?? []).first { $0.orderIndex == 0 })
+        let prescription = SessionFactory.prescription(
+            for: first.exercise,
+            targetRepsLow: first.targetRepsLow,
+            targetRepsHigh: first.targetRepsHigh,
+            targetRPE: first.targetRPE,
+            in: session,
+            strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
+            userSettings: nil,
+            context: ctx
+        )
+        #expect(prescription.explanation.formulaName == "Block periodized")
+        #expect(prescription.explanation.phaseContextLine == "deload phase - Week 1 of 1")
+    }
+
     // MARK: - 9. tracksTempo / tracksPartialReps snapshot (Wave-4 plan 04-02)
 
     @Test("snapshotsTracksTempoAndTracksPartialReps — opt-in row toggles are snapshotted")

@@ -10,17 +10,13 @@
 //  `SchemaV7.SessionTemplate` (the baseline schema) is a typealias for
 //  this type.
 //
-//  The optional `block` relationship lets a template belong to a
-//  periodization block when one is active. The inverse for this field is
-//  `Block.legacyTemplates` (CR-02 carry-over — declared in Block.swift), which
-//  restores the nullify-on-block-delete contract that `Block.routines` provided
-//  at baseline. The field is still load-bearing — `SessionFactory` reads
-//  `template.block` to resolve the scheduled `BlockPhase` (volume/intensity
-//  multipliers) at log time, and `RoutineDraft` / `RoutineDuplicator` carry it
-//  across edits. V7's Split→SplitSessionSlot graph is the new program structure;
-//  this direct template→block link is retained for periodization resolution until
-//  the Phase 8 unified resolver supersedes it (Phase 8 removes both
-//  `SessionTemplate.block` and `Block.legacyTemplates`).
+//  The optional `block` relationship is a deprecated edge, kept stored until a
+//  later schema version removes it with its inverse `Block.legacyTemplates`
+//  (declared in Block.swift), which nullifies it when the block is deleted.
+//  No training code reads it: a workout takes the active block, and the
+//  session editor offers Block Periodized and Hybrid from the program graph,
+//  Block→Split→SplitSessionSlot (RM-026). Only backup export and restore
+//  carry it.
 //
 //  Cascade: deleting a SessionTemplate cascades its SessionExerciseTemplate
 //  lines (owned rows). SessionTemplate→Session is intentionally NOT a
@@ -46,9 +42,8 @@ public final class SessionTemplate {
     public var createdAt: Date = Date.now
     public var updatedAt: Date = Date.now
     public var isArchived: Bool = false
-    // DEPRECATED(Phase 8): write-orphaned for prescription resolution; SessionFactory no longer
-    // reads this edge. Removal in V8 schema migration. Non-prescription writers (RoutineDraft,
-    // RoutineDuplicator, BackupRestorer) still set it — see RESEARCH §Pattern 4 readers inventory.
+    // DEPRECATED: no training code reads or writes this edge (RM-026); backup export and
+    // restore keep it. Removing it needs a later schema version.
     public var block: Block? = nil
     public var folderID: UUID? = nil
     public var intentRaw: String = "strength"

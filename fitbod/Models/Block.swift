@@ -67,12 +67,10 @@ public final class Block {
     @Relationship(inverse: \Session.block)
     public var sessions: [Session]? = []
 
-    // CR-02 carry-over — load-bearing legacy edge. SessionFactory still reads
-    // SessionTemplate.block to resolve the scheduled BlockPhase (see SessionTemplate.swift).
-    // This inverse exists ONLY to restore the nullify-on-block-delete contract that
-    // Block.routines provided at baseline; it is NOT the new program-graph structure
-    // (Block→Split→SplitSessionSlot is). Phase 8 removes both sides when SessionFactory
-    // migrates off template.block.
+    // Deprecated inverse of SessionTemplate.block (see SessionTemplate.swift), which no
+    // training code reads. It exists ONLY to nullify that edge when the block is deleted;
+    // the program graph is Block→Split→SplitSessionSlot. A later schema version removes
+    // both sides.
     // Note: named `legacyTemplates` (NOT `routines`) — the public Block.routines name
     // stays permanently dead; this is an internal carry-over edge only.
     @Relationship(deleteRule: .nullify, inverse: \SessionTemplate.block)

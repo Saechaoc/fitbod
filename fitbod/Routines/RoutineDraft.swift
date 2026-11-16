@@ -90,10 +90,10 @@ public final class RoutineDraft {
     /// picker in the builder writes this directly.
     public var folderID: UUID? = nil
 
-    /// Soft draft ref to `Block`. The save path fetches by UUID and
-    /// materializes `Routine.block`, or nils the relationship when the
-    /// id is absent/unknown.
-    public var blockID: UUID? = nil
+    /// Whether the session is in the active block's routine, read from the
+    /// program graph (block, routine, slot) and never from the deprecated
+    /// `SessionTemplate.block`. Block Periodized and Hybrid need it (RM-026).
+    public var isOnActiveBlock: Bool = false
 
     /// Ordered list of exercise drafts. Index in this array is the
     /// canonical `orderIndex` at save time — the `.onMove` handler in
@@ -219,7 +219,7 @@ public final class RoutineDraft {
         self.name = routine.name
         self.notes = routine.notes
         self.folderID = routine.folderID
-        self.blockID = routine.block?.id
+        self.isOnActiveBlock = routine.modelContext.map { isTemplateOnActiveBlock(routine, context: $0) } ?? false
         // Phase 3.1 PIVOT-04 — pull session-level Intent + Progression
         // off the persisted SessionTemplate row. The accessors are computed
         // (`intentRaw` → `Intent`) per FOUND-03 enum-as-String at
@@ -240,11 +240,11 @@ public final class RoutineDraft {
 
     /// Phase 4 (D-19 relocated): block-aware filter for the
     /// session-level Progression header picker. `.block` and `.hybrid`
-    /// strategies require a routine.block to be meaningful — without a
-    /// block, BlockPeriodizedStrategy has no phase to read multipliers
-    /// from and HybridStrategy's min(blockTarget, rpeTarget) reduces to
-    /// rpeTarget. The picker therefore hides those two cases when the
-    /// routine has no block. After Phase 3.1's PIVOT-04 hoisted
+    /// strategies need the session on the active block to be meaningful —
+    /// without a block, BlockPeriodizedStrategy has no phase to read
+    /// multipliers from and HybridStrategy's min(blockTarget, rpeTarget)
+    /// reduces to rpeTarget. The picker therefore hides those two cases
+    /// off the active block (`isOnActiveBlock`). After Phase 3.1's PIVOT-04 hoisted
     /// Progression to the session level, this filter lives on the
     /// builder header picker (not on the removed per-exercise row).
     ///
@@ -265,11 +265,11 @@ public final class RoutineDraft {
 
     /// Phase 4 (D-19 relocated): save-path guard so a draft whose
     /// `progressionKind` is `.block` or `.hybrid` cannot persist
-    /// without a real block. If the draft is dirtied to one of the
+    /// off the active block. If the draft is dirtied to one of the
     /// block-required cases via a direct property mutation (not the
-    /// picker — the picker is filtered) and the routine has no block,
-    /// the guard demotes the selection to `.double` (the universal
-    /// default per D-04).
+    /// picker — the picker is filtered) and the session is not on the
+    /// active block, the guard demotes the selection to `.double` (the
+    /// universal default per D-04).
     internal func guardedProgressionSelection(hasBlock: Bool) -> ProgressionKind {
         let kinds = RoutineDraft.availableProgressionKinds(hasBlock: hasBlock)
         if kinds.contains(progressionKind) {
@@ -278,15 +278,11 @@ public final class RoutineDraft {
         return .double
     }
 
-    public func enforceBlockProgressionEligibility(hasBlock: Bool) {
-        let guarded = guardedProgressionSelection(hasBlock: hasBlock)
+    public func enforceBlockProgressionEligibility() {
+        let guarded = guardedProgressionSelection(hasBlock: isOnActiveBlock)
         if guarded != progressionKind {
             progressionKind = guarded
         }
-    }
-
-    public func enforceBlockProgressionEligibility() {
-        enforceBlockProgressionEligibility(hasBlock: blockID != nil)
     }
 
     /// Append a brand-new exercise to the draft. Runs the
@@ -347,28 +343,12 @@ public final class RoutineDraft {
         routine.notes = notes
         routine.folderID = folderID
         // Phase 3.1 PIVOT-04 — write session-level Intent to the
-        // persisted SessionTemplate row. Progression writes after resolving
-        // the Phase 4 block link so .block/.hybrid cannot persist without a
-        // real block.
+        // persisted SessionTemplate row. Block Periodized and Hybrid persist
+        // only on the active block. The deprecated `routine.block` keeps
+        // what is stored, for a later schema to remove (RM-026).
         routine.intentRaw = intent.rawValue
         routine.updatedAt = .now
-
-        let resolvedBlock: Block?
-        if let blockID {
-            let targetID = blockID
-            let descriptor = FetchDescriptor<Block>(
-                predicate: #Predicate<Block> { $0.id == targetID }
-            )
-            resolvedBlock = (try? context.fetch(descriptor))?.first
-        } else {
-            resolvedBlock = nil
-        }
-
-        routine.block = resolvedBlock
-        if resolvedBlock == nil {
-            blockID = nil
-        }
-        enforceBlockProgressionEligibility(hasBlock: resolvedBlock != nil)
+        enforceBlockProgressionEligibility()
         routine.progressionKindRaw = progressionKind.rawValue
 
         // Remove SessionExerciseTemplate rows not represented in the draft.
@@ -464,7 +444,7 @@ public final class RoutineDraft {
             ]
             return fields.map(text).joined(separator: "/")
         }
-        let fields: [Any?] = [name, notes, folderID, blockID, intent.rawValue, progressionKind.rawValue]
+        let fields: [Any?] = [name, notes, folderID, intent.rawValue, progressionKind.rawValue]
         return (fields.map(text) + [rows.joined(separator: ",")]).joined(separator: "|")
     }
 }

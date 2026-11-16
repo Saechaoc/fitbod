@@ -32,7 +32,8 @@ public enum RoutineDuplicator {
         copy.name = "\(draft.name.trimmingCharacters(in: .whitespacesAndNewlines)) (Copy)"
         copy.notes = draft.notes
         copy.folderID = draft.folderID
-        copy.blockID = draft.blockID
+        // The copy joins no routine yet, but keeps the progression the editor shows (RM-026).
+        copy.isOnActiveBlock = draft.isOnActiveBlock
         copy.intent = draft.intent
         copy.progressionKind = draft.progressionKind
 

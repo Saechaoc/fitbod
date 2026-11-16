@@ -288,9 +288,6 @@ public struct RoutineBuilderView: View {
         } message: {
             Text(saveErrorMessage ?? "")
         }
-        .onChange(of: draft.blockID) { _, newBlockID in
-            draft.enforceBlockProgressionEligibility(hasBlock: newBlockID != nil)
-        }
         .onAppear {
             draft.enforceBlockProgressionEligibility()
             initialSnapshot = draft.snapshotHash()
@@ -337,7 +334,7 @@ public struct RoutineBuilderView: View {
                 }
             }
 
-            // Header chip row: intent · days/wk · ~min · linked block
+            // Header chip row: intent · ~min · progression
             chipRow
         }
         .padding(.top, 14)
@@ -368,24 +365,14 @@ public struct RoutineBuilderView: View {
                 BRUChip("~\(SessionTemplateSummary(draft: draft).estimatedMinutes) min")
             }
 
-            // Linked block chip — signal outline when block is set
-            if draft.blockID != nil {
-                Menu {
-                    progressionMenuItems
-                } label: {
-                    BRUChip("Linked → Block", color: .bruSignal, fill: false)
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-            } else {
-                // Progression chip when no block linked
-                Menu {
-                    progressionMenuItems
-                } label: {
-                    BRUChip(progressionLabel(draft.progressionKind))
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                }
+            // Progression chip — it names the progression on the active block
+            // too, where the banner already says the session is part of it.
+            Menu {
+                progressionMenuItems
+            } label: {
+                BRUChip(progressionLabel(draft.progressionKind))
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
         }
     }
@@ -426,7 +413,7 @@ public struct RoutineBuilderView: View {
         Binding(
             get: { draft.progressionKind },
             set: { newValue in
-                if draft.blockID != nil || !RoutineDraft.requiresBlock(newValue) {
+                if draft.isOnActiveBlock || !RoutineDraft.requiresBlock(newValue) {
                     draft.progressionKind = newValue
                 }
             }
@@ -443,7 +430,7 @@ public struct RoutineBuilderView: View {
     }
 
     private var availableProgressionKinds: [ProgressionKind] {
-        RoutineDraft.availableProgressionKinds(hasBlock: draft.blockID != nil)
+        RoutineDraft.availableProgressionKinds(hasBlock: draft.isOnActiveBlock)
     }
 
     // MARK: - Exercise Scroll View
@@ -465,7 +452,7 @@ public struct RoutineBuilderView: View {
                     let edges = draft.supersetEdges(at: i)
                     RoutineExerciseCard(
                         draft: exDraft,
-                        hasBlock: draft.blockID != nil,
+                        hasBlock: draft.isOnActiveBlock,
                         index: i,
                         isExpanded: Binding(
                             get: { expandedExerciseIDs.contains(stableKey(for: exDraft)) },

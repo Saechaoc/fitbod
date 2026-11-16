@@ -99,15 +99,10 @@ struct RoutineBuilderHeaderPickersTests {
 
         // Build a fresh draft with both pickers MUTATED away from the
         // default values so the assertion exercises a real write.
-        // Phase 4 requires block/hybrid progression to be inside a
-        // resolved block, so this fixture links the routine to one.
-        let block = Block()
-        block.name = "Peak Block"
-        ctx.insert(block)
-
+        // Hybrid progression needs the session on the active block (RM-026).
         let draft = RoutineDraft()
         draft.name = "Header Picker Save Test"
-        draft.blockID = block.id
+        draft.isOnActiveBlock = true
         draft.intent = .power
         draft.progressionKind = .hybrid
         let exDraft = RoutineExerciseDraft()
@@ -125,7 +120,6 @@ struct RoutineBuilderHeaderPickersTests {
         let saved = try #require(routines.first)
         #expect(saved.intentRaw == "power")
         #expect(saved.progressionKindRaw == "hybrid")
-        #expect(saved.block?.id == block.id)
         // Computed accessor sanity-check.
         #expect(saved.intent == .power)
         #expect(saved.progressionKind == .hybrid)

@@ -50,7 +50,8 @@ App writes go through the environment's main context: SwiftData keeps the last w
 | `SupersetGroup` | Template exercise grouping |
 | `RoutineExerciseSetOverride` | Storage retained, not applied by logger; editor hidden |
 
-SessionTemplate.block/Block.legacyTemplates remain deprecated schema edges; prescription uses the active program graph.
+SessionTemplate.block/Block.legacyTemplates remain deprecated schema edges, which only backup export and restore carry; prescription uses the active program graph.
+The session editor offers Block Periodized and Hybrid only to a session slotted in the active block's routine (`RoutineDraft.isOnActiveBlock`); off it, saving the editor turns either one into Double Progression ([RM-026](docs/ROADMAP.md#rm-026)).
 Removing them requires future compatibility work, not the old migration plan.
 Auxiliary model names are accepted naming debt.
 Persist enums as raw values with typed accessors.
