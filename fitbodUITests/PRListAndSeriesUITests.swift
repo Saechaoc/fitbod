@@ -109,8 +109,7 @@ final class PRListAndSeriesUITests: XCTestCase {
 
         // One intent at a time (RM-023): the chart opens on the newest
         // workout's, strength, and Hypertrophy swaps in its own workouts.
-        // The chip's uppercased text uppercases the value XCUI reads too.
-        XCTAssertEqual((app.buttons["Strength"].value as? String)?.lowercased(), "selected", "The chart must open on the newest workout's intent")
+        XCTAssertTrue(app.buttons["Strength"].isSelected, "The chart must open on the newest workout's intent")
         let opened = chartReadout(in: app)
         XCTAssertFalse(opened.isEmpty, "The chart reads nothing before any chip is tapped")
         app.buttons["Hypertrophy"].tap()

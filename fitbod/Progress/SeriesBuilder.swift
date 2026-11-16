@@ -203,28 +203,35 @@ struct ProgressChartSelection {
     /// The intents of the exercise's finished workouts with a logged work
     /// set, in `Intent` order: the ones the lifter picks from.
     let intents: [Intent]
-    /// The intent drawn: the one picked, else the newest workout's; nil
-    /// when no finished workout logged the exercise.
+    /// The intent drawn: the one picked while it is one of `intents`, else
+    /// the newest workout's; nil when no finished workout logged the
+    /// exercise.
     let intent: Intent?
     /// The logs of the finished workouts at `intent` started in the period.
     let logs: [SessionExercise]
-    /// The logs of the finished workouts at `intent`, whenever they started:
-    /// the PR rule reads these, so a period never passes off a lesser best
-    /// as the PR.
-    let intentLogs: [SessionExercise]
+    /// The logs of the finished workouts at `intent`, whenever they started.
+    private let intentLogs: [SessionExercise]
     /// The workouts in `logs` with a logged work set of the exercise.
     let workouts: Int
+
+    /// The PR rule: the intent's best e1RM over all time, 0 with none, so a
+    /// short period never shows a lesser best as the PR. The top set is
+    /// always the higher line.
+    var bestE1RM: Double {
+        SeriesBuilder.buildPoints(from: intentLogs).map(\.e1RM).max() ?? 0
+    }
 
     init(logs all: [SessionExercise], intent picked: Intent?, since lowerBound: Date?) {
         let finished = all.filter { $0.session?.completedAt != nil }
         // One point per finished workout with a logged work set, oldest first.
         let worked = SeriesBuilder.volumePoints(from: finished)
-        let intent = picked ?? worked.last?.intent
+        let intents = Intent.allCases.filter { intent in worked.contains { $0.intent == intent } }
+        let intent = picked.flatMap { intents.contains($0) ? $0 : nil } ?? worked.last?.intent
         let intentLogs = finished.filter { $0.session?.intent == intent }
         let logs = intentLogs.filter { log in
             lowerBound.map { (log.session?.startedAt ?? .distantPast) >= $0 } ?? true
         }
-        self.intents = Intent.allCases.filter { intent in worked.contains { $0.intent == intent } }
+        self.intents = intents
         self.intent = intent
         self.intentLogs = intentLogs
         self.logs = logs
@@ -240,12 +247,8 @@ struct ProgressChartSelection {
             return ("No finished workouts yet", "Finish a workout with this exercise to see its trend.")
         }
         let span = period.phrase.map { " \($0)" } ?? ""
-        guard workouts > 0 else {
-            return (
-                "No \(intent.rawValue) workouts\(span)",
-                period == .allTime ? "Pick another intent." : "Pick All time to see older workouts."
-            )
-        }
+        // The intent is one the exercise has, so only a shorter period can hold none.
+        guard workouts > 0 else { return ("No \(intent.rawValue) workouts\(span)", "Pick All time to see older workouts.") }
         let heading = BRUCountLabel.text(workouts, "\(intent.rawValue) workout") + span
         guard plotted < workouts else { return (heading, "Log another to see a trend.") }
         let some = plotted == 0 ? "None" : "Only one"

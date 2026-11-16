@@ -116,6 +116,10 @@ public struct BlockPhaseChipRow: View {
             }
         }
         .disabled(disabled)
+        // A disabled row cannot undo a pick, which would leave the chart empty.
+        .onChange(of: disabled) { _, isDisabled in
+            if isDisabled { selection.removeAll() }
+        }
     }
 
     @ViewBuilder

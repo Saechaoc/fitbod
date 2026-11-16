@@ -4,7 +4,8 @@
 //
 //  RM-023, finding D-28: Weekly Tonnage's phase chips filter. A set counts
 //  in the phase its workout's block was in on the day the workout started;
-//  a set outside a block, or past its block's plan, is in no phase. No chip
+//  a set outside a block, before its block started or past its plan, is in
+//  no phase. No chip
 //  keeps every set. The week detail filters the same way, so a bar and the
 //  week it opens still total the same.
 //
@@ -30,6 +31,13 @@ struct WeeklyTonnagePhaseFilterTests {
         #expect(WeeklyTonnageAggregator.sets(all, inPhases: ["peak"]).isEmpty)
     }
 
+    @Test("A block's workout that started before the block did is in no phase, not the block's first")
+    func aWorkoutBeforeItsBlockStartedIsInNoPhase() throws {
+        let week = try PhasedWeek()
+        let everyPhase = Set(BlockPhaseKind.allCases.map(\.rawValue))
+        #expect(!WeeklyTonnageAggregator.sets(week.sets, inPhases: everyPhase).contains { $0.weight == 20 })
+    }
+
     @Test("A filtered bar and the week it opens total the same")
     func aBarAndItsWeekTotalTheSame() throws {
         let week = try PhasedWeek()
@@ -52,7 +60,8 @@ struct WeeklyTonnagePhaseFilterTests {
     /// holds the end of the first and the start of the second: a workout
     /// on Tuesday at 100 (accumulation), one on Thursday at 60 (deload), one
     /// that Thursday in no block at 80, and one the next Wednesday at 40,
-    /// past the plan. Three sets of 5 each.
+    /// past the plan; and, a week earlier, one in the block at 20 on the
+    /// Tuesday before the block started. Three sets of 5 each.
     private struct PhasedWeek {
         let context: ModelContext
         let monday: Date
@@ -84,7 +93,10 @@ struct WeeklyTonnagePhaseFilterTests {
             let bench = Exercise(name: "Bench Press", canonicalName: "bench press", equipmentRaw: "barbell", mechanicRaw: "compound")
             context.insert(bench)
             var sets: [SetEntry] = []
-            for (start, weight, inBlock) in [(day(10, hour: 9), 100.0, true), (day(12, hour: 9), 60, true), (day(12, hour: 18), 80, false), (day(18, hour: 9), 40, true)] {
+            for (start, weight, inBlock) in [
+                (day(3, hour: 9), 20.0, true), (day(10, hour: 9), 100, true), (day(12, hour: 9), 60, true),
+                (day(12, hour: 18), 80, false), (day(18, hour: 9), 40, true),
+            ] {
                 let workout = Session()
                 context.insert(workout)
                 workout.startedAt = start

@@ -166,9 +166,9 @@ public enum WeeklyTonnageAggregator {
     /// values as the phase chips hold them; every set when `phases` is
     /// empty, in the order given (RM-023). A workout's phase is the one its
     /// block was in on the day it started (`PeriodizationEngine.phase`), so a
-    /// set outside a block, or past its block's plan, is in no phase. The
-    /// chart and the week detail both filter here, so a bar and its week
-    /// still total the same.
+    /// set outside a block, before its block started or past its plan, is in
+    /// no phase. The chart and the week detail both filter here, so a bar
+    /// and its week still total the same.
     public static func sets(_ sets: [SetEntry], inPhases phases: Set<String>) -> [SetEntry] {
         guard !phases.isEmpty else { return sets }
         // One phase lookup per workout, not per set.
@@ -176,7 +176,10 @@ public enum WeeklyTonnageAggregator {
         return sets.filter { set in
             guard let workout = set.sessionExercise?.session else { return false }
             if let keeps = keepsWorkout[workout.id] { return keeps }
-            let phase = workout.block.flatMap { PeriodizationEngine.phase(for: $0, on: workout.startedAt) }
+            // `phase` puts a day before the block's start in its first phase.
+            let phase = workout.block.flatMap { block in
+                workout.startedAt >= block.startDate ? PeriodizationEngine.phase(for: block, on: workout.startedAt) : nil
+            }
             let keeps = phase.map { phases.contains($0.kind.rawValue) } ?? false
             keepsWorkout[workout.id] = keeps
             return keeps

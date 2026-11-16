@@ -40,6 +40,9 @@ struct ProgressChartSelectionTests {
         let picked = ProgressChartSelection(logs: logs, intent: .strength, since: nil)
         #expect(picked.intent == .strength)
         #expect(picked.logs.map(\.id) == [logs[1].id])
+
+        // An intent the exercise has no workouts at falls back to the newest workout's.
+        #expect(ProgressChartSelection(logs: logs, intent: .power, since: nil).intent == .hypertrophy)
     }
 
     @Test("A period keeps the workouts started since its start; the PR rule still reads the intent's whole history")
@@ -53,9 +56,31 @@ struct ProgressChartSelectionTests {
         let selection = ProgressChartSelection(logs: logs, intent: nil, since: now.addingTimeInterval(-56 * day))
         #expect(selection.logs.map(\.id) == [logs[1].id])
         #expect(selection.workouts == 1)
-        #expect(selection.intentLogs.count == 2)
-        let best = SeriesBuilder.buildPoints(from: selection.intentLogs).map(\.e1RM).max()
-        #expect(best == OneRepMaxEstimator.estimate(weight: 140, reps: 3))
+        #expect(selection.bestE1RM == OneRepMaxEstimator.estimate(weight: 140, reps: 3))
+    }
+
+    @Test("A period starts at its lower bound: a workout started then counts, one a second earlier does not")
+    func periodStartsAtItsLowerBound() throws {
+        let (ctx, bench) = try makeBench()
+        // Worked out as the view does: whole weeks, starting on Monday.
+        let since = try #require(TimeRangeChoice.last8wk.lowerBound(now: now, calendar: WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: true)))
+        let atStart = log(bench, daysAgo: 0, .strength, in: ctx)
+        atStart.session?.startedAt = since
+        let before = log(bench, daysAgo: 0, .strength, in: ctx)
+        before.session?.startedAt = since.addingTimeInterval(-1)
+
+        let selection = ProgressChartSelection(logs: [before, atStart], intent: nil, since: since)
+        #expect(selection.logs.map(\.id) == [atStart.id])
+    }
+
+    @Test("A picked intent with no workouts in the period says so")
+    func notesForAPickedIntentOutsideThePeriod() throws {
+        let (ctx, bench) = try makeBench()
+        let logs = [log(bench, daysAgo: 70, .strength, in: ctx), log(bench, daysAgo: 3, .hypertrophy, in: ctx)]
+        let picked = ProgressChartSelection(logs: logs, intent: .strength, since: now.addingTimeInterval(-56 * day))
+        #expect(picked.gapNote(metric: .e1RM, plotted: 0, period: .last8wk) == (
+            "No strength workouts in the last 8 weeks", "Pick All time to see older workouts."
+        ))
     }
 
     @Test("With nothing finished, or nothing in the period, the chart says so and what to do")

@@ -191,7 +191,7 @@ Progression also requires completed non-warmup positive reps/weight; records add
 Progression kind is not a comparability key.
 Do not widen one reader alone.
 The exercise chart's every chip, hero and stall band read `ProgressChartSelection`: the finished workouts of one intent, picked or else the newest workout's, that started in the chosen period, across machines ([RM-023](docs/ROADMAP.md#rm-023)).
-Its PR rule is that intent's best over all time, so a short period never shows a lesser best as the PR.
+Its PR rule, `bestE1RM`, is that intent's best over all time, so a short period never shows a lesser best as the PR.
 
 Stalls outside a workout ([RM-019](docs/ROADMAP.md#rm-019)) are the exercise card's plateau check, run on each finished exercise/intent/machine stream: `StalledExercises.find` reads `PlateauDetector.evaluateWindow` and `suggestedAction`, never a second rule.
 `find` reads the logs the view's query already holds (it fetches them only when given none), hands each stream its own, and reads what no stream decides (this week's volume, MAV targets, the active block) once per call, so its fetch count does not grow with history.
@@ -249,7 +249,7 @@ Timed and assisted sets count as logged sets and toward muscle volume.
 e1RM, records, load progression, plateau and Compare need positive weight and reps, so they skip both; deload's missed-rep-range signal still reads an assisted set's reps.
 Counted workouts exclude empty finished workouts; readers promising finished history exclude open workouts.
 Weekly tonnage bins by set completion time, rotation/history by workout start.
-Its phase chips keep the sets of workouts that started in a chosen phase of their block (`PeriodizationEngine.phase` on `Session.block` and `startedAt`); a set outside a block or past its plan is in no phase, and the week detail filters through the same `WeeklyTonnageAggregator.sets(_:inPhases:)`, so a bar and its week agree ([RM-023](docs/ROADMAP.md#rm-023)).
+Its phase chips keep the sets of workouts that started in a chosen phase of their block (`PeriodizationEngine.phase` on `Session.block` and `startedAt`); a set outside a block, before its block's `startDate` or past its plan is in no phase, and the week detail filters through the same `WeeklyTonnageAggregator.sets(_:inPhases:)`, so a bar and its week agree ([RM-023](docs/ROADMAP.md#rm-023)).
 Muscle volume uses weighted stimulus; contributions need not equal physical count.
 Muscle tonnage stacks may overlap ([RM-041](docs/ROADMAP.md#rm-041)).
 

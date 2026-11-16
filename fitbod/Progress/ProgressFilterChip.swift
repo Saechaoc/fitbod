@@ -16,7 +16,8 @@
 //
 //  Accessibility:
 //  - `accessibilityLabel` carries the explicit name (e.g. "Top set series").
-//  - `accessibilityValue` is "selected" or "hidden" for VoiceOver toggle state.
+//  - A picked chip carries the selected trait, as `SeriesToggleChipRow` and
+//    `BRUSegmentedControl` do; an unpicked one says nothing more (D-180).
 //  - `.frame(minHeight: 44)` provides the HIG-mandated touch target.
 //
 //  Haptics: `.selectionChanged()` on tap (UI-SPEC item 627 haptics anchor).
@@ -70,7 +71,7 @@ public struct ProgressFilterChip: View {
         .contentShape(Rectangle())
         .frame(minHeight: 44)
         .accessibilityLabel(accessibilityName)
-        .accessibilityValue(isActive ? "selected" : "hidden")
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }
 

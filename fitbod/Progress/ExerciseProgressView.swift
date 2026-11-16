@@ -358,11 +358,7 @@ private struct ProgressChartHost: View {
         let anyHighRepSuppressed = selection.logs.contains { se in
             (se.sets ?? []).contains { PRDetector.isWorkingSet($0) && $0.reps > 10 }
         }
-        // The intent's best over all time, so a short period never calls a
-        // lesser best its PR. The top set is always the higher line.
-        let prValue = metric.plotsE1RM
-            ? SeriesBuilder.buildPoints(from: selection.intentLogs).map(\.e1RM).max() ?? 0
-            : 0
+        let prValue = metric.plotsE1RM ? selection.bestE1RM : 0
         // The intent's stalls still running in the period.
         let shownStalls = stalls.filter { stall in
             guard stall.intent == selection.intent, let newest = stall.workouts.first?.startedAt else { return false }
