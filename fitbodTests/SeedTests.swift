@@ -379,6 +379,13 @@ final class SeedTests {
         // A field the dataset supplies, as an older dataset wrote it.
         let datasetInstructions = bench.instructions
         bench.instructions = ["An older dataset's step"]
+        // Outdoor Walk's aliases as seed 10 wrote them, before "hike" (RM-022).
+        let walkExternalID = "local:outdoor-walk"
+        let walk = try #require(try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == walkExternalID }
+        )).first)
+        walk.aliasesJoined = "outdoor walking|hiking"
+        let walkID = walk.id
 
         // A volume target the lifter edited.
         let target = MuscleVolumeTarget()
@@ -447,6 +454,11 @@ final class SeedTests {
         #expect(benchAfter?.plateauWindowOverride == 4)
         #expect(benchAfter?.plateauToleranceOverride == 0.02)
         #expect(benchAfter?.instructions == datasetInstructions, "The re-seed must refresh what the dataset supplies")
+
+        // Outdoor Walk gains "hike" in place, still one row.
+        let walks = try after.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.externalID == walkExternalID }))
+        #expect(walks.map(\.id) == [walkID], "The re-seed must update Outdoor Walk in place, not add a second row")
+        #expect(walks.first?.aliasesJoined.split(separator: "|").contains("hike") == true, "The re-seed must add the alias \"hike\"")
 
         // The edited stimulus weight is still the bench press's chest row.
         let benchChestAfter = try after.fetch(FetchDescriptor<ExerciseMuscleStimulus>(
