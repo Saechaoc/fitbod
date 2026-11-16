@@ -449,12 +449,23 @@ Open: a look on the phone.
 
 ### <a id="rm-015"></a>RM-015 — Redesign 2.3: Program's This week agrees with Today
 
-**P2 · Planned.** Seven weekday groups or rotation strip use Today's state function, queries and calendar.
+**P2 · Done (2026-11-15).** Seven weekday groups or rotation strip use Today's state function, queries and calendar; built on `swarm/A6`.
 **Done when:** each counted workout appears once on its actual day and opens summary; open workout is read-only IN PROGRESS. Planned TODAY/NEXT starts show only in T-TODAY and pass StartSlot; empty sessions open repair detail. Cover off-plan/swapped/rest/two-workout days and T-RESUME/T-DONE/T-FIX.
 **Scope / sequence:** Share state/calendar → logged/planned rows → summary/start routes → off-plan/multi-workout checks. No new adherence metric.
 **Requires:** [RM-006](#rm-006) shared starts/state, [RM-011](#rm-011) Program surface, [RM-014](#rm-014) next-day rules.
 **Scheduled after:** [RM-014](#rm-014).
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence (2026-11-15, swarm/A6):** Program's active block slab now has This week under it (`ThisWeekSection`): seven day groups from Today's week start, or on rotation the slots in order, then Also this week, with no adherence number.
+It resolves `TodayState` from Today's own queries, calendar and week start setting, so TODAY ▸ and NEXT ▸ show only while Today is T-TODAY, and they start through `WorkoutStarter`, so `StartSlot` credits the slot Today's hero would.
+Each counted workout appears once and opens its summary on Program's stack: in its day's group, oldest first, or on rotation as its slot's latest workout in the block, else under Also this week.
+The open workout reads IN PROGRESS with no action, and a planned session with no exercises reads NO EXERCISES › and opens its session detail.
+A weekday group leaves out its planned session when a workout that day holds its slot, and planned rows begin on the block's start day.
+On rotation the NEXT slot shows its start or repair instead of its last workout, which then lists under Also this week when it is from this week.
+New DEBUG launch argument: `-fitbod-seed-today-weekly`, T-TODAY in a weekly block with a done day, an off-plan two-workout day and rest days.
+`ThisWeekTests` (14 cases: off-plan, swapped, rest, two-workout and Sunday-first weeks, and T-TODAY, T-RESUME, T-DONE and T-FIX in both kinds of block) passed with `ProgramViewFidelityTests`, `TodayWeekTests` and `TodayStatesSeedTests`, 31/31 (`fast-20261115-165623-57307`).
+`BlockWeekCountsUITests`, `BlockLifecycleEntryPointsUITests`, `WorkoutExitUITests`, `BlockOverviewStatesUITests`, `ArchiveRoutineUITests`, `SessionEditorRowsUITests`, `NumberEntryUITests`, `BlockAndRoutineTextFitUITests`, `BlockDraftKeepsUITests` and `BackupRestoreRoutinesUITests` passed 27/27 (`fast-20261115-164620-52293`).
+Light and dark 390pt captures of the weekly T-TODAY, T-DONE and T-REST states and the rotation T-TODAY, T-DONE and T-FIX states match program-layouts.md, except that durations read "52M", as on Today's Done slab and History rows, not "52 MIN".
+A throwaway route tour checked that a logged row opens its summary, TODAY ▸ opens the logger on Today, Program then shows that workout IN PROGRESS with no start, NO EXERCISES › opens the session's detail, and AX3 rows put the status under the name.
+Open: a look on the phone.
 **References:** redesign R-22/R-24; [Program layouts](design-map/redesign/program-layouts.md), [TodayState](../fitbod/Views/TodayState.swift).
 
 ### <a id="rm-016"></a>RM-016 — Redesign 2.4: review origin/end consequences

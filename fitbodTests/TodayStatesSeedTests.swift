@@ -57,6 +57,8 @@ struct TodayStatesSeedTests {
         case (.doneWeekly, .done(let workouts)):
             #expect(workouts.count == 1)
             #expect(workouts.first?.block?.schedulingMode == .fixedWeekly)
+        case (.weekly, .today(let block, _)):
+            #expect(block.schedulingMode == .fixedWeekly)
         case (.pick, .pick(let suggestion)):
             // Push A was trained two days ago, so the routine's NEXT is Pull A.
             #expect(suggestion.session.name == "Pull A")

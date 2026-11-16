@@ -133,6 +133,9 @@ Today's week board (`TodayWeek`) shows the user's calendar week: each day's coun
 It is counted in a `.task(id:)` keyed on the finished workout IDs, the week start and `HistoryEdits.version`, never per render; the full per-muscle model runs only when Volume opens from the board or Progress.
 Deload advice has one evaluator, `DeloadAdvisor.evaluate`: Today's notice asks it on appear, and Volume asks it on appear to ring its bars, so `deloadAlertEnabled` off and a dismissed week hide both.
 Program leads with the active block, else the first ready block in `ProgramBlocks.readyOrder` (Today's READY order), else the newest created draft; the other unstarted blocks list under Planned.
+Program's This week (`ThisWeekSection`) sits under the active block's slab and reads Today's state function, queries, calendar and week start setting, so its TODAY ▸ or NEXT ▸ shows exactly while Today is T-TODAY and starts through `WorkoutStarter` from the block's routine ([RM-015](docs/ROADMAP.md#rm-015)).
+A weekday block lists each counted workout on the day it started, the open workout read-only, then the day's planned session unless a workout that day holds its slot; a rotation block lists each slot with its latest counted workout in the block, then the week's other counted workouts, so each appears once.
+This week's workouts open their summaries and an empty planned session opens its detail on Program's stack; the logger still opens only on Today's.
 A workout in progress adds Program's resume banner, whose RESUME ▸ is then the page's one signal: Program's other signal controls draw in ink.
 Today's slab and Program's banner discard through `DiscardWorkoutButton`: it asks first only with sets or bouts logged, deletes through `SessionSetActions.deleteWorkout`, and clears the rest timer only after the delete saves.
 Finished blocks open from Program › Past blocks, and block presets live only in + New block › Use Preset.

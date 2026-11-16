@@ -19,6 +19,10 @@
 //    that opens Block overview (no week cells, O-13); with none active, the
 //    oldest created ready block with START BLOCK ▸ (O-6); with drafts only,
 //    the newest created draft with CONTINUE BLOCK ▸.
+//  - THIS WEEK, or ROTATION, under the active slab (ThisWeekSection,
+//    RM-015): its workouts open their summaries, TODAY ▸ or NEXT ▸ starts
+//    the session while Today is T-TODAY, and NO EXERCISES › opens the
+//    session to add some, all on this stack but the logger.
 //  - PLANNED: the other ready blocks, oldest created first, then the other
 //    drafts, newest created first. With no live block, BLOCKS says "No
 //    block yet." or "No block planned." beside + NEW BLOCK.
@@ -61,6 +65,7 @@ public struct ProgramView: View {
     // MARK: State
 
     @Environment(\.modelContext) private var ctx
+    @Environment(\.calendar) private var calendar
 
     // Every block; `ProgramBlocks` orders them by status in Swift, since
     // derivedStatus is computed, not stored.
@@ -87,6 +92,10 @@ public struct ProgramView: View {
     @State private var presentingStartChoice = false
     /// The ready block whose START BLOCK ▸ threw; its alert offers Try again and Open block.
     @State private var failedBlockStart: Block? = nil
+    /// The empty session This week's NO EXERCISES › opened.
+    @State private var repairing: SessionTemplate? = nil
+    /// Why This week's TODAY ▸ or NEXT ▸ could not start a workout.
+    @State private var startError: String? = nil
     #if DEBUG
     /// UI tests' `-fitbod-fail-block-start-once` makes the first START BLOCK ▸ throw, as on Today.
     @State private var failNextBlockStart = ProcessInfo.processInfo.arguments.contains("-fitbod-fail-block-start-once")
@@ -127,7 +136,8 @@ public struct ProgramView: View {
                                 }
                             } else {
                                 blocksSection(blocks)
-                                routinesSection(underSlab: blocks.leadIsSlab && blocks.planned.isEmpty)
+                                // The active slab has This week under it.
+                                routinesSection(underSlab: blocks.active == nil && blocks.leadIsSlab && blocks.planned.isEmpty)
                                 if !blocks.past.isEmpty {
                                     pastBlocksEntry(count: blocks.past.count)
                                 }
@@ -151,12 +161,25 @@ public struct ProgramView: View {
             .navigationDestination(for: PastBlocksRoute.self) { _ in
                 PastBlocksView()
             }
+            // This week's workouts open their summaries here.
+            .sessionHistoryDestinations()
+            .navigationDestination(item: $repairing) { session in
+                SessionTemplateDetailView(template: session, routine: blocks.active?.split)
+            }
             .newRoutineDestination(path: $navigationPath)
             .fullScreenCover(item: $pendingBlockBuilder) { route in
                 route.builder(origin: .program)
             }
             .blockCreateFlow(isPresented: $presentingStartChoice) { pendingBlockBuilder = $0 }
             .modifier(TodayBlockAlerts(failedBlock: $failedBlockStart, onRetry: startBlock, onOpen: openBlock))
+            .alert(
+                "Couldn't start workout",
+                isPresented: Binding(get: { startError != nil }, set: { if !$0 { startError = nil } })
+            ) {
+                Button("OK", role: .cancel) { startError = nil }
+            } message: {
+                Text(startError ?? "")
+            }
         }
     }
 
@@ -238,6 +261,20 @@ public struct ProgramView: View {
         }
     }
 
+    /// This week's TODAY ▸ or NEXT ▸: starts the session from the block's
+    /// routine, so StartSlot credits the slot Today's hero would, then opens
+    /// the logger on Today's stack, where it lives (FT-02).
+    private func startWorkout(_ session: SessionTemplate, in routine: Split?) {
+        switch WorkoutStarter.start(session, in: routine, context: ctx, calendar: calendar) {
+        case .started, .alreadyInProgress:
+            resumeRequest?.isPending = true
+        case .emptyTemplate:
+            startError = "Add at least one exercise to \(session.name) first."
+        case .failed(let message):
+            startError = message
+        }
+    }
+
     // MARK: - Empty program
 
     /// A fresh store starts with a routine; blocks schedule one later, and
@@ -266,6 +303,12 @@ public struct ProgramView: View {
     private func blocksSection(_ blocks: ProgramBlocks) -> some View {
         if let active = blocks.active {
             ActiveBlockSlab(block: active) { openBlock(active) }
+            ThisWeekSection(
+                block: active, liveRoutines: allSplits, readyBlocks: blocks.ready,
+                onOpen: { navigationPath.append(SessionHistoryRoute.summary(sessionID: $0.id)) },
+                onStart: { startWorkout($0, in: active.split) },
+                onRepair: { repairing = $0 }
+            )
         } else if let ready = blocks.ready.first {
             ReadyBlockCard(
                 block: ready, readyCount: blocks.ready.count,
@@ -288,7 +331,7 @@ public struct ProgramView: View {
         }
 
         if !blocks.planned.isEmpty {
-            BRUSectionHead("Planned", underSlab: blocks.leadIsSlab)
+            BRUSectionHead("Planned", underSlab: blocks.active == nil && blocks.leadIsSlab)
             ForEach(Array(blocks.planned.enumerated()), id: \.element.id) { index, block in
                 if index > 0 {
                     BRUDivider(.hair)

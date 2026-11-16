@@ -20,6 +20,11 @@
 //                               session it schedules today finished.
 //    -fitbod-seed-today-rest    T-REST: an active weekly block whose training
 //                               days leave today out.
+//    -fitbod-seed-today-weekly  T-TODAY in a weekly block that trains today
+//                               and every other day after it. For Program's
+//                               This week, the session it planned five days
+//                               ago was done that day, and Legs A and then
+//                               Pull A two days ago, a rest day.
 //    -fitbod-seed-today-attach  T-ATTACH: an active block whose routine is
 //                               gone, as restored data can leave it.
 //    -fitbod-seed-today-pick    T-PICK: no block; a routine whose Push A was
@@ -67,7 +72,7 @@ enum TodayStatesSeed {
 
     #if DEBUG
     enum State: String, CaseIterable {
-        case ready, empty, done, doneWeekly = "done-weekly", rest, attach, pick, fix
+        case ready, empty, done, doneWeekly = "done-weekly", rest, weekly, attach, pick, fix
 
         var launchArgument: String { "-fitbod-seed-today-\(rawValue)" }
     }
@@ -164,6 +169,19 @@ enum TodayStatesSeed {
             // One training day per session, none of them today: tomorrow, then every other day.
             block.trainingDays = weekdays([1, 3, 5])
             start(block, at: now, in: context)
+        case .weekly:
+            let block = makeBlock(blockName)
+            block.schedulingMode = .fixedWeekly
+            block.trainingDays = weekdays([0, 2, 4])
+            start(block, at: now, in: context)
+            let midnight = Calendar.current.startOfDay(for: now)
+            let fiveDaysAgo = midnight.addingTimeInterval(-5 * day)
+            if case .session(let planned) = TodayResolver.resolveFixedWeekly(block: block, today: fiveDaysAgo, calendar: .current) {
+                finish(planned, block: block, startedAt: fiveDaysAgo.addingTimeInterval(9 * 3600), duration: 52 * 60, in: context)
+            }
+            let twoDaysAgo = midnight.addingTimeInterval(-2 * day)
+            finish(slots[2], block: block, startedAt: twoDaysAgo.addingTimeInterval(10 * 3600), duration: 35 * 60, in: context)
+            finish(slots[1], block: block, startedAt: twoDaysAgo.addingTimeInterval(18 * 3600), duration: 20 * 60, in: context)
         case .attach:
             let block = makeBlock(blockName)
             start(block, at: now, in: context)
