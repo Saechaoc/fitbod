@@ -218,6 +218,8 @@ public struct PlateCalculatorSheet: View {
             center: "Plate calculator",
             right: HeaderAction("Done") { dismiss() }
         )
+        // Room under the drag handle, which the two-line title met at 390pt.
+        .padding(.top, 8)
     }
 
     // MARK: - Target Band

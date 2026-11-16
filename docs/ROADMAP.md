@@ -817,6 +817,8 @@ Now such a change is rolled back through `SessionSetActions.rollBack`, the row s
 TARGET's band now keeps a full line at rest, so its rule no longer moves about 3pt when typing starts; at 390pt and the large detent it sits on the same rows in both states.
 On the review's final source, seven unit suites passed 50 of 50 (`fast-20261115-213334-55656`), and `NumberEntryUITests`, `SwipeBackUITests` and `WhyThisWeightControlUITests` passed 11 of 11 (`fast-20261115-213400-55876`, iPhone 17, iOS 26.5).
 390pt dark captures of the calculator from a set, a typed TARGET, the equipment menu and the inventory's note were inspected.
+Since the sheet can change height, iOS shows its drag handle, which covered the top of the two-line title at 390pt; the header now has 8pt of room above it.
+390pt captures in light and dark, at half and full height, opened from a set and from Settings, show the handle clear of the title, and `NumberEntryUITests` passed 7 of 7 (`fast-20261115-214835-64778`).
 Not checked: accessibility text sizes and VoiceOver; the count menu's VoiceOver reach waits for [RM-044](#rm-044).
 **References:** D-12/D-14/D-114–D-121; [plate workflow](design-map/workflows/plates-and-the-calculator.md), logger-plate-calculator/typed-target/equipment-switch/plate-inventory-saved-note.
 
