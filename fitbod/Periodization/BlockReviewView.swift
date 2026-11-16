@@ -327,7 +327,8 @@ public struct BlockReviewView: View {
                         .textCase(.uppercase)
                         .tracking(1.5)
                         .foregroundStyle(Color.bruInk)
-                    Text("\(nextTemplate.name) · \(BRUCountLabel.text(nextTemplate.totalWeeks, "week"))")
+                    // A no-break space keeps "·" with the name, so no line starts with it (D-197).
+                    Text("\(nextTemplate.name)\u{00A0}· \(BRUCountLabel.text(nextTemplate.totalWeeks, "week"))")
                         .font(BRUFont.displayLarge)
                         .foregroundStyle(Color.bruInk)
                 }

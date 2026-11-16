@@ -36,7 +36,6 @@ public struct BlockNameField: View {
     /// The field's focus, owned by the screen, so it can put the cursor
     /// here when the name is what a save still needs.
     private var isFocused: FocusState<Bool>.Binding
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public init(title: String, placeholder: String, text: Binding<String>, isFocused: FocusState<Bool>.Binding) {
         self.title = title
@@ -65,24 +64,20 @@ public struct BlockNameField: View {
                         .allowsHitTesting(false)
                 }
 
-                if dynamicTypeSize.isAccessibilitySize {
-                    // T38: at accessibility sizes one line holds only part of
-                    // a name, so the field wraps it between words onto as many
-                    // lines as it needs, rather than cut it off.
-                    styled(TextField("", text: $text, axis: .vertical))
-                        .submitLabel(.done)
-                        .onChange(of: text) { _, newValue in
-                            // A vertical field turns Return into a new line;
-                            // treat it as done.
-                            if newValue.contains("\n") {
-                                text = newValue.replacingOccurrences(of: "\n", with: "")
-                                isFocused.wrappedValue = false
-                            }
+                // T38: one line can hold only part of a name, such as
+                // "Generic Strength Meso" at 390pt, so the field wraps it
+                // between words onto as many lines as it needs, as the mock
+                // breaks HYPERTROPHY / MESO, rather than cut it off.
+                styled(TextField("", text: $text, axis: .vertical))
+                    .submitLabel(.done)
+                    .onChange(of: text) { _, newValue in
+                        // A vertical field turns Return into a new line;
+                        // treat it as done.
+                        if newValue.contains("\n") {
+                            text = newValue.replacingOccurrences(of: "\n", with: "")
+                            isFocused.wrappedValue = false
                         }
-                } else {
-                    styled(TextField("", text: $text))
-                        .frame(height: 46)
-                }
+                    }
             }
             .padding(.top, 2)
             .contentShape(Rectangle())
