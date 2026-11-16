@@ -13,7 +13,11 @@
 //    (2) Legend strip       — UNDER MEV / MEV→MAV / MRV swatches + labels,
 //                             stacked at accessibility sizes
 //    (3) Volume This Week   — BRUSectionHead + LazyVStack of MuscleVolumeBar rows
-//    (4) Muscle Heatmap     — BRUSectionHead + side-by-side FRONT + BACK grids
+//                             for the muscles trained this week, then one
+//                             "n muscles not trained yet ▾" row that opens
+//                             the untrained muscles' bars in place (RM-017)
+//    (4) Muscle Heatmap     — BRUSectionHead with the week's dates + side-by-side
+//                             FRONT + BACK grids
 //
 //  Empty-state: the legend, volume section and heatmap section are replaced
 //  by the verbatim UI-SPEC §Copywriting Contract empty-state copy.
@@ -55,6 +59,9 @@ public struct FatigueSurfaceView: View {
     /// taps push onto the same stack. Default `.constant(...)` lets
     /// previews + lightweight call sites compile without wiring.
     @Binding public var navigationPath: NavigationPath
+
+    /// True while the "n muscles not trained yet" row is open (RM-017).
+    @State private var showsUntrained = false
 
     public init(
         isAdvisoryActive: Bool = false,
@@ -107,17 +114,28 @@ public struct FatigueSurfaceView: View {
         )
     }
 
-    /// Muscles with non-zero weekly volume OR a non-zero MEV target.
-    /// Sorted alphabetically by displayName for stable ordering.
-    private func visibleMuscles(_ volumes: WeekVolumes) -> [MuscleGroup] {
-        let withVolume = allMuscles.filter { muscle in
-            if volumes.total(muscle.slug).totalSetsRounded >= 1 { return true }
-            if let row = allTargets.first(where: { $0.muscle?.slug == muscle.slug }), row.mev > 0 {
-                return true
-            }
-            return false
+    /// The list's muscles, each part in name order (RM-017): the muscles
+    /// trained this week, which show their bars, and the untrained ones,
+    /// which fold into one "n muscles not trained yet" row. Untrained means
+    /// the sets round to 0, the rule the NOT TRAINED chip and the heatmap
+    /// read (RM-065). An untrained muscle is listed only when `targetedSlugs`
+    /// holds it, a stored target with an MEV above 0, so the front delts,
+    /// whose MEV is 0, stay out until trained.
+    static func listedMuscles(
+        _ muscles: [MuscleGroup],
+        thisWeek: [String: WeightedSetTotal],
+        targetedSlugs: Set<String>
+    ) -> (trained: [MuscleGroup], untrained: [MuscleGroup]) {
+        let sorted = muscles.sorted { $0.displayName < $1.displayName }
+        let isTrained = { (muscle: MuscleGroup) in (thisWeek[muscle.slug]?.totalSetsRounded ?? 0) > 0 }
+        return (sorted.filter(isTrained), sorted.filter { !isTrained($0) && targetedSlugs.contains($0.slug) })
+    }
+
+    private func listedMuscles(_ volumes: WeekVolumes) -> (trained: [MuscleGroup], untrained: [MuscleGroup]) {
+        let targeted = allMuscles.filter { muscle in
+            (allTargets.first { $0.muscle?.slug == muscle.slug }?.mev ?? 0) > 0
         }
-        return withVolume.sorted { $0.displayName < $1.displayName }
+        return Self.listedMuscles(allMuscles, thisWeek: volumes.thisWeek, targetedSlugs: Set(targeted.map(\.slug)))
     }
 
     /// Net delta copy per bru-screens/volume.jsx line 32: `+N`, `-N`, or `±0`.
@@ -128,16 +146,16 @@ public struct FatigueSurfaceView: View {
         return "±0"
     }
 
-    /// ISO week label e.g. "W3 / 5" matching heatmap.jsx header right slot.
-    private var weekLabel: String {
-        let cal = Calendar(identifier: .iso8601)
-        let week = cal.component(.weekOfYear, from: Date.now)
-        let weeksInYear = cal.range(of: .weekOfYear, in: .yearForWeekOfYear, for: Date.now)?.count ?? 52
-        return "W\(week) / \(weeksInYear)"
+    /// The heatmap's week (RM-017): the seven days from `weekStart`, the
+    /// days the list counts, as "NOV 9–15", or "OCT 26–NOV 1" across a
+    /// month. It replaced "W44 / 53", which read like a block's week (D-344).
+    static func weekRange(weekStart: Date, calendar: Calendar = .current) -> String {
+        let lastDay = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+        return TodayWeek.rangeLabel([weekStart, lastDay])
     }
 
-    /// Zone map for BodySilhouetteView — all muscles, not just visibleMuscles,
-    /// so the heatmap can show context for untrained muscles.
+    /// Zone map for BodySilhouetteView — all muscles, not just the listed
+    /// ones, so the heatmap can show context for untrained muscles.
     private func zoneMap(_ volumes: WeekVolumes) -> [String: VolumeZone] {
         var result: [String: VolumeZone] = [:]
         // An untrained muscle gets no zone, so its tile reads NOT TRAINED like its bar.
@@ -164,11 +182,12 @@ public struct FatigueSurfaceView: View {
 
     public var body: some View {
         let volumes = readWeekVolumes()
-        let muscles = visibleMuscles(volumes)
+        let muscles = listedMuscles(volumes)
         VStack(spacing: 0) {
             summarySlab(volumes)
-            if !muscles.isEmpty {
-                // The legend explains the bars, so it shows only with them.
+            if !muscles.trained.isEmpty || !muscles.untrained.isEmpty {
+                // The legend shows even when every bar is folded, as on a
+                // fresh week, so opening the row never adds it above the list.
                 legendStrip
                 volumeSection(muscles, volumes)
                 heatmapSection(volumes)
@@ -281,31 +300,53 @@ public struct FatigueSurfaceView: View {
 
     // MARK: - (3) Volume section
 
-    private func volumeSection(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> some View {
+    private func volumeSection(
+        _ muscles: (trained: [MuscleGroup], untrained: [MuscleGroup]),
+        _ volumes: WeekVolumes
+    ) -> some View {
         // One axis for every bar so the rows compare: the reference's 25
-        // sets, or the largest MRV on screen if a target runs past it.
-        let axisSets = muscles
+        // sets, or the largest MRV listed if a target runs past it. The
+        // folded rows count too, so opening them never rescales the bars.
+        let axisSets = (muscles.trained + muscles.untrained)
             .map { targetFor($0).mrv }
             .reduce(MuscleVolumeBar.minimumAxisSets, max)
         return VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("Volume This Week")
             LazyVStack(spacing: 0) {
-                ForEach(muscles, id: \.persistentModelID) { muscle in
-                    let target = targetFor(muscle)
-                    MuscleVolumeBar(
-                        muscle: muscle,
-                        target: target,
-                        total: volumes.total(muscle.slug),
-                        delta: volumes.delta(muscle.slug),
-                        isAdvisoryActive: isAdvisoryActive,
-                        axisSets: axisSets,
-                        onTap: { tappedMuscle in
-                            navigationPath.append(MuscleSlugRoute.detail(tappedMuscle.slug))
+                ForEach(muscles.trained, id: \.persistentModelID) { muscle in
+                    volumeBar(muscle, volumes, axisSets: axisSets)
+                }
+                if !muscles.untrained.isEmpty {
+                    TodayGhostRow(
+                        title: "\(BRUCountLabel.text(muscles.untrained.count, "muscle")) not trained yet",
+                        glyph: showsUntrained ? "▴" : "▾"
+                    ) {
+                        showsUntrained.toggle()
+                    }
+                    .accessibilityValue(showsUntrained ? "Expanded" : "Collapsed")
+                    .accessibilityIdentifier("volume.untrainedMuscles")
+                    if showsUntrained {
+                        ForEach(muscles.untrained, id: \.persistentModelID) { muscle in
+                            volumeBar(muscle, volumes, axisSets: axisSets)
                         }
-                    )
+                    }
                 }
             }
         }
+    }
+
+    private func volumeBar(_ muscle: MuscleGroup, _ volumes: WeekVolumes, axisSets: Int) -> some View {
+        MuscleVolumeBar(
+            muscle: muscle,
+            target: targetFor(muscle),
+            total: volumes.total(muscle.slug),
+            delta: volumes.delta(muscle.slug),
+            isAdvisoryActive: isAdvisoryActive,
+            axisSets: axisSets,
+            onTap: { tappedMuscle in
+                navigationPath.append(MuscleSlugRoute.detail(tappedMuscle.slug))
+            }
+        )
     }
 
     // MARK: - (4) Heatmap section
@@ -314,7 +355,7 @@ public struct FatigueSurfaceView: View {
         let zones = zoneMap(volumes)
         let names = nameMap
         return VStack(alignment: .leading, spacing: 0) {
-            BRUSectionHead("Muscle Heatmap", right: weekLabel)
+            BRUSectionHead("Muscle Heatmap", right: Self.weekRange(weekStart: weekStart))
             // Each tile opens its muscle's detail; say so once (FT-17).
             // VoiceOver skips it: every tile carries the hint itself.
             Text("Tap a muscle for its detail")

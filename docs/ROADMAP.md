@@ -498,13 +498,23 @@ Open: a look on the phone.
 
 ### <a id="rm-017"></a>RM-017 — Redesign 2.5: readable volume without seventeen empty rows
 
-**P2 · Planned: collapsed untrained muscles.** FT-18 amber below-MEV bars/figures/legend shipped; collapsed untrained rows/date label remain.
+**P2 · Done (2026-11-15).** Volume folds the muscles not trained this week into one row and names the heatmap's week by its dates, beside FT-18's amber under-target fills; built on `swarm/A8`.
 **Done when:** fresh week shows one expandable “n muscles not trained yet” row and a heatmap date range. Dark 2-of-4 hamstrings, zero, under-target, in-range and landmark ticks read distinctly. Keep muscle routes.
 **Scope / sequence:** Collapse untrained rows → date range → inspect landmarks/amber/routes. Aggregate wording waits only where RM-038 changes it; physical clipping stays RM-045.
 **Requires:** Existing Volume surface and [RM-003](#rm-003) safe fallback rendering.
 **Scheduled after:** [RM-016](#rm-016).
 **Verify when:** Collapse/date/routes at implementation; RM-038 wording only where affected.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence (2026-11-15, swarm/A8):** Volume shows a bar for each muscle trained this week, then one "n muscles not trained yet ▾" row that opens the other bars in place and reads ▴ while open; a fresh week shows only that row, "18 muscles not trained yet".
+Untrained is RM-065's rule, sets that round to 0, and an untrained muscle is named only when its stored target has an MEV above 0, as the list did before, so the front delts stay out until trained.
+The bars keep one axis that counts the folded muscles too, so opening the row never rescales them, and the legend shows even when every bar is folded, so opening the row never adds it above the list.
+The heatmap head reads the week the list counts, "NOV 9–15", in the range format of Today's week board, in place of "W46 / 53" (D-344).
+No set total or its wording changed, so [RM-038](#rm-038) is not affected.
+`VolumeListTests` (the fold rule, and the week's dates across a month, from a Sunday and over the US clock change) with `VolumeRenderingTests`, `MuscleVolumeBarBRUTests`, `BodySilhouetteViewBRUTests` and `TodayWeekTests` passed 28/28 (`fast-20261115-212714-50485`).
+The unit target ran 1,350 tests: 1,347 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261115-212858-52759`).
+`PerMuscleDetailUITests` gains a test that the row starts folded, opens, the neck's bar opens its screen, Back keeps the row open and a second tap folds it; the class passed 2/2 (`fast-20261115-214104-60314`), and the new test failed, as it should, against a row that starts open.
+Light and dark 390pt captures were inspected: a fresh week, closed and open; mid-week with 2 of 4 hamstring sets from an uncommitted seed tweak; and the heatmap.
+In dark mode zero, under target and in range read apart, and the MEV, MAV and MRV ticks and labels read separately; a heatmap tile and an opened bar still open their muscle.
+Open: a look at dark Volume on the phone, where FT-18 was reported.
 **References:** FT-18/VOL-04/05; [volume](../fitbod/Fatigue/FatigueSurfaceView.swift).
 
 ### <a id="rm-018"></a>RM-018 — Redesign 2.6: empty routine picker offers repair

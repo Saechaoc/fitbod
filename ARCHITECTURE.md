@@ -80,6 +80,7 @@ The muscles are the 17 upstream slugs with "shoulders" split into front, side an
 A seed may delete stimulus rows, so `RootView` shows the library splash, not the tabs, while a newer catalog is seeded.
 Volume bars count stimulus-weighted sets per muscle; the week's total on Today and Progress counts the working sets logged of exercises that train a muscle, so cardio stays out (RM-038).
 A muscle whose weighted sets round to 0 this week reads NOT TRAINED on its bar, its heatmap tile and its detail screen, whatever its zone; `MuscleVolumeBar.chip(sets:target:)` is the one chip rule for the bar and the detail screen.
+Volume folds those muscles into one "n muscles not trained yet" row that opens their bars in place, and names one only when its stored target has an MEV above 0 (`FatigueSurfaceView.listedMuscles`, RM-017).
 
 ## Program graph
 
