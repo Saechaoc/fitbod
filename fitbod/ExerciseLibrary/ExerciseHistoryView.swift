@@ -232,8 +232,9 @@ private struct FilteredHistoryContent: View {
                     volPR: prFooter.volPR
                 )
             }
-            // Every record of the exercise, past the footer's three (RM-023).
-            if completed.contains(where: { PRDetector.isWorkingSet($0.setEntry) }) {
+            // Every record of the exercise, past the footer's three, whatever
+            // the filters show (RM-023).
+            if sessionExercises.contains(where: { ($0.sets ?? []).contains(where: PRDetector.isWorkingSet) }) {
                 ExerciseLinkRow("View records") {
                     ExercisePRsView(scope: .forExercise(exercise.id, name: exercise.name))
                 }

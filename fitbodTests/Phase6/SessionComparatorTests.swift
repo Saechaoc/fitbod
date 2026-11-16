@@ -25,7 +25,9 @@
 //  RM-023: when Progress offers Compare (`earlierStart(of:)`): for an
 //  earlier workout of the same session and intent exactly 14 days back,
 //  not a second more, not for another session's workout, and not when
-//  the shared exercise has no top set in the latest workout.
+//  the shared exercise has no top set in the latest workout. A workout
+//  that skipped every set of the exercise is passed over for the one
+//  before it.
 //
 
 import Foundation
@@ -376,5 +378,39 @@ struct SessionComparatorTests {
         // A bodyweight set has no weight, so it is no top set.
         let result = try offeredEarlierStart(daysBack: 3, latestSets: [(weight: 0, reps: 12)])
         #expect(result.offered == nil, "Compare would show only the earlier side")
+    }
+
+    @Test("Compare reaches past an earlier workout that skipped every set of the lift")
+    func offeredPastAWorkoutThatSkippedTheLift() throws {
+        let ctx = try makeContext()
+        let bench = seedBench(in: ctx)
+        let squat = seedSquat(in: ctx)
+        let routineID = UUID()
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let older = now.addingTimeInterval(-10 * 86_400)
+        try seedSession(
+            in: ctx, startedAt: older, sourceRoutineID: routineID,
+            intentRaw: Intent.strength.rawValue,
+            exercisesAndSets: [(bench, [(weight: 95, reps: 5)])]
+        )
+        // This workout counts by its squat, but its bench set was skipped.
+        let skipped = try seedSession(
+            in: ctx, startedAt: now.addingTimeInterval(-3 * 86_400), sourceRoutineID: routineID,
+            intentRaw: Intent.strength.rawValue,
+            exercisesAndSets: [(bench, [(weight: 100, reps: 5)]), (squat, [(weight: 140, reps: 5)])]
+        )
+        for log in skipped.exercises ?? [] where log.exercise?.id == bench.id {
+            for entry in log.sets ?? [] { entry.isComplete = false }
+        }
+        try ctx.save()
+        let latest = try seedSession(
+            in: ctx, startedAt: now, sourceRoutineID: routineID,
+            intentRaw: Intent.strength.rawValue,
+            exercisesAndSets: [(bench, [(weight: 100, reps: 5)])]
+        )
+
+        let rows = SessionComparator.compare(current: latest, context: ctx)
+        #expect(rows.first?.lastWeekTopSet?.weight == 95)
+        #expect(SessionComparator.earlierStart(of: rows) == older)
     }
 }

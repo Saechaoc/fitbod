@@ -27,6 +27,8 @@
 //    6. prior.machine?.id == current.machine?.id: loads compare only
 //       within one machine, and logs with no machine with each other
 //       (RM-066)
+//    7. the prior logs hold a working set: a workout that skipped every
+//       set of the exercise is passed over for the one before it (RM-023)
 //
 //  Per exercise and machine (not per session) so multi-exercise sessions
 //  surface row-by-row diffs even when a single exercise pair lacks a
@@ -223,7 +225,8 @@ public enum SessionComparator {
     /// (`orderIndex`). A workout with the exercise only on another machine
     /// is passed over (RM-066).
     /// Only a workout that counts as a session matches, so an unfinished
-    /// or empty one is passed over for the one before it (decision 6).
+    /// or empty one is passed over for the one before it (decision 6), and
+    /// so is one whose logs of the exercise hold no working set (RM-023).
     ///
     /// Returns no logs for any freestanding session (nil sourceRoutineID)
     /// because there's no template to match against, nor when no prior
@@ -265,7 +268,9 @@ public enum SessionComparator {
             let logs = (session.exercises ?? [])
                 .filter { $0.exercise?.id == targetExerciseID && $0.machine?.id == machineID }
                 .sorted { $0.orderIndex < $1.orderIndex }
-            if !logs.isEmpty {
+            // A workout that skipped every set of the exercise has nothing
+            // to compare, so the one before it is read instead (RM-023).
+            if topWorkingSet(in: logs) != nil {
                 return logs
             }
         }
