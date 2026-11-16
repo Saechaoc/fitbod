@@ -16,11 +16,11 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 ## Active work
 
 Since 2026-11-12 two building agents work the Next queue at once, one slice per stream, each on its own branch, worktree and simulators.
-In flight: [RM-015](#rm-015) redesign 2.3, Program's This week agrees with Today; and [RM-023](#rm-023)'s comparable periods and sparse routes.
+In flight: [RM-015](#rm-015) redesign 2.3, Program's This week agrees with Today; and [RM-026](#rm-026)'s progression eligibility from the active graph.
 Fixed on 2026-11-12: the first nightly run's two failures, a store test and a large-iPhone PR list test, were test races, now fixed in the tests ([RM-001](#rm-001), [RM-053](#rm-053)).
 Fixed on 2026-11-15: reveal's swipe, which failed twice in the 2026-11-14 nightly, now drags by coordinates ([RM-054](#rm-054)); a failed save's rollback shows the saved values again for every caller, where a later save could write the refused edit ([RM-002](#rm-002)); and saving an exercise's settings can no longer put a cleaned photo's location back or undo a catalog update ([RM-004](#rm-004)).
 Done on 2026-11-12: [RM-019](#rm-019) stalled exercises and [RM-020](#rm-020) past weekly recaps (on `main` 2026-11-15), which [RM-023](#rm-023) follows in the analytics stream; [RM-011](#rm-011) redesign 1.5, Program's Now, Planned and Past; [RM-012](#rm-012) redesign 1.6, Program's resume and discard; [RM-013](#rm-013) redesign 2.1, the opt-in review notice; and [RM-014](#rm-014) redesign 2.2, the next-session and next-day lines (both on `main` 2026-11-15), which [RM-015](#rm-015) follows in the redesign order.
-Delivered: [RM-026](#rm-026)'s first three deliveries, superset partners in one trip and unsaved duplication (2026-11-12) and ordered multi-select (2026-11-15); its fourth, progression eligibility from the active graph, follows.
+Delivered: [RM-026](#rm-026)'s first three deliveries, superset partners in one trip and unsaved duplication (2026-11-12) and ordered multi-select (2026-11-15), whose fourth, progression eligibility from the active graph, is in flight; and [RM-023](#rm-023)'s first delivery (2026-11-15), one intent over a chosen period with sparse-chart notes and phase chips that filter, which Compare and older records follow.
 On `main` with only phone checks open: [RM-010](#rm-010)'s Volume deload advice, and [RM-062](#rm-062)'s counts of a workout in progress and of a cardio exercise's Library pages, which leave bouts out.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
@@ -35,7 +35,7 @@ Ready work in independent streams may continue while another feature awaits inpu
 |---|---|---|
 | 1 | [RM-022](#rm-022) slices 7–8: the "hike" alias, a search field in the family picker and the order inside a family, then a sibling's estimated starting weight | Catalog stream; needs nothing from the redesign. |
 
-Also dependency-ready, in no chosen order: [RM-026](#rm-026)'s progression eligibility from the active graph, [RM-025](#rm-025) plate calculator from a set and [RM-027](#rm-027) Library/custom results.
+Also dependency-ready, in no chosen order: [RM-023](#rm-023)'s Compare and older-record routes, [RM-025](#rm-025) plate calculator from a set and [RM-027](#rm-027) Library/custom results.
 **Decision (user, 2026-11-12):** [RM-029](#rm-029) is deprioritized and leaves this queue.
 A schema change that SwiftData migrates in place, as in [RM-062](#rm-062) slices 2 and 6 and [RM-066](#rm-066), needs the store rehearsal (`scripts/rehearse-store.sh` on a fresh copy of the phone's store) before and after it, and the user's go-ahead.
 RM-029's populated restore proof returns before a schema change SwiftData cannot migrate in place, and at release readiness.
@@ -46,7 +46,7 @@ Authoring, catalog, logging and calculator deliveries use their actual condition
 ## Needs input or device verification
 
 Only the named observation/decision is unavailable; this section does not pause unrelated work.
-Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `19866099` (2026-11-15), whose store is on seed 10.
+Every phone row except RM-007's disposable-install reproduction can be checked in one pass on the installed build, `59e43448` (2026-11-15), whose store is on seed 10.
 
 | Owner | Missing input or proof | What depends on it |
 |---|---|---|
@@ -59,6 +59,7 @@ Every phone row except RM-007's disposable-install reproduction can be checked i
 | [RM-014](#rm-014) | On the phone, light and dark: T-REST's and T-DONE's next lines. The user's call: in a block that trains one day a week, whether the done line names the weekday plainly ("NEXT: PUSH A · SUNDAY" on a Sunday, meaning next week) or says "next Sunday" | Nothing waits on it; the line keeps the plain weekday until the user decides. |
 | [RM-019](#rm-019) | The user's call: whether DROP INTENSITY should open the next workout instead of explaining with an alert | Only DROP INTENSITY's route; the Stalled list and the charts are done. |
 | [RM-020](#rm-020) | On the phone: how long the week list and a reopened recap take to fill on the phone's store, and that the automatic recap still shows once a week. The user's call: whether a planned week's headline weighs sessions before records (one session of four with 19 records reads "Light week."), and whether ALL RECAPS opens the list inside Today's sheet or on Progress | Nothing waits on it; both keep today's behavior until the user decides. |
+| [RM-023](#rm-023) | The user's call: whether VOLUME and AVG RPE offer an "All intents" view again, one line per intent as before the chart showed one intent at a time | Nothing waits on it; the chart shows one intent at a time until the user decides. |
 | [RM-026](#rm-026) | The user's call: whether a superset's sets alternate between its lifts in the workout, and whether to build the mock-up's REST BEHAVIOR and CLUSTER chip; each needs new stored fields. Also whether "Duplicate with your changes?" should offer saving the changes to both sessions, and whether the session editor's exercise picker takes the mock-up's title block (a NEW ROUTINE / + ADD EXERCISE breadcrumb over a large PICK EXERCISES), and if so where + NEW goes | Only those pieces; the superset sheet says each lift keeps its own sets and rest until then, Duplicate keeps the changes in the copy only, and the picker keeps the app's header bar with + NEW. |
 | [RM-022](#rm-022) | On the phone: Bench Press folds into one line, History keeps logged names, Library lists Low Cable Triceps Extension, and "side lateral raise" finds Lateral Raise (Dumbbell) | Closing the families and grouped-list slices; slices 7–8 can proceed. |
 | [RM-045](#rm-045), FT-16 | Calf taps on the 430pt phone and a small (390pt) physical phone pass; the iOS 26.7 bottom band is fixed | Closing clipping acceptance; nothing else waits on it. |
@@ -1031,6 +1032,7 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 **Requires:** Approved structure unchanged through two weeks of gym use, no touching product decision, owning redesign implemented. Block stability also needs one whole real block.
 **Verify when:** For each workflow as soon as stability triggers, then at release readiness.
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
+Fixed 2026-11-15 under [RM-023](#rm-023): the shared filter chip carries the selected trait and no longer tells VoiceOver "hidden" ([D-180](design-map/audit.md#d-180)); not yet heard with VoiceOver on a device.
 **References:** [audit](design-map/audit.md), [accessibility](design-system/accessibility.md), [stability](DEVELOPMENT.md#stages), redesign R-14/R-15, F57/F202/F225/F284/F289/F344/F357/F360/F368.
 
 ### <a id="rm-045"></a>RM-045 — FT-16: heatmap reach on small/large phones
