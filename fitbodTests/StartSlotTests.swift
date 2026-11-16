@@ -81,6 +81,31 @@ struct StartSlotTests: ProgramFixtures {
         #expect(StartSlot.nextTrainingDay(in: makeBlock(on: routine), after: now, calendar: calendar) == nil)
     }
 
+    @Test("weekly block: days keep their stored order, and a day past the last slot takes slot storedIndex % slotCount")
+    func nextTrainingDayWithMoreDaysThanSlots() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A", "Legs A"])
+        let block = makeBlock(on: routine, weekly: [2, 4, 6, 1]) // Monday first: Mon, Wed, Fri, Sun
+        let wednesday = try #require(StartSlot.nextTrainingDay(in: block, after: now, calendar: calendar))
+        #expect(wednesday.day == calendar.startOfDay(for: now.addingTimeInterval(day)))
+        #expect(wednesday.slot == slots[1]) // stored index 1; a Sunday-first order would give slot 2
+        let friday = now.addingTimeInterval(3 * day)
+        let sunday = try #require(StartSlot.nextTrainingDay(in: block, after: friday, calendar: calendar))
+        #expect(sunday.day == calendar.startOfDay(for: now.addingTimeInterval(5 * day)))
+        #expect(sunday.slot == slots[0]) // stored index 3 of 3 slots
+    }
+
+    @Test("weekly block on a routine with no slots: no next training day, so T-DONE has no next line")
+    func nextTrainingDayWithNoSlots() throws {
+        let routine = makeRoutine()
+        let block = makeBlock(on: routine, weekly: [3, 5])
+        makeWorkout(in: nil, daysAgo: 0)
+        let finished = try finishedWorkouts()
+        #expect(StartSlot.nextTrainingDay(in: block, after: now, calendar: calendar) == nil)
+        #expect(TodayView.upNextLabel(
+            block: block, resolution: resolution(for: block, at: now), finished: finished,
+            liveRoutines: [routine], sessions: [], now: now, calendar: calendar) == nil)
+    }
+
     @Test("weekly block: the only training day comes round again, and no training day gives no NEXT")
     func weeklyNextWithOneOrNoTrainingDay() throws {
         let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"])

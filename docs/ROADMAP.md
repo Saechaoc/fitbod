@@ -440,6 +440,7 @@ New DEBUG launch argument: `-fitbod-seed-today-done-weekly`, T-DONE in a weekly 
 `StartSlotTests` (rotation keeps NEXT after an unslotted or other-routine workout; the next training day and its slot) and `TodaySlabSummaryTests` (the line names the sheet's NEXT on a rest day, once trained, after an unslotted rotation workout and with no block) passed with `BlockOverviewStatesTests`, `TodayResolverTests`, `TodayStatesSeedTests`, `SessionSheetContentTests`, `WorkoutStarterTests` and `TodayStateTests`, 88/88 (`fast-20261115-155238-16528`).
 The unit target with `TodayStateRoutesUITests` and `BlockOverviewStatesUITests` passed 1,312 of 1,315, the rest being 2 store-rehearsal skips and 1 expected failure (`fast-20261115-155642-21362`).
 Light and dark 390pt captures of T-DONE on rotation and in a weekly block, and of T-REST, match today-layouts.md; a rotation block has no rest day to capture.
+Review fixes: the weekly done seed finishes the session the block schedules today, checked on all seven weekdays, and `StartSlotTests` adds a Monday-first stored order with more days than slots and a routine with no slots, which gives no next line; `StartSlotTests`, `TodaySlabSummaryTests` and `TodayStatesSeedTests` passed 30/30 (`fast-20261115-160603-27511`).
 Open: a look on the phone.
 **References:** redesign R-27; [Today layouts](design-map/redesign/today-layouts.md), [StartSlot](../fitbod/Periodization/StartSlot.swift), [overview](../fitbod/Periodization/BlockOverviewScreen.swift), StartSlotTests/TodaySlabSummaryTests/BlockOverviewStatesTests.
 

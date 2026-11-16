@@ -55,7 +55,7 @@ struct TodayStatesSeedTests {
         case (.done, .done(let workouts)):
             #expect(workouts.map(\.displayName) == ["Pull A", "Push A"])
         case (.doneWeekly, .done(let workouts)):
-            #expect(workouts.map(\.displayName) == ["Push A"])
+            #expect(workouts.count == 1)
             #expect(workouts.first?.block?.schedulingMode == .fixedWeekly)
         case (.pick, .pick(let suggestion)):
             // Push A was trained two days ago, so the routine's NEXT is Pull A.
@@ -84,6 +84,23 @@ struct TodayStatesSeedTests {
             #expect(review.name == TodayStatesSeed.endedBlockName)
         default:
             Issue.record("the \(seed?.rawValue ?? "review") seed gave \(state)")
+        }
+    }
+
+    /// The training days sort to the locale's week order, so on some weekdays
+    /// today's session is not the routine's first.
+    @Test("the weekly done seed finishes the session the block schedules today, on every weekday")
+    func weeklyDoneSeedTrainsTodaysSession() throws {
+        for offset in 0..<7 {
+            let now = noon.addingTimeInterval(Double(offset) * 86_400)
+            guard case .done(let workouts) = try state(after: .doneWeekly, now: now),
+                  let block = workouts.first?.block,
+                  case .session(let today) = TodayResolver.resolveFixedWeekly(block: block, today: now, calendar: calendar)
+            else {
+                Issue.record("day +\(offset): no T-DONE on a day the block trains")
+                continue
+            }
+            #expect(workouts.map(\.slot) == [today], "day +\(offset)")
         }
     }
 

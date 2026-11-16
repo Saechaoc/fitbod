@@ -16,8 +16,8 @@
 //                               Pull A finished today.
 //    -fitbod-seed-today-done-weekly
 //                               T-DONE in a weekly block that trains today
-//                               and every other day after it, with Push A
-//                               finished today.
+//                               and every other day after it, with the
+//                               session it schedules today finished.
 //    -fitbod-seed-today-rest    T-REST: an active weekly block whose training
 //                               days leave today out.
 //    -fitbod-seed-today-attach  T-ATTACH: an active block whose routine is
@@ -143,9 +143,16 @@ enum TodayStatesSeed {
                 block.trainingDays = weekdays([0, 2, 4])
             }
             start(block, at: now, in: context)
+            // The weekly block trains the session it schedules today; its days are in
+            // the locale's week order, so today is not always the first slot's day.
+            var trained = slots[0]
+            if state == .doneWeekly,
+               case .session(let today) = TodayResolver.resolveFixedWeekly(block: block, today: now, calendar: .current) {
+                trained = today
+            }
             let midnight = Calendar.current.startOfDay(for: now)
             let sinceMidnight = now.timeIntervalSince(midnight)
-            finish(slots[0], block: block, startedAt: midnight.addingTimeInterval(sinceMidnight * 0.2),
+            finish(trained, block: block, startedAt: midnight.addingTimeInterval(sinceMidnight * 0.2),
                    duration: min(47 * 60, sinceMidnight * 0.25), in: context)
             if state == .done {
                 finish(slots[1], block: block, startedAt: midnight.addingTimeInterval(sinceMidnight * 0.6),
