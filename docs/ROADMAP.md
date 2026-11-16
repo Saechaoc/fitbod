@@ -794,11 +794,24 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 
 ### <a id="rm-025"></a>RM-025 — Plate calculator from a working set
 
-**P2 · Planned.** Keep standalone calculator/inventory; FT-11 deliberately removed the inline graphic.
+**P2 · Done (2026-11-15).** A working set's actions open the plate calculator on the set's weight, equipment, bar and unit, and its Done returns to that set.
+Keep standalone calculator/inventory; FT-11 deliberately removed the inline graphic.
 **Done when:** logger opens it with set weight/equipment and returns to that set; TARGET accepts typing; equipment switches in-place. Inventory handles actual counts, explains autosave/unit-specific defaults and calculator read-only rows look read-only. A real 225/315 load takes no dozens of taps.
 **Scope / sequence:** Repair numeric input → prefill calculator from a set → return to that set → verify equipment/inventory. Keep standalone access; removed inline graphic excluded.
 **Requires:** [RM-005](#rm-005) numeric/plate validation. Keep current relabeling; provenance only if conversion is introduced.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** Slice D2 (`swarm/D2`) delivered the scope on 2026-11-15, with no stored field, model or backup format change.
+A barbell, dumbbell, EZ-bar or trap-bar set's actions offer Plate calculator; it opens on the weight the set's cell shows, typed or offered, and writes nothing to the set.
+The logger shows the sheet, because shown from the set's row it was rebuilt as TARGET's keyboard rose, which threw the typing away.
+A tap on TARGET opens a number field that reads the current locale and selects its weight; the plates follow each key, and the chips come back for small steps when the keyboard closes.
+BAR and INVENTORY open a menu of the four equipment kinds, and PLATES AVAILABLE is read-only text (D-114, D-115).
+In Plate Inventory the tabs and the bar weight row are 44pt targets and the row's label focuses its field (D-117, D-118), a plate's "×4 ▾" count opens counts from none to 20 (D-119), small signal text uses `bruSignalText` (D-120), and a note says each change saves and a unit switch only relabels (D-121).
+From a 225 lb set the plates show after two taps, the set's actions and Plate calculator, and 315 takes five more: TARGET, three digits and DONE.
+Eight unit suites passed 51 of 51 (`fast-20261115-205542`), with the prefill, return, locale and count-menu cases.
+`NumberEntryUITests.testPlateCalculatorTargetTypeOverFromSet` types 315 over a set's 225, checks three 45s a side and returns to the set with its weight unchanged; it failed with the sheet shown from the set's row (`fast-20261115-210220`).
+With the fix it passed, and `WhyThisWeightControlUITests`, `NumberEntryUITests`, `SwipeBackUITests` and `NonBarbellWhyUITests` passed 12 of 12 (`fast-20261115-210343`, iPhone 17, iOS 26.5); the new check passed again on the final source (`fast-20261115-211118`).
+390pt light captures of the set's menu, the calculator from a set, a typed TARGET, the equipment menu, the trap bar, the return to the set, and the inventory's count menu, label focus and note were inspected.
+They differ from `plate-calc.jsx` only where earlier decisions moved inventory editing and saving out of the calculator.
+Not checked: dark mode, accessibility text sizes and VoiceOver.
 **References:** D-12/D-14/D-114–D-121; [plate workflow](design-map/workflows/plates-and-the-calculator.md), logger-plate-calculator/typed-target/equipment-switch/plate-inventory-saved-note.
 
 ### <a id="rm-026"></a>RM-026 — Session/routine authoring without detours
