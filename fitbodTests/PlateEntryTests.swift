@@ -49,6 +49,38 @@ struct PlateEntryTests {
         #expect(retried.updatedAt > .distantPast)
     }
 
+    /// A count picked from a plate's menu, or a delete, whose save fails
+    /// leaves the saved plates in the model the row and the calculator read
+    /// (RM-025 review).
+    @Test func failedCountChangeOrDeleteKeepsTheSavedPlates() throws {
+        let context = ModelContext(try FitbodModelContainer.make(inMemory: true))
+        let inventory = PlateInventory()
+        context.insert(inventory)
+        let plates = [PlateSpec(weight: 45, countPerSide: 4), PlateSpec(weight: 25, countPerSide: 2)]
+        inventory.availablePlates = plates
+        inventory.updatedAt = .distantPast
+        try context.save()
+        let original = inventory.availablePlatesData
+        let twelve = [PlateSpec(weight: 45, countPerSide: 12), PlateSpec(weight: 25, countPerSide: 2)]
+
+        for change in [twelve, [PlateSpec(weight: 45, countPerSide: 4)]] {
+            #expect(throws: Failure.self) {
+                try PlateInventoryEditor.setPlates(change, on: inventory, context: context,
+                    save: { _ in throw Failure.disk })
+            }
+            #expect(!context.hasChanges)
+            #expect(inventory.availablePlates == plates, "The row must show the saved count again")
+            #expect(inventory.updatedAt == .distantPast)
+            let saved = try #require(try ModelContext(context.container).fetch(FetchDescriptor<PlateInventory>()).first)
+            #expect(saved.availablePlatesData == original)
+        }
+
+        try PlateInventoryEditor.setPlates(twelve, on: inventory, context: context)
+        let retried = try #require(try ModelContext(context.container).fetch(FetchDescriptor<PlateInventory>()).first)
+        #expect(retried.availablePlates == twelve)
+        #expect(retried.updatedAt > .distantPast)
+    }
+
     @Test func legacyDuplicateRowsCombineWithoutWrites() throws {
         let context = ModelContext(try FitbodModelContainer.make(inMemory: true))
         let inventory = PlateInventory()

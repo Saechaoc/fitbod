@@ -140,10 +140,11 @@ public struct PlateInventoryEditor: View {
             // UI-SPEC line 280 verbatim
             Text("Replaces with the default \(unitLabel) plate set for \(activeTab.displayName).")
         }
-        .alert("Couldn't reset inventory", isPresented: $showSaveError) {
+        // A reset, a count change or a delete that could not be saved.
+        .alert("Couldn't save inventory", isPresented: $showSaveError) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Your custom inventory wasn't changed. Try resetting again.")
+            Text("Your inventory wasn't changed. Try again.")
         }
     }
 
@@ -174,15 +175,10 @@ public struct PlateInventoryEditor: View {
         save: (ModelContext) throws -> Void = { try $0.save() }
     ) throws {
         if let error = plateError(weight: weight, inventory: inventory) { throw error }
-        inventory.availablePlates = (inventory.availablePlates + [PlateSpec(weight: weight, countPerSide: 2)])
-            .sorted { $0.weight > $1.weight }
-        inventory.updatedAt = .now
-        do {
-            try save(context)
-        } catch {
-            SessionSetActions.rollBack(context)
-            throw error
-        }
+        try setPlates(
+            (inventory.availablePlates + [PlateSpec(weight: weight, countPerSide: 2)]).sorted { $0.weight > $1.weight },
+            on: inventory, context: context, save: save
+        )
     }
 
     // MARK: - Equipment tab strip
@@ -400,8 +396,9 @@ public struct PlateInventoryEditor: View {
     // MARK: - Footer bar
 
     /// 2pt bruInk top rule + full-width primary "Done ▸".
-    /// No save button: @Bindable write-through and `try? ctx.save()` in the row
-    /// bindings persist every change as it is made (T19 removed "Save inventory").
+    /// No save button: the bar weight writes through, and a count change or a
+    /// delete saves as it is made; one whose save fails is undone and
+    /// explained (T19 removed "Save inventory").
     private var footerBar: some View {
         VStack(spacing: 0) {
             // 2pt bruInk top rule
@@ -438,9 +435,7 @@ public struct PlateInventoryEditor: View {
                         countPerSide: newCount,
                         color: updated[idx].color
                     )
-                    inv.availablePlates = updated
-                    inv.updatedAt = .now
-                    try? ctx.save()
+                    apply(updated, to: inv)
                 }
             }
         )
@@ -448,11 +443,33 @@ public struct PlateInventoryEditor: View {
 
     /// Removes the plate with the given weight from inventory.
     private func delete(plate: PlateSpec, from inv: PlateInventory) {
-        var updated = inv.availablePlates
-        updated.removeAll(where: { $0.weight == plate.weight })
-        inv.availablePlates = updated
-        inv.updatedAt = .now
-        try? ctx.save()
+        apply(inv.availablePlates.filter { $0.weight != plate.weight }, to: inv)
+    }
+
+    /// Saves a count change or a delete, or says it failed. The rows then
+    /// show the saved plates again, so the calculator never plans with an
+    /// unsaved count.
+    private func apply(_ plates: [PlateSpec], to inv: PlateInventory) {
+        do {
+            try Self.setPlates(plates, on: inv, context: ctx)
+        } catch {
+            showSaveError = true
+        }
+    }
+
+    @MainActor
+    static func setPlates(
+        _ plates: [PlateSpec], on inventory: PlateInventory, context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        inventory.availablePlates = plates
+        inventory.updatedAt = .now
+        do {
+            try save(context)
+        } catch {
+            SessionSetActions.rollBack(context)
+            throw error
+        }
     }
 
     // MARK: - Empty inventory (no PlateInventory row for active tab)
