@@ -482,8 +482,9 @@ extension Block {
     var programName: String { name.isEmpty ? "Untitled Block" : name }
 }
 
-private extension BlockStatus {
+extension BlockStatus {
     /// The chip's word, and the start of the block's VoiceOver label, "READY block: …".
+    /// An archived routine's USED IN rows show it too.
     var word: String {
         switch self {
         case .active: "Active"

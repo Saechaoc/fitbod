@@ -4,11 +4,15 @@ import XCTest
 /// Archive and a visible Keep routine, after the deny rule for a routine a
 /// live block uses. An archived routine leaves Program, and Program's
 /// Archived routines entry, shown only while a routine is archived, opens
-/// ARCHIVED ROUTINES, whose RESTORE brings it back.
+/// ARCHIVED ROUTINES, whose RESTORE brings it back. A row there opens the
+/// routine read only, with its own RESTORE ROUTINE (RM-026).
 final class ArchiveRoutineUITests: XCTestCase {
 
     /// The progress-history seed's one session, which no routine holds.
     private static let session = "Bench & Squat"
+
+    /// Push Pull Legs, archived, with Push A, Pull A and Legs A, and no block.
+    private static let archivedRoutineSeed = [UITestNavigation.resetFlag, "-fitbod-seed-program-archived"]
 
     @MainActor
     override func setUpWithError() throws {
@@ -118,12 +122,54 @@ final class ArchiveRoutineUITests: XCTestCase {
         XCTAssertTrue(app.buttons["today.planLine"].label.hasPrefix("Live Block"))
     }
 
+    // MARK: - An archived routine's page
+
+    /// A row on ARCHIVED ROUTINES opens the routine read only: its sessions
+    /// in rotation order, and USED IN, where no block has used it. RESTORE
+    /// ROUTINE goes back to the list, now empty, and puts the routine back
+    /// on Program, and a relaunch reads the restore back (RM-026).
+    @MainActor
+    func testArchivedRoutinePageListsItsSessionsAndRestoresIt() throws {
+        let app = UITestNavigation.launch(Self.archivedRoutineSeed)
+        let name = "Push Pull Legs"
+        UITestNavigation.selectTab("Program", in: app)
+        let entry = archivedEntry(in: app)
+        scrollProgram(toward: entry, in: app)
+        XCTAssertTrue(entry.exists, "Program must offer the archived routine")
+        entry.tap()
+        UITestNavigation.hittable(app.buttons, name).tap()
+        XCTAssertTrue(UITestNavigation.appears(pageTitle(in: app)), "The row must open the archived routine")
+
+        let sessions = ["Push A", "Pull A", "Legs A"].enumerated().map { pageRow("Session \($0.offset + 1): \($0.element)", in: app) }
+        XCTAssertTrue(sessions.allSatisfy(\.exists), "The page must list the routine's three sessions")
+        XCTAssertTrue(sessions[0].frame.minY < sessions[1].frame.minY && sessions[1].frame.minY < sessions[2].frame.minY,
+                      "The page must list the sessions in rotation order")
+        XCTAssertTrue(app.staticTexts.labeled("No block has used it.").exists, "USED IN must say no block has used it")
+
+        let restore = app.buttons.labeled("Restore routine")
+        UITestNavigation.reveal(restore, in: app)
+        restore.tap()
+        XCTAssertTrue(UITestNavigation.disappears(pageTitle(in: app), within: 5), "RESTORE ROUTINE must go back to the list")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("No archived routines."), within: 5),
+                      "The restored routine must leave the list")
+
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertTrue(UITestNavigation.appears(programRow(name, in: app)), "RESTORE ROUTINE must put \(name) back on Program")
+        assertNoArchivedEntry(in: app)
+
+        UITestNavigation.relaunch(app)
+        UITestNavigation.selectTab("Program", in: app)
+        XCTAssertTrue(UITestNavigation.appears(programRow(name, in: app)), "Program must still list \(name) after a relaunch")
+        assertNoArchivedEntry(in: app)
+    }
+
     // MARK: - A block that uses an archived routine
 
     /// Once Live Block ends, its routine can be archived. The ended block
     /// keeps working: Past blocks still lists it and its overview opens. The
-    /// routine waits on ARCHIVED ROUTINES and stays out of New Block's
-    /// routine picker.
+    /// routine waits on ARCHIVED ROUTINES, where its page names the ended
+    /// block under USED IN, and opening the page leaves it archived: it
+    /// stays out of New Block's routine picker.
     @MainActor
     func testEndedBlockKeepsWorkingAfterItsRoutineIsArchived() throws {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock)
@@ -151,6 +197,11 @@ final class ArchiveRoutineUITests: XCTestCase {
         scrollProgram(toward: entry, in: app)
         XCTAssertTrue(entry.exists, "Program must offer the archived routine")
         entry.tap()
+        UITestNavigation.hittable(app.buttons, "Live Routine").tap()
+        XCTAssertTrue(UITestNavigation.appears(pageTitle(in: app)), "The row must open the archived routine")
+        XCTAssertTrue(pageRow("Session 1: Live Push", in: app).exists, "The page must list Live Push")
+        XCTAssertTrue(pageRow("DONE block: Live Block", in: app).exists, "USED IN must name the ended block")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
         UITestNavigation.hittable(app.buttons, "Restore Live Routine", exactLabel: true)
         UITestNavigation.hittable(app.buttons, "Back").tap()
 
@@ -255,6 +306,20 @@ final class ArchiveRoutineUITests: XCTestCase {
     @MainActor
     private func archivedEntry(in app: XCUIApplication) -> XCUIElement {
         app.buttons.labeled("Archived routines")
+    }
+
+    /// The archived routine's page title, ARCHIVED ROUTINE; at default text
+    /// a no-break space joins its words.
+    @MainActor
+    private func pageTitle(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", "Archived.routine")).firstMatch
+    }
+
+    /// A row on the archived routine's page, by what VoiceOver reads:
+    /// "Session 1: Push A", or "DONE block: Live Block".
+    @MainActor
+    private func pageRow(_ label: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] %@", label)).firstMatch
     }
 
     /// Swipes Program up until `element` is on screen, or for `maxSwipes`
