@@ -14,6 +14,9 @@
 //  whose close records it once, keeping the first date. A close that cannot
 //  save leaves the review pending and says so until a later close saves.
 //
+//  RM-016. A save that fails at Start next is made by the review's close,
+//  which says so under the row that opened the review only if it fails too.
+//
 
 import Foundation
 import SwiftData
@@ -181,47 +184,109 @@ struct BlockReviewTriggerTests {
         #expect(!presenter.isUnsaved(block))
     }
 
-    @Test("a close that cannot save keeps the review pending and says so, until a later close saves")
-    func failedCloseKeepsTheReviewPending() throws {
-        let directory = FileManager.default.temporaryDirectory
+    /// A disk store, in a folder of its own that the caller removes, with
+    /// Strength ended at `ended` and its review pending.
+    private func storeWithEndedBlock(ended: Date) throws -> (folder: URL, url: URL, blockID: UUID) {
+        let folder = FileManager.default.temporaryDirectory
             .appendingPathComponent("BlockReviewTrigger-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: directory) }
-        let url = directory.appendingPathComponent("review.store")
-        let ended = started + 7 * day
-
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent("review.store")
         let blockID = try autoreleasepool {
             let context = ModelContext(try FitbodModelContainer.make(storeURL: url))
             let block = try startBlock("Strength", at: started, in: context)
             try BlockLifecycleService.end(block: block, context: context, now: ended)
             return block.id
         }
-        func block(in context: ModelContext) throws -> Block {
-            try #require(try context.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == blockID })).first)
-        }
+        return (folder, url, blockID)
+    }
 
-        // The same store opened so that every save fails, as a full disk would.
+    /// The store at `url` opened so that every save fails, as a full disk would.
+    private func readOnlyContext(_ url: URL) throws -> ModelContext {
+        let schema = Schema(versionedSchema: FitbodModelContainer.CurrentSchema.self)
+        return ModelContext(try ModelContainer(
+            for: schema, configurations: ModelConfiguration(schema: schema, url: url, allowsSave: false)
+        ))
+    }
+
+    private func block(_ id: UUID, in context: ModelContext) throws -> Block {
+        try #require(try context.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == id })).first)
+    }
+
+    @Test("a close that cannot save keeps the review pending and says so, until a later close saves")
+    func failedCloseKeepsTheReviewPending() throws {
+        let ended = started + 7 * day
+        let store = try storeWithEndedBlock(ended: ended)
+        defer { try? FileManager.default.removeItem(at: store.folder) }
+
         var presenter = BlockReviewPresenter()
         try autoreleasepool {
-            let schema = Schema(versionedSchema: FitbodModelContainer.CurrentSchema.self)
-            let readOnly = ModelContext(try ModelContainer(
-                for: schema, configurations: ModelConfiguration(schema: schema, url: url, allowsSave: false)
-            ))
-            let unsaved = try block(in: readOnly)
+            let readOnly = try readOnlyContext(store.url)
+            let unsaved = try block(store.blockID, in: readOnly)
             openAndClose(unsaved, with: &presenter, in: readOnly, now: ended + day)
             #expect(unsaved.reviewedAt == nil, "A failed save must leave the review unseen")
             #expect(!readOnly.hasChanges, "Nothing may stay pending for a later save to write")
             #expect(presenter.isUnsaved(unsaved), "The opening row must say the review was not saved")
-            #expect(try pendingReviews(in: readOnly, now: ended + day) == [blockID], "The notice must stay")
+            #expect(try pendingReviews(in: readOnly, now: ended + day) == [store.blockID], "The notice must stay")
         }
 
-        let context = ModelContext(try FitbodModelContainer.make(storeURL: url))
-        let reopened = try block(in: context)
-        #expect(try pendingReviews(in: context, now: ended + 2 * day) == [blockID], "The failed close wrote nothing")
+        let context = ModelContext(try FitbodModelContainer.make(storeURL: store.url))
+        let reopened = try block(store.blockID, in: context)
+        #expect(try pendingReviews(in: context, now: ended + 2 * day) == [store.blockID], "The failed close wrote nothing")
         openAndClose(reopened, with: &presenter, in: context, now: ended + 2 * day)
         #expect(reopened.reviewedAt == ended + 2 * day)
         #expect(!presenter.isUnsaved(reopened), "A close that saves clears the line")
         #expect(try pendingReviews(in: context, now: ended + 3 * day).isEmpty)
+    }
+
+    // MARK: - Start next's save (RM-016)
+
+    @Test("a save that fails at Start next is made by the review's close, which shows no line")
+    func closeRecordsAReviewStartNextCouldNotSave() throws {
+        let ended = started + 7 * day
+        let store = try storeWithEndedBlock(ended: ended)
+        defer { try? FileManager.default.removeItem(at: store.folder) }
+
+        try autoreleasepool {
+            let readOnly = try readOnlyContext(store.url)
+            let unsaved = try block(store.blockID, in: readOnly)
+            BlockReviewStatistics.acknowledgeBeforeNextBlock(block: unsaved, context: readOnly)
+            #expect(unsaved.reviewedAt == nil, "A failed save must leave the review unseen")
+            #expect(!readOnly.hasChanges, "Nothing may stay pending for a later save to write")
+        }
+
+        // New block closes, and the review closes with it.
+        let context = ModelContext(try FitbodModelContainer.make(storeURL: store.url))
+        let reviewed = try block(store.blockID, in: context)
+        var presenter = BlockReviewPresenter()
+        openAndClose(reviewed, with: &presenter, in: context, now: ended + day)
+        #expect(reviewed.reviewedAt == ended + day, "The close must record the review Start next could not")
+        #expect(!presenter.isUnsaved(reviewed), "A close that saves shows no line")
+        #expect(try pendingReviews(in: context, now: ended + 2 * day).isEmpty)
+    }
+
+    @Test("when Start next's save and the close's both fail, the review stays pending and its row says so")
+    func failedStartNextAndCloseKeepTheReviewPending() throws {
+        let ended = started + 7 * day
+        let store = try storeWithEndedBlock(ended: ended)
+        defer { try? FileManager.default.removeItem(at: store.folder) }
+
+        try autoreleasepool {
+            let readOnly = try readOnlyContext(store.url)
+            let unsaved = try block(store.blockID, in: readOnly)
+            var presenter = BlockReviewPresenter()
+            presenter.open(unsaved)
+            BlockReviewStatistics.acknowledgeBeforeNextBlock(block: unsaved, context: readOnly)
+            #expect(unsaved.reviewedAt == nil, "A failed save must leave the review unseen")
+
+            // New block closes, and the review's close tries again in the
+            // same context: a review still read as seen would skip the save.
+            presenter.showing = nil
+            presenter.close(in: readOnly, now: ended + day)
+            #expect(unsaved.reviewedAt == nil, "A second failed save must leave the review unseen")
+            #expect(!readOnly.hasChanges, "Nothing may stay pending for a later save to write")
+            #expect(presenter.isUnsaved(unsaved), "The row that opened the review must say it was not saved")
+            #expect(try pendingReviews(in: readOnly, now: ended + day) == [store.blockID], "The notice must stay")
+        }
     }
 
     @Test("a planned end date still ahead neither opens a review nor hides one")

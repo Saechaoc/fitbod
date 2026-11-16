@@ -489,6 +489,8 @@ A save that fails at Start next or Plan custom is retried by that close, and a c
 `BlockReviewHeroLayoutTests`, `BlockReviewPRMarkTests`, `BlockReviewTriggerTests`, `NewBlockBuilderFidelityTests` and `BlockOverviewScreenWeekCarouselTests` passed 21/21 (`fast-20261115-203502-17649`).
 `BlockReviewAfterEndUITests`, with a new test of both return paths and the three taps, `BlockLifecycleEntryPointsUITests`, whose CANCEL now lands on Today's Block overview, `BlockOverviewStatesUITests` and `ArchiveRoutineUITests` passed 16/16 (`fast-20261115-203946-21099`).
 Light and dark 390pt captures of the End alert, New block from Today's notice, Today's Block overview and Program, each return, and the failed-close line under REVIEW ▸ on Program were inspected.
+Review fixes: Start next and Plan custom save through `BlockReviewStatistics.acknowledgeBeforeNextBlock`, and `BlockReviewTriggerTests` checks on a read-only store that a save failing there is made by the close with no line, and that a close failing too leaves the line; the UI tests check each landing by where ‹ BACK leads, Today or Past blocks.
+The four review and builder unit suites passed 17/17 (`fast-20261115-210110-31957`), and `BlockLifecycleEntryPointsUITests` and `BlockReviewAfterEndUITests` passed in a run of five classes, 15/15 (`fast-20261115-210219-33151`).
 Open: a look on the phone.
 **References:** D-40; [overview](../fitbod/Periodization/BlockOverviewScreen.swift), [layouts](design-map/redesign/program-layouts.md).
 

@@ -411,9 +411,7 @@ public struct BlockReviewView: View {
     /// ended block's routine, scheduling and days (decided 2026-11-05), and
     /// record the review before the builder opens (RM-013).
     private func openNextBlock(template: BlockTemplate?) {
-        // A failed save is tried again when the review closes with New
-        // block, and the row that opened the review says if that fails too.
-        try? BlockReviewStatistics.acknowledge(block: block, context: ctx)
+        BlockReviewStatistics.acknowledgeBeforeNextBlock(block: block, context: ctx)
         nextBlock = NextBlock(draft: BlockDraft.next(after: block, template: template))
     }
 }
@@ -658,6 +656,15 @@ public enum BlockReviewStatistics {
         guard block.reviewedAt == nil else { return }
         block.reviewedAt = now
         try SessionSetActions.saveOrRollBack(context)
+    }
+
+    /// Records the review before New block opens over it, as Start next and
+    /// Plan custom do. A failed save is not thrown: the review closes with
+    /// New block, its close tries again, and the row that opened the review
+    /// says so if that fails too (RM-016).
+    @MainActor
+    public static func acknowledgeBeforeNextBlock(block: Block, context: ModelContext) {
+        try? acknowledge(block: block, context: context)
     }
 
     public static func formattedKg(_ value: Double) -> String {

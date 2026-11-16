@@ -73,7 +73,8 @@ final class BlockReviewAfterEndUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "< TODAY", exactLabel: true).tap()
         XCTAssertTrue(UITestNavigation.disappears(newBlock), "< TODAY must close New block")
         XCTAssertTrue(UITestNavigation.disappears(reviewTitle(in: app)), "< TODAY must close the review too")
-        // Nothing covers Today: its Settings button takes a tap.
+        // `hittable` fails the test unless Today's Settings button takes a
+        // tap, so nothing covers Today.
         UITestNavigation.hittable(app.buttons, "Settings")
         XCTAssertFalse(reviewNotice(in: app).exists, "Start next must have recorded the review")
 
@@ -86,9 +87,11 @@ final class BlockReviewAfterEndUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "< PROGRAM", exactLabel: true).tap()
         XCTAssertTrue(UITestNavigation.disappears(newBlock), "< PROGRAM must close New block")
         XCTAssertTrue(UITestNavigation.disappears(reviewTitle(in: app)), "< PROGRAM must close the review too")
-        // Nothing covers the block's overview: its REVIEW ▸ takes a tap.
+        // The block's overview on Program's stack: nothing covers its
+        // REVIEW ▸, and its ‹ BACK leads to Past blocks.
         UITestNavigation.hittable(app.buttons, "REVIEW ▸")
-        XCTAssertTrue(UITestNavigation.tab("Program", in: app).isSelected, "< PROGRAM must land on Program")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        UITestNavigation.hittable(app.buttons, "DONE block: Live Block")
     }
 
     // MARK: - Helpers

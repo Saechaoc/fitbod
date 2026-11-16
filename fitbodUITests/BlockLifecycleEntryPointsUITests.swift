@@ -51,7 +51,12 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         XCTAssertFalse(app.buttons.labeled("END BLOCK").exists, "An ended block offers no END BLOCK")
         XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("REVIEW ▸")),
                       "A finished block's overview must reopen its review (B12)")
+        // CANCEL lands on the block's overview on Today's stack: `hittable`
+        // fails the test unless nothing covers REVIEW ▸, and ‹ BACK leads to
+        // Today, the one screen with a Settings button.
+        UITestNavigation.hittable(app.buttons, "REVIEW ▸")
         UITestNavigation.hittable(app.buttons, "Back").tap()
+        UITestNavigation.hittable(app.buttons, "Settings")
         XCTAssertFalse(UITestNavigation.appears(review, within: 3), "A review already seen must not reopen on Today")
         XCTAssertFalse(app.buttons["today.reviewNotice"].exists, "A review closed on the overview must leave no notice on Today")
         assertNoActiveBlockOnToday(in: app)
