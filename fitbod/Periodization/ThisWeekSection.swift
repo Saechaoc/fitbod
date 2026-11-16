@@ -254,19 +254,31 @@ struct ThisWeekSection: View {
             today: calendar.startOfDay(for: now), edits: historyEdits?.version,
             open: workouts.filter { $0.completedAt == nil }.map(\.persistentModelID)
         )) {
-            let week = ThisWeek.make(
-                block: block, workouts: workouts, templates: sessions, settings: settingsList,
-                liveRoutines: liveRoutines, readyBlocks: readyBlocks, context: ctx, now: now, calendar: calendar)
-            self.week = week
-            isShown = !week.groups.isEmpty
+            refresh()
         }
-        .onAppear { now = .now }
+        .onAppear {
+            now = .now
+            // The first showing builds the week at once: the task runs a frame
+            // later, and the section would push the list down as it came in.
+            if week == nil {
+                refresh()
+            }
+        }
         // A History correction can empty a finished workout or fill an empty one.
         .onChange(of: historyEdits?.version) { now = .now }
         .onChange(of: scenePhase) { _, phase in if phase == .active { now = .now } }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
             now = .now
         }
+    }
+
+    /// Works the week out from the queries and tells Program whether it shows.
+    private func refresh() {
+        let week = ThisWeek.make(
+            block: block, workouts: workouts, templates: sessions, settings: settingsList,
+            liveRoutines: liveRoutines, readyBlocks: readyBlocks, context: ctx, now: now, calendar: calendar)
+        self.week = week
+        isShown = !week.groups.isEmpty
     }
 
     // MARK: - Rows
