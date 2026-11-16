@@ -947,11 +947,20 @@ Not built: a session row that opens the session read only, and a block row that 
 
 ### <a id="rm-027"></a>RM-027 — Library/custom flows finish where expected
 
-**P2 · Planned: saved-result navigation.** Creation/edit/copy/search prefill exist; finish filtering, saved-result navigation and image display.
+**P2 · Planned: filters and image display.** The first delivery (2026-11-16) opens a saved new exercise or copy, and a delete leaves the deleted exercise's page.
+Creation/edit/copy/search prefill and these routes exist; filtering, duplicate-muscle explanations and image display remain.
 **Done when:** create/copy opens its result, delete returns to Library, custom-only filtering/duplicate-muscle behavior are clear, empty filters offer repair. PATTERN/TEMPO/BAR WT/INCREMENT fields require supported metadata/prescription semantics, not inert controls.
 **Scope / sequence:** Deliver create/copy → saved result and delete → Library routes with retry intact. Filters/duplicate-muscle explanations return when those paths are next touched; PATTERN/TEMPO/BAR WT/INCREMENT require catalog/prescription semantics. No inert fields.
 **Requires:** [RM-004](#rm-004) for photo writes; catalog/prescription semantics only for fields using them.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** First delivery on `swarm/B3` (`bb68d283`), iPhone 17 and iPhone 17e simulators, iOS 26.5, Xcode 26.5; filtering, duplicate-muscle explanations, image display and the deferred fields have no passing acceptance yet.
+SAVE of a new exercise, from + NEW or CREATE CUSTOM EXERCISE, closes the editor onto the exercise's page in the Library, and SAVE of a copy opens the copy's page over the built-in, which Back returns to ([D-53](design-map/audit.md#d-53)).
+Delete in EDIT closes the editor and then the deleted exercise's page, onto the Library, or onto the built-in when its copy's SAVE opened the page ([D-55](design-map/audit.md#d-55)).
+Before, a delete after a search that matched only that exercise showed a blank page with a warning sign, because the list's empty state took the exercise destination with it; the destination now sits at the root of the Library's stack.
+The editor hands back a created exercise or a delete only after the save succeeds, so a failed save or delete keeps the editor, its draft and the page behind for a retry; a picker's + NEW still lists the new exercise, ready to pick.
+`CustomExerciseDraftTests` adds a failed create that leaves no rows and the draft as typed, then a retry that saves one exercise, the one SAVE opens; the unit target passed 1,371 of 1,374 with 2 skipped and 1 expected failure (`fast-20261116-133854-65918`).
+`CustomExerciseEditorBRUUITests`, which now checks that SAVE opens the new exercise, `LibrarySearchBackUITests`, `PhotoPrivacyUITests` and `MilestoneOneJourneyUITests`, whose SAVE step now goes Back to the Library, passed 6/6 (`fast-20261116-134343-69135`).
+390pt light captures on the iPhone 17e were inspected before and after: SAVE from + NEW, from a search with no match and behind a filter that hides the new exercise, a copy's SAVE, Back and delete, a delete from a page SAVE opened, and a Library tab tap from a copy's page.
+Still open: the name placeholder looks typed ([D-51](design-map/audit.md#d-51)), + ADD MUSCLE sits under SECONDARY STIMULUS ([D-52](design-map/audit.md#d-52)), the cannot-archive alert names no way forward ([D-54](design-map/audit.md#d-54)), and Back from a new exercise that a filter hides lands on "No exercises match".
 **References:** D-51–D-55/D-69–D-70/D-82–D-83/D-94, custom-exercises-filter, T48 field follow-ups; [workflow](design-map/workflows/find-and-create-exercises.md).
 
 ### <a id="rm-028"></a>RM-028 — Remaining approved workflow redesign findings
