@@ -65,9 +65,12 @@ struct WorkoutSetSuggestions {
     private let programmed: Bool
     private let blockProgrammed: Bool
     private let tracking: Tracking?
+    /// A family sibling's load for a first-time variant (`SiblingEstimate`).
+    private let estimatedWeight: Double?
 
-    init(exercise: SessionExercise, prior: [SetEntry]) {
+    init(exercise: SessionExercise, prior: [SetEntry], estimatedWeight: Double? = nil) {
         self.exercise = exercise
+        self.estimatedWeight = estimatedWeight
         let tracking = exercise.exercise?.tracking
         self.tracking = tracking
         let eligiblePrior = prior.filter { Self.isReference($0, tracking: tracking) }
@@ -120,9 +123,10 @@ struct WorkoutSetSuggestions {
             let fromCurrent = !blockProgrammed && lastCompleted != nil
             let reference = fromCurrent ? lastCompleted : previous ?? lastCompleted
             let startingWeight = initialWeight(previous: previous)
-            let weight = blockProgrammed
+            // Any load of the lift's own wins over a sibling's estimate.
+            let weight = (blockProgrammed
                 ? startingWeight ?? lastCompleted?.weight
-                : lastCompleted?.weight ?? startingWeight
+                : lastCompleted?.weight ?? startingWeight) ?? estimatedWeight
             let effectiveWeight = WorkoutSetSuggestion(weight: weight).weight(for: entry)
             let reps = repOffer(at: effectiveWeight, reference: reference, fromCurrent: fromCurrent)
             offers[entry.id] = WorkoutSetSuggestion(weight: weight, reps: reps)

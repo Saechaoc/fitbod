@@ -77,6 +77,10 @@ public struct SessionExerciseCard: View {
     /// opens once the variation sheet has gone.
     @State private var swapListAfterVariation = false
     @State private var presentingMachinePicker = false
+    /// A first-time variant's estimate from a family sibling (RM-022) and
+    /// the lift and machine it was read for. Finished workouts do not change
+    /// during this one, so it is read once, not on every draw.
+    @State private var siblingEstimate: (inputs: [UUID?], estimate: SiblingEstimate?)?
 
     @Environment(\.modelContext) private var phase5ModelContext
 
@@ -112,7 +116,12 @@ public struct SessionExerciseCard: View {
         let guidance = currentExplanation()
         // Timed and assisted sets have no prescribed load to explain.
         let explanation = tracking.progressesLoad ? guidance?.explanation : nil
-        let offers = WorkoutSetSuggestions(exercise: sessionExercise, prior: guidance?.prior ?? []).offers()
+        let estimate = currentSiblingEstimate
+        let offers = WorkoutSetSuggestions(
+            exercise: sessionExercise, prior: guidance?.prior ?? [], estimatedWeight: estimate?.weight
+        ).offers()
+        // Only a lift with no matching workout of its own reads a sibling's estimate.
+        let firstTime = guidance.map { $0.prior.isEmpty && $0.otherMachine == nil } ?? false
 
         Section {
             // MARK: Card body
@@ -190,7 +199,7 @@ public struct SessionExerciseCard: View {
                 if collapsed {
                     BRUDivider(.ink)
                 } else {
-                    headerDetails(explanation, offers: offers, otherMachine: guidance?.otherMachine)
+                    headerDetails(explanation, offers: offers, otherMachine: guidance?.otherMachine, estimate: estimate)
                 }
             }
             .cardRow()
@@ -330,6 +339,7 @@ public struct SessionExerciseCard: View {
         .task(id: inputsID) {
             expandedEffortSetID = nil
             evaluatePlateau()
+            await readSiblingEstimate(firstTime: firstTime)
         }
         .onChange(of: hasLoggedWorkingSet) { _, logged in
             if logged { variationUndo = nil }
@@ -348,6 +358,31 @@ public struct SessionExerciseCard: View {
                 DeloadSignalDetailSheet(report: report)
             }
         }
+    }
+
+    /// Reads the sibling estimate once for this lift and machine, off the
+    /// main actor: with a long history it takes tens of milliseconds. A lift
+    /// with a workout of its own leaves the state alone, so its card does
+    /// not draw again.
+    private func readSiblingEstimate(firstTime: Bool) async {
+        let inputs = inputsID
+        guard firstTime, siblingEstimate?.inputs != inputs,
+              let exerciseID = sessionExercise.exercise?.id, let session = sessionExercise.session
+        else { return }
+        let estimate = await SiblingEstimate.find(
+            exerciseID: exerciseID, intentRaw: session.intentRaw, excludingSessionID: session.id, in: ctx.container
+        )
+        guard !Task.isCancelled else { return }
+        siblingEstimate = (inputs, estimate)
+    }
+
+    /// The sibling estimate read for this lift and machine, until a set of
+    /// the lift is done in this workout.
+    private var currentSiblingEstimate: SiblingEstimate? {
+        guard let read = siblingEstimate, read.inputs == inputsID, let estimate = read.estimate,
+              !SiblingEstimate.liftDone(in: sessionExercise)
+        else { return nil }
+        return estimate
     }
 
     // MARK: - Phase 5 PROG-06 helpers
@@ -427,7 +462,8 @@ public struct SessionExerciseCard: View {
     private func headerDetails(
         _ explanation: PrescriptionExplanation?,
         offers: [UUID: WorkoutSetSuggestion],
-        otherMachine: PreviousMatchingIntentHit?
+        otherMachine: PreviousMatchingIntentHit?,
+        estimate: SiblingEstimate?
     ) -> some View {
         BRUDivider(.hair)
 
@@ -544,7 +580,8 @@ public struct SessionExerciseCard: View {
             explanation: explanation,
             unit: unit,
             loggedWeight: topLoggedWeight,
-            hasSetOffer: offers.values.contains { $0.weight != nil || $0.reps != nil || $0.durationSeconds != nil }
+            hasSetOffer: offers.values.contains { $0.weight != nil || $0.reps != nil || $0.durationSeconds != nil },
+            estimate: estimate
         )
         .id(inputsID)
 

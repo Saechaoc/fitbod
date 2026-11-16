@@ -7,6 +7,8 @@ struct WorkoutWeightGuidance: View {
     let unit: WeightUnit
     let loggedWeight: Double?
     let hasSetOffer: Bool
+    /// A first-time variant's starting weight from a family sibling (RM-022).
+    let estimate: SiblingEstimate?
 
     @State private var expanded = false
     @State private var showingCalculation = false
@@ -101,7 +103,7 @@ struct WorkoutWeightGuidance: View {
         SetRow.targetReps(low: exercise.targetRepsLow, high: exercise.targetRepsHigh)
     }
 
-    private func guidanceText(suggestion: String?) -> String {
+    func guidanceText(suggestion: String?) -> String {
         var parts: [String] = []
         let programmed = WorkoutSetSuggestions.hasProgram(exercise.session)
         let tracking = exercise.exercise?.tracking ?? .weightReps
@@ -123,7 +125,9 @@ struct WorkoutWeightGuidance: View {
             // A cardio plan (RM-062); its values are the set's offers too.
             parts.append("Plan \(plan)")
         }
-        if suggestion == nil, loggedWeight == nil {
+        if suggestion == nil, loggedWeight == nil, let estimate {
+            parts.append(estimate.label(unit: unit))
+        } else if suggestion == nil, loggedWeight == nil {
             switch tracking {
             case .weightReps:
                 if programmed {
