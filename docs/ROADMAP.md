@@ -751,7 +751,7 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 
 ### <a id="rm-026"></a>RM-026 — Session/routine authoring without detours
 
-**P2 · Planned.** Supersets and unsaved duplication (2026-11-12) and ordered multi-select (2026-11-15) are delivered; block/hybrid progression and archived inspection remain.
+**P2 · Planned.** Supersets and unsaved duplication (2026-11-12), ordered multi-select (2026-11-15) and progression eligibility from the active graph (2026-11-15) are delivered; archived inspection remains.
 **Done when:** name supersets' acting exercise/partners/effect in one trip, including unsaved sessions; duplication preserves/confirms unsaved edits; multi-select adds the stated count in order. Progression eligibility reads active graph, not deprecated template.block. Inspect archived routines before restore. Preserve drafts/rollback/snapshots.
 **Scope / sequence:** Deliver supersets (partners/effect/unsaved rollback), then unsaved duplication, then ordered multi-select, then graph-based progression eligibility and archived inspection. Each is a bounded authoring delivery; applied per-set targets stay RM-040.
 **Requires:** [RM-002](#rm-002) for affected superset/editor writes; [RM-040](#rm-040) only before exposing applied per-set targets.
@@ -790,6 +790,17 @@ A throwaway check on the iPhone 17e showed that a swipe-down closes an empty pic
 390pt light captures were compared with `phase-2--exercise-picker.png`: the check boxes, the row tint and the footer match.
 Kept differences: the app's header bar with + NEW in place of the mock-up's title block, the existing filter chips and match count, and the near-black check mark the superset sheet also uses.
 Captures before and after the shared check box are pixel-identical in the picker and in the superset sheet, its locked box included.
+Progression eligibility, the fourth delivery (2026-11-15): the session editor offers Block Periodized and Hybrid to a session slotted in the active block's routine, read from the program graph, so a lifter can now choose them (D-142).
+The deprecated `SessionTemplate.block` stays stored: the editor no longer reads or writes it, a duplicate no longer copies it, and only backup export and restore carry it.
+Off the active block the editor still turns either choice into Double Progression on save, and a copy keeps the progression of the session it copies.
+The progression chip always names the progression, so the Linked → Block chip, which no lifter could reach, is gone; the ACTIVE BLOCK banner already says the session is part of the block.
+A workout still takes the active block when it starts, so logged snapshots and frozen prescriptions are unchanged.
+`RoutineBlockLinkageTests`, rewritten for the graph, passed 4/4, and `SessionFactoryTests` passed 16/16 with a session whose deprecated block names another block: it saves Block Periodized from the graph and starts in the active block's deload week (`fast-20261115-162516-38405`).
+In the same run, the seven other suites that build or save a session draft passed 42/42.
+`SlottedSessionDeleteUITests` passed 3/3 and `SessionEditorRowsUITests` 2/2 on iPhone 17/iOS 26.5 (`fast-20261115-162816-40453`).
+A throwaway check on the iPhone 17e opened Upper A on the active Powerbuilding block, chose Block Periodized from all four progressions and read it back after a relaunch (`fast-20261115-163109-42048`).
+Its 390pt light captures were compared with `phase-2--routine-builder.png`: the chip row is unchanged, and the mock-up's LINKED → BLOCK 03 · W3 chip is still absent, with the ACTIVE BLOCK banner in its place.
+Not built: a new session made from the active block's routine offers the two choices only after it is saved and reopened, because it joins the routine when it saves.
 No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
 
