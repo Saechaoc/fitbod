@@ -14,6 +14,7 @@
 //      session only"; SessionFactory.start clears it at that start)
 //    - exercise?.mechanic != .compound → skip (machines, cables, bodyweight)
 //    - equipment NOT in {.barbell, .trapBar, .smithMachine, .dumbbell} → skip
+//    - topWorkingWeight <= 0 → skip (a first-time lift has no weight to ramp to)
 //    - topWorkingWeight < 1.5 × barWeight → skip (too light, no ramp needed)
 //    - barWeight == 0 → skip the 1.5× check for dumbbell (accept any weight)
 //
@@ -70,7 +71,11 @@ public enum WarmupRamp {
         // Guard 5: free bars, Smith machine and dumbbells only (bodyweight, cable, kettlebell, etc. → skip)
         guard [.barbell, .trapBar, .smithMachine, .dumbbell].contains(exercise.equipment) else { return false }
 
-        // Guard 6: light weight check — skip when top < 1.5 × bar weight.
+        // Guard 6: a weight to ramp to. A first-time lift has none yet, and
+        // with no bar to compare, its ramp would read 0 lb at every step.
+        guard topWorkingWeight > 0 else { return false }
+
+        // Guard 7: light weight check - skip when top < 1.5 × bar weight.
         // For dumbbell, barWeight is typically 0 — skip the ratio check to avoid
         // division-by-zero / false negatives with dumbbell pairs.
         if barWeight > 0 {

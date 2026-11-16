@@ -138,6 +138,23 @@ struct WarmupRampTests {
         #expect(result == false)
     }
 
+    // MARK: - 3b. No top weight skips the ramp, with or without a bar
+
+    /// A first-time dumbbell lift has no prescribed weight yet, so its ramp
+    /// read 0 lb at 60% and 90% (found under RM-022, 2026-11-15).
+    @Test("a dumbbell compound with no top weight gets no ramp, and one with a top weight still does")
+    func noTopWeightSkipsRamp() throws {
+        let ctx = try makeContext()
+        let se = makeSessionExercise(ctx: ctx, equipment: .dumbbell, mechanic: .compound)
+
+        #expect(!WarmupRamp.shouldGenerate(
+            for: se, deloadActive: false, topWorkingWeight: 0, barWeight: 0, warmupConfig: nil
+        ))
+        #expect(WarmupRamp.shouldGenerate(
+            for: se, deloadActive: false, topWorkingWeight: 40, barWeight: 0, warmupConfig: nil
+        ))
+    }
+
     // MARK: - 4. Bodyweight equipment skips ramp
 
     @Test("bodyweightSkipsRamp")
