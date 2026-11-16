@@ -3,7 +3,8 @@ import XCTest
 /// Ticket T21, review item 15. "+ New routine" opens a name step, and no
 /// routine exists until SAVE, so leaving the step keeps Program's first-run
 /// screen. SAVE puts the routine's editor in the step's place, so Back from
-/// the editor returns to where the user started.
+/// the editor returns to where the user started. From New block's empty
+/// routine picker, SAVE attaches the routine instead (RM-018).
 final class NewRoutineFlowUITests: XCTestCase {
 
     @MainActor
@@ -47,6 +48,53 @@ final class NewRoutineFlowUITests: XCTestCase {
         XCTAssertFalse(nameStepTitle(in: app).exists, "Back from the editor must skip the name step")
         XCTAssertFalse(app.staticTexts.labeled("Start with a routine").exists,
                        "A saved routine must take the first-run screen's place")
+    }
+
+    // MARK: - From New block
+
+    /// RM-018: with no routine, New block's picker offers + New routine.
+    /// ‹ BACK from the name step makes nothing. SAVE returns to New block
+    /// with its name and FIXED WEEKLY kept and the new routine attached,
+    /// and SAVE DRAFT saves the block on that routine.
+    @MainActor
+    func testNewBlocksEmptyPickerMakesARoutineAndKeepsTheDraft() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.hittable(app.buttons, "+ NEW", exactLabel: true).tap()
+        UITestNavigation.hittable(app.buttons, "+ New block", exactLabel: true).tap()
+        UITestNavigation.hittable(app.buttons, "Blank Block").tap()
+        let newBlock = app.staticTexts.labeled("NEW BLOCK")
+        XCTAssertTrue(UITestNavigation.appears(newBlock), "New Block never opened")
+        UITestNavigation.type("Spring Base", into: app.textFields.firstMatch)
+        let fixedWeekly = app.buttons.labeled("FIXED WEEKLY scheduling")
+        UITestNavigation.reveal(fixedWeekly, in: app)
+        fixedWeekly.tap()
+
+        UITestNavigation.revealAboveBottomBar(app.buttons, "+ ATTACH ▸", in: app).tap()
+        let picker = app.staticTexts.labeled("Choose Routine")
+        let noRoutines = app.staticTexts.labeled("No routines yet.")
+        XCTAssertTrue(UITestNavigation.appears(noRoutines), "With no routine, the picker must say so")
+        UITestNavigation.hittable(app.buttons, "+ New routine", exactLabel: true).tap()
+        XCTAssertTrue(nameField(in: app).waitForExistence(timeout: 10), "+ New routine must open the name step")
+        UITestNavigation.hittable(app.buttons, "Back", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(noRoutines), "‹ BACK must return to the picker with no routine made")
+
+        UITestNavigation.hittable(app.buttons, "+ New routine", exactLabel: true).tap()
+        UITestNavigation.type("Upper Lower", into: nameField(in: app))
+        saveButton(in: app).tap()
+        XCTAssertTrue(UITestNavigation.disappears(nameField(in: app)), "SAVE must close the name step")
+        XCTAssertFalse(picker.exists, "SAVE must close the picker, not return to it")
+        XCTAssertTrue(newBlock.exists, "SAVE must return to New block")
+        XCTAssertEqual(app.textFields.firstMatch.value as? String, "Spring Base", "New block must keep its name")
+        XCTAssertTrue(fixedWeekly.isSelected, "New block must keep FIXED WEEKLY")
+        XCTAssertTrue(app.staticTexts.labeled("Upper Lower").exists, "New block must take the new routine")
+        XCTAssertTrue(app.buttons.labeled("ROUTINE IS EMPTY").exists, "The bottom action must ask for the routine's sessions")
+
+        UITestNavigation.hittable(app.buttons, "SAVE DRAFT", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(newBlock), "SAVE DRAFT must close New Block")
+        let row = programRow("Upper Lower", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "Program must list the new routine")
+        XCTAssertTrue(row.label.hasSuffix("used by Spring Base"), "The saved block must run the new routine, not \"\(row.label)\"")
     }
 
     // MARK: - Helpers

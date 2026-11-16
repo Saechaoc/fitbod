@@ -132,6 +132,7 @@ A close that cannot save rolls back, leaves the review pending, and shows "Could
 The review knows the tab it opened on, `.today` from Today's notice and Today's Block overview and `.program` from Program's, and New block over it names that tab on its back control ([RM-016](docs/ROADMAP.md#rm-016)).
 Closing that New block by any route, saved or not, closes the review too, so the lifter lands where the review opened, and that close retries a save that failed at Start next or Plan custom.
 Block creation stays on Program and the review's next-block flow. Today retains existing-block editing; its only empty-workout start is first-run's.
+With no live routine, the routine picker (`RoutinePickerSheet`) offers + New routine, which pushes the name step on the picker's own stack; its SAVE is the pick, so New block keeps its draft and takes the new routine, and Block overview attaches it ([RM-018](docs/ROADMAP.md#rm-018)).
 Today's week board (`TodayWeek`) shows the user's calendar week: each day's counted workouts and their `countsAsWork` sets, so open, empty and warm-up work never count.
 It is counted in a `.task(id:)` keyed on the finished workout IDs, the week start and `HistoryEdits.version`, never per render; the full per-muscle model runs only when Volume opens from the board or Progress.
 Deload advice has one evaluator, `DeloadAdvisor.evaluate`: Today's notice asks it on appear, and Volume asks it on appear to ring its bars, so `deloadAlertEnabled` off and a dismissed week hide both.

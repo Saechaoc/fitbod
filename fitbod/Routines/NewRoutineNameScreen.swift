@@ -14,7 +14,9 @@
 // returns to where the user started.
 //
 // Navigation: pushed with `NewRoutineRoute.name` on the tab's own stack,
-// which registers it with `newRoutineDestination(path:)`.
+// which registers it with `newRoutineDestination(path:)`. The empty
+// routine picker pushes it on its sheet's own stack instead, where SAVE
+// picks the new routine (RM-018).
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
 //               NO Image(systemName:) / NO Color(.system*) /

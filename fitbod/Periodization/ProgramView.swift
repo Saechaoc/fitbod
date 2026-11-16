@@ -722,8 +722,8 @@ struct RoutineSplitRow: View {
 
 /// A section with nothing in it says so beside its one way forward, as
 /// "No block yet. + NEW BLOCK". The action moves under the words at
-/// accessibility sizes.
-fileprivate struct EmptySectionLine: View {
+/// accessibility sizes. The empty routine picker uses it too.
+struct EmptySectionLine: View {
     let message: String
     let action: String
     /// Signal text when it is the page's one way forward, ink otherwise.

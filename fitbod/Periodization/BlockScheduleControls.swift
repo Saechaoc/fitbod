@@ -173,12 +173,19 @@ struct ScheduleMismatchHint: View {
 /// Lists the non-archived routines; a tap reports one. The header's CANCEL
 /// closes the sheet without one (T38). BRU chrome: BRUHeaderBar and rows
 /// with hair dividers, no List or navigation title.
+///
+/// With none, "No routines yet." sits beside + New routine, which pushes
+/// the name step on this sheet's own stack, so the screen under the sheet
+/// stays as it was. SAVE reports the new routine as the pick; ‹ BACK
+/// comes back here with no routine made (D-162, RM-018).
 struct RoutinePickerSheet: View {
     @Query(filter: #Predicate<Split> { !$0.isArchived }, sort: \Split.name)
     private var splits: [Split]
 
     let selectedSplit: Split?
     let onSelect: (Split) -> Void
+
+    @State private var namingRoutine = false
 
     var body: some View {
         NavigationStack {
@@ -187,7 +194,9 @@ struct RoutinePickerSheet: View {
 
                 ScrollView {
                     if splits.isEmpty {
-                        noRoutines
+                        EmptySectionLine(message: "No routines yet.", action: "+ New routine", isSignal: true) {
+                            namingRoutine = true
+                        }
                     }
                     LazyVStack(spacing: 0) {
                         ForEach(splits) { split in
@@ -218,24 +227,11 @@ struct RoutinePickerSheet: View {
             }
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
+            // On the stack, not the empty line, which goes once SAVE adds the routine.
+            .navigationDestination(isPresented: $namingRoutine) {
+                NewRoutineNameScreen(onSave: onSelect)
+            }
         }
         .presentationDetents([.medium, .large])
-    }
-
-    /// With no routine to pick, says why the list is empty and where a
-    /// routine is made (D-162).
-    private var noRoutines: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("No routines yet")
-                .font(BRUFont.condensedHeading)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.bruInk)
-            Text("A block runs on a routine. Make one on Program with + NEW, then + New routine, and attach it here.")
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruMuted)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
     }
 }

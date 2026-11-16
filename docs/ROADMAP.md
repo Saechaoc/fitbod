@@ -525,13 +525,22 @@ Open: a look at dark Volume on the phone, where FT-18 was reported.
 
 ### <a id="rm-018"></a>RM-018 — Redesign 2.6: empty routine picker offers repair
 
-**P2 · Planned.** PICK A ROUTINE says “No routines yet. + New routine”.
+**P2 · Done (2026-11-15).** With no routine, Choose routine says "No routines yet." beside + New routine, and the routine made there comes back attached to the block; built on `swarm/A9`.
 **Done when:** with no routine, + New block reaches + New routine in one tap; builder fidelity/copy/activation checks pass.
 **Scope / sequence:** Empty-routine repair action → retain builder draft/return state → builder checks. No full inline creator.
 **Requires:** Existing builder/routine creation routes.
 **Scheduled after:** [RM-017](#rm-017).
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
-**References:** D-162 (picker half); [builder](../fitbod/Periodization/BlockBuilderView.swift).
+**Evidence (2026-11-15, swarm/A9):** With no live routine, + ATTACH ▸ on New block opens Choose routine with Program's empty-section line, "No routines yet." beside + NEW ROUTINE in signal text, in place of the note that sent the lifter to Program.
++ New routine pushes the existing name step on the sheet's own stack, and the sheet grows to full height for the keyboard; ‹ BACK returns to the picker with no routine made, and SAVE makes the routine and picks it.
+New block stays open under the sheet, so it keeps its name, phases and scheduling, and comes back with the new routine in its Routine row and ROUTINE IS EMPTY as its bottom action until the routine has a session; no inline creator was added ([RM-030](#rm-030)).
+Block overview shares the sheet, so a draft block's + ATTACH ROUTINE ▸ offers the same repair and attaches the new routine at once.
+`NewBlockBuilderFidelityTests`, `BlockBuilderViewActivationTests` and `UICopyRulesTests` passed 7/7 (`fast-20261115-220158-72548`).
+GitNexus rates `RoutinePickerSheet` and `EmptySectionLine`, which the picker now shares with Program, CRITICAL through the Program and builder screens, so the unit target ran once: 1,350 tests, 1,347 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261115-221028-79996`).
+`NewRoutineFlowUITests` gains a test that New block's empty picker makes the routine, ‹ BACK makes none, the name and FIXED WEEKLY survive the trip, and SAVE DRAFT saves the block on the new routine; with `NewBlockSavesUITests`, `EditorSwipeDismissUITests` and `ArchiveRoutineUITests`, which open the empty picker, they passed 13/13 (`fast-20261115-221135-80223`).
+Review fix: after SAVE the test waits for the name step to close and checks that the picker is gone, in place of a wait for the picker's title, which had already left with the name step pushed; it failed there, as it should, against a SAVE that returns to the picker (`fast-20261115-222031-84742`), and `NewRoutineFlowUITests` then passed 3/3 (`fast-20261115-222227-87074`).
+Light and dark 390pt captures of the empty picker, the name step in the sheet, and the return to New block and to Block overview were inspected; they match the Program layouts' empty-section line and the approved name step, apart from the sheet's grabber and rounded top.
+Open: a look on the phone.
+**References:** D-162 (picker half); [builder](../fitbod/Periodization/BlockBuilderView.swift), [picker](../fitbod/Periodization/BlockScheduleControls.swift).
 
 ### <a id="rm-019"></a>RM-019 — Stalled exercises outside a workout
 
