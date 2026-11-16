@@ -933,10 +933,12 @@ USED IN lists every block that used it, with its status and, once it has ended, 
 RESTORE ROUTINE is the page's one write: it restores the routine as the row's RESTORE does and goes back to the list, which no longer holds it; a failed save keeps the routine archived and shows Couldn't Save.
 Both RESTOREs act at once, as the design system asks of a reversible action, since restore never had a question to keep.
 The page's session and block rows open nothing, because a session's own screen offers EDIT and START WORKOUT.
-`ArchivedRoutineTests` passed 2/2 (`fast-20261116-132948-59352`): reading the page's sessions and blocks in order leaves the store unchanged, and a failed restore leaves the routine archived for a retry that saves it.
-The unit target passed 1,367 of 1,370 with 2 skipped and 1 expected failure (`fast-20261116-133303-61372`).
+`ArchivedRoutineTests` passed 2/2 (`fast-20261116-134441-69804`): the page's two helpers read the sessions in rotation order and the blocks the active one first, then ready and draft ones, then the ended ones, newest first, and write nothing.
+In the same suite, a failed restore rolls the context back through `SessionSetActions.rollBack`, so the routine reads archived in memory and in the store with nothing left to save, and a retry saves it.
+Before that rollback replaced a hand revert of the flag, the unit target passed 1,367 of 1,370 with 2 skipped and 1 expected failure (`fast-20261116-133303-61372`).
 `ArchiveRoutineUITests` passed 5/5 on iPhone 17/iOS 26.5 (`fast-20261116-133643-64568`).
-Its new journey opens Push Pull Legs from the archived seed, finds its three sessions in order, restores it from its page and reads it back after a relaunch; the ended-block journey finds Live Block under USED IN, then the routine still archived and out of New Block's routine picker.
+Its new journey opens Push Pull Legs from the archived seed, finds its three sessions in order, restores it from its page and reads it back after a relaunch.
+The ended-block journey finds Live Block under USED IN, and once the page closes the routine is still archived and out of New Block's routine picker, so opening the page leaves it archived.
 390pt light captures of the list, the page with no block and with an ended one, and the list and Program after a restore were inspected (`fast-20261116-133421-62526`).
 No mock-up exists for either screen, so the page was compared with the routine's own screen, whose title block, session rows and USED IN rows it repeats without the controls that change them.
 Not built: a session row that opens the session read only, and a block row that opens its overview.

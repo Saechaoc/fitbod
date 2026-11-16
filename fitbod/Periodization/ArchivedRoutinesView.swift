@@ -41,8 +41,9 @@ public enum ArchivedRoutinesRoute: Hashable, Sendable {
 // MARK: - Restore
 
 /// Makes an archived routine active again: the one write RESTORE makes, on
-/// the list and on the routine's page. A failed save puts the flag back, so
-/// the routine stays listed as the store still holds it, and throws.
+/// the list and on the routine's page. A failed save rolls the context
+/// back, so the routine reads archived again, as the store still holds
+/// it, and throws.
 @MainActor
 func restoreRoutine(
     _ split: Split, context: ModelContext,
@@ -52,7 +53,7 @@ func restoreRoutine(
     do {
         try save(context)
     } catch {
-        split.isArchived = true
+        SessionSetActions.rollBack(context)
         throw error
     }
 }
@@ -217,8 +218,8 @@ struct ArchivedRoutineView: View {
         (split.slots ?? []).sorted { $0.position < $1.position }
     }
 
-    /// The blocks that used the routine, in Program's order: a live one
-    /// first, then the ended ones, the newest ended first.
+    /// The blocks that used the routine, in Program's order: the active one
+    /// first, then ready and draft ones, then the ended ones, newest first.
     static func blocks(of split: Split) -> [Block] {
         let blocks = ProgramBlocks(split.blocks ?? [])
         return (blocks.active.map { [$0] } ?? []) + blocks.ready + blocks.drafts + blocks.past
