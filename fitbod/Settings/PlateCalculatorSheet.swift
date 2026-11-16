@@ -353,23 +353,29 @@ public struct PlateCalculatorSheet: View {
                         .accessibilityIdentifier("plateCalculator.targetField")
                 }
         } else {
-            Button {
-                targetText = targetLabel
-                editingTarget = true
-            } label: {
-                Text(targetLabel)
-                    .font(font)
-                    .foregroundStyle(Color.bruInk)
-                    // Negative letterspacing per displayHero spec (-0.5)
-                    .tracking(-0.5)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
+            // The number shrinks to fit beside the chips, but the row keeps a
+            // full line, as the field has while typing, so TARGET's rule
+            // stays put when typing starts.
+            ZStack(alignment: Alignment(horizontal: .leading, vertical: .lastTextBaseline)) {
+                Text("0").font(font).hidden()
+                Button {
+                    targetText = targetLabel
+                    editingTarget = true
+                } label: {
+                    Text(targetLabel)
+                        .font(font)
+                        .foregroundStyle(Color.bruInk)
+                        // Negative letterspacing per displayHero spec (-0.5)
+                        .tracking(-0.5)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Target")
+                .accessibilityValue("\(targetLabel) \(unitLabel)")
+                .accessibilityHint("Double tap to type a weight")
+                .accessibilityIdentifier("plateCalculator.target")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Target")
-            .accessibilityValue("\(targetLabel) \(unitLabel)")
-            .accessibilityHint("Double tap to type a weight")
-            .accessibilityIdentifier("plateCalculator.target")
         }
     }
 
