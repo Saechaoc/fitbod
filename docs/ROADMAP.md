@@ -873,7 +873,7 @@ Not checked: accessibility text sizes and VoiceOver; the count menu's VoiceOver 
 
 ### <a id="rm-026"></a>RM-026 — Session/routine authoring without detours
 
-**P2 · Planned.** Supersets and unsaved duplication (2026-11-12), ordered multi-select (2026-11-15) and progression eligibility from the active graph (2026-11-15) are delivered; archived inspection remains.
+**P2 · Done (2026-11-16).** Supersets and unsaved duplication (2026-11-12), ordered multi-select and progression eligibility from the active graph (2026-11-15), and inspecting an archived routine before restore (2026-11-16) are delivered; the last is built on `swarm/D3e`.
 **Done when:** name supersets' acting exercise/partners/effect in one trip, including unsaved sessions; duplication preserves/confirms unsaved edits; multi-select adds the stated count in order. Progression eligibility reads active graph, not deprecated template.block. Inspect archived routines before restore. Preserve drafts/rollback/snapshots.
 **Scope / sequence:** Deliver supersets (partners/effect/unsaved rollback), then unsaved duplication, then ordered multi-select, then graph-based progression eligibility and archived inspection. Each is a bounded authoring delivery; applied per-set targets stay RM-040.
 **Requires:** [RM-002](#rm-002) for affected superset/editor writes; [RM-040](#rm-040) only before exposing applied per-set targets.
@@ -927,7 +927,19 @@ A throwaway check on the iPhone 17e opened Upper A on the active Powerbuilding b
 Its 390pt light captures were compared with `phase-2--routine-builder.png`: the chip row is unchanged, and the mock-up's LINKED → BLOCK 03 · W3 chip is still absent, with the ACTIVE BLOCK banner in its place.
 A second throwaway check captured both pickers on the iPhone 17e: the check mark sits on Double Progression, moves to Block Periodized once it is chosen, and sits on Strength in the intent menu, whose items keep their order (`fast-20261115-164603-51788`).
 Not built: a new session made from the active block's routine offers the two choices only after it is saved and reopened, because it joins the routine when it saves.
-No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+Archived inspection, the fifth delivery (2026-11-16): a row on Archived routines opens the routine read only, so a lifter can see what it holds before restoring it (D-33).
+The page names the routine over "3 SESSIONS · ROTATES IN ORDER" and lists its sessions in rotation order with each one's exercises, sets and minutes, as the routine's own screen does.
+USED IN lists every block that used it, with its status and, once it has ended, its weeks, dates and workouts as Past blocks shows them.
+RESTORE ROUTINE is the page's one write: it restores the routine as the row's RESTORE does and goes back to the list, which no longer holds it; a failed save keeps the routine archived and shows Couldn't Save.
+Both RESTOREs act at once, as the design system asks of a reversible action, since restore never had a question to keep.
+The page's session and block rows open nothing, because a session's own screen offers EDIT and START WORKOUT.
+`ArchivedRoutineTests` passed 2/2 (`fast-20261116-132948-59352`): reading the page's sessions and blocks in order leaves the store unchanged, and a failed restore leaves the routine archived for a retry that saves it.
+The unit target passed 1,367 of 1,370 with 2 skipped and 1 expected failure (`fast-20261116-133303-61372`).
+`ArchiveRoutineUITests` passed 5/5 on iPhone 17/iOS 26.5 (`fast-20261116-133643-64568`).
+Its new journey opens Push Pull Legs from the archived seed, finds its three sessions in order, restores it from its page and reads it back after a relaunch; the ended-block journey finds Live Block under USED IN, then the routine still archived and out of New Block's routine picker.
+390pt light captures of the list, the page with no block and with an ended one, and the list and Program after a restore were inspected (`fast-20261116-133421-62526`).
+No mock-up exists for either screen, so the page was compared with the routine's own screen, whose title block, session rows and USED IN rows it repeats without the controls that change them.
+Not built: a session row that opens the session read only, and a block row that opens its overview.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
 
 ### <a id="rm-027"></a>RM-027 — Library/custom flows finish where expected
