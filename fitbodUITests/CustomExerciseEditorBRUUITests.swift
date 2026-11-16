@@ -69,8 +69,9 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         XCTAssertEqual(status(in: app), "Valid, no muscle mapped. Ready to save.")
     }
 
-    /// RM-022: a machine picks its family. It saves, the family's line in
-    /// the Library opens to it, and after a relaunch EDIT shows it.
+    /// RM-022: a machine finds its family with the list's search and picks
+    /// it. It saves, the family's line in the Library opens to it, and after
+    /// a relaunch EDIT shows it.
     @MainActor
     func testMachineJoinsItsFamily() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
@@ -79,7 +80,7 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         UITestNavigation.type(exerciseName, into: app.textFields["customExercise.name"])
         pick("machine", from: "customExercise.equipment", in: app)
         XCTAssertFalse(app.buttons["customExercise.brand"].exists, "A machine is named in the workout, not here")
-        pick("Chest Press", from: "customExercise.family", in: app)
+        pick("Chest Press", from: "customExercise.family", searching: "chest press", in: app)
         addMuscle("chest", in: app)
 
         UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
@@ -113,12 +114,18 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(app.textFields["customExercise.name"]), "EDIT must open the editor")
     }
 
-    /// Opens a classification cell's list and picks the row for `raw`.
+    /// Opens a classification cell's list and picks the row for `raw`,
+    /// after typing `query` into the list's search field when one is given.
     @MainActor
-    private func pick(_ raw: String, from cell: String, in app: XCUIApplication) {
+    private func pick(_ raw: String, from cell: String, searching query: String? = nil, in app: XCUIApplication) {
         let button = app.buttons[cell]
         UITestNavigation.reveal(button, in: app)
         button.tap()
+        if let query {
+            // A tap at the trailing end of a search field can land on its × (F293).
+            UITestNavigation.type(query, into: app.textFields["\(cell)Search"], replacing: false)
+            XCTAssertFalse(app.buttons["\(cell).none"].exists, "A search lists only the rows it finds")
+        }
         let row = app.buttons["\(cell).\(raw)"]
         XCTAssertTrue(UITestNavigation.appears(row), "\(cell) must open its list")
         UITestNavigation.reveal(row, in: app)

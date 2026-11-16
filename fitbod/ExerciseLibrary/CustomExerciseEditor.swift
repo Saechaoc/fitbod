@@ -16,8 +16,8 @@
 //  - `BRUHeaderBar`: CANCEL, "New exercise" or "Edit exercise", SAVE.
 //  - NAME, in the condensed display font.
 //  - CLASSIFICATION: Family, Equipment and Tracks each open a BRU list: the
-//    store's families, every `Equipment.allCases` and every
-//    `Tracking.allCases`; Mechanic is a
+//    store's families under a search field, every `Equipment.allCases` and
+//    every `Tracking.allCases`; Mechanic is a
 //    `BRUSegmentedControl`, left out for cardio. The design's PATTERN,
 //    TEMPO, BAR WT and INCREMENT cells are left out, because an exercise
 //    has no such fields.
@@ -578,30 +578,56 @@ struct CustomExerciseEditor: View {
 
 /// A classification cell's BRU list: one row per choice, the current one
 /// marked. A tap picks it and closes the sheet; CANCEL keeps the current
-/// one. The machine picker's maker list uses it too (RM-066).
+/// one. The machine picker's maker list uses it too (RM-066). With a
+/// `search`, a field above the list narrows it, as the family list's does
+/// (RM-022).
 struct ChoicePickerSheet<Value: Hashable>: View {
+    /// The field's prompt and identifier, and the options a query finds,
+    /// in the order the list shows them.
+    struct Search {
+        let prompt: String
+        let identifier: String
+        let find: (String) -> [Value]
+    }
+
     let title: String
     let options: [Value]
     @Binding var selection: Value
     let name: (Value) -> String
     /// A row's accessibility identifier.
     let identifier: (Value) -> String
+    var search: Search? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        let shown = if let search, !trimmed.isEmpty { search.find(trimmed) } else { options }
         VStack(spacing: 0) {
             BRUHeaderBar(
                 left: HeaderAction("Cancel") { dismiss() },
                 center: title
             )
+            if let search {
+                BRUSearchField(search.prompt, text: $query, focus: $searchFocused, identifier: search.identifier)
+            }
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(options, id: \.self) { option in
+                    ForEach(shown, id: \.self) { option in
                         row(option)
+                    }
+                    if shown.isEmpty, !trimmed.isEmpty {
+                        Text("No \(title.lowercased()) matches “\(trimmed)”")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(BRUMetrics.Spacing.gutter)
                     }
                 }
             }
+            .scrollDismissesKeyboard(.immediately)
         }
         .background(Color.bruPaper.ignoresSafeArea())
     }
@@ -638,8 +664,10 @@ struct ChoicePickerSheet<Value: Hashable>: View {
     }
 }
 
-/// The family list: None, then every family in the store, A to Z. It reads
-/// the store only while it is open.
+/// The family list: None, then every family in the store, A to Z. A search
+/// lists only the families whose names it finds, best first, the way the
+/// Library finds exercises (`ExerciseSearch`). It reads the store only
+/// while it is open.
 private struct FamilyPickerSheet: View {
     @Binding var selection: String?
     @Query private var exercises: [Exercise]
@@ -649,7 +677,10 @@ private struct FamilyPickerSheet: View {
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
         ChoicePickerSheet(
             title: "Family", options: [nil] + families.map { Optional($0) }, selection: $selection,
-            name: { $0 ?? "None" }, identifier: { "customExercise.family.\($0 ?? "none")" }
+            name: { $0 ?? "None" }, identifier: { "customExercise.family.\($0 ?? "none")" },
+            search: .init(prompt: "Search families", identifier: "customExercise.familySearch") { query in
+                ExerciseSearch.results(query, in: families) { ExerciseSearch.Row(name: $0) }.map { Optional($0.item) }
+            }
         )
     }
 }

@@ -5,7 +5,7 @@
 //  The exercise library: Library tab (browse) and exercise picker (the
 //  session editor checks several; the logger's add and swap pick one).
 //
-//  Composition: BRUHeaderBar · search field · ExerciseFilterBar chip row ·
+//  Composition: BRUHeaderBar · BRUSearchField · ExerciseFilterBar chip row ·
 //  FilteredExerciseList (pinned letter sections of family lines and
 //  ExerciseRow).
 //
@@ -133,7 +133,10 @@ public struct ExerciseLibraryView: View {
                     right: .action("+ New") { openNewCustom() }
                 )
             }
-            searchField
+            BRUSearchField(
+                "Search exercises", text: $searchText, focus: $searchFocused,
+                identifier: isPicker ? "library.search.picker" : "library.search.browser"
+            ) { debouncedSearch = $0 }
             ExerciseFilterBar(
                 filterState: filterState,
                 presentingSheet: $presentingFacet
@@ -230,57 +233,6 @@ public struct ExerciseLibraryView: View {
         let draft = CustomExerciseDraft()
         draft.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         newCustomDraft = draft
-    }
-
-    // MARK: - Search field
-
-    private var searchField: some View {
-        HStack(spacing: 10) {
-            Text("⌕")
-                .font(BRUFont.condensedHeading)
-                .foregroundStyle(Color.bruMuted)
-                .accessibilityHidden(true)
-            TextField(
-                text: $searchText,
-                // The system placeholder gray reads at 1.7:1 on paper;
-                // bruMuted reads at 4.5:1 or more in light and dark mode.
-                prompt: Text("Search exercises").foregroundStyle(Color.bruMuted)
-            ) {
-                Text("Search exercises")
-            }
-            .font(.bru(.mono, size: 17))
-            .foregroundStyle(Color.bruInk)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .submitLabel(.search)
-            .focused($searchFocused)
-            .onSubmit {
-                debouncedSearch = searchText
-                searchFocused = false
-            }
-            .accessibilityLabel("Search exercises")
-            .accessibilityIdentifier(isPicker ? "library.search.picker" : "library.search.browser")
-            if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                    debouncedSearch = ""
-                } label: {
-                    Text("×")
-                        .font(BRUFont.condensedHeading)
-                        .foregroundStyle(Color.bruInk)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Clear search")
-            }
-        }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 56)
-        .background(Color.bruPaper)
-        .contentShape(Rectangle())
-        .onTapGesture { searchFocused = true }
-        .overlay(alignment: .bottom) { BRUDivider(.ink) }
     }
 }
 

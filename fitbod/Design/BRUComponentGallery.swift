@@ -16,6 +16,7 @@ struct BRUComponentGallery: View {
     @State private var units = "kg"
     @State private var selectedTab = BRUTab.today
     @State private var search = ""
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -61,12 +62,7 @@ struct BRUComponentGallery: View {
                         }
                         BRUSegmentedControl("Weight units", options: ["kg", "lb"], selection: $units) { $0 }
                         Toggle("Automatic warm-up sets", isOn: $autoWarmup).toggleStyle(.bru)
-                        TextField("Search exercises", text: $search)
-                            .font(BRUFont.bodyDefault)
-                            .padding(12)
-                            .frame(minHeight: 44)
-                            .overlay(Rectangle().strokeBorder(Color.bruInk, lineWidth: 1.5))
-                            .accessibilityLabel("Example exercise search")
+                        BRUSearchField("Search exercises", text: $search, focus: $searchFocused, identifier: "gallery.search")
                         Text(search.isEmpty ? "Empty search" : "Search: \(search)")
                             .font(BRUFont.bodyDefault)
                         PlateTallyRow(weight: 20, count: $plates, unitLabel: units)
