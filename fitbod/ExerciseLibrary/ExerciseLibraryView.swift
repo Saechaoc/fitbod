@@ -114,6 +114,11 @@ public struct ExerciseLibraryView: View {
         } else {
             NavigationStack(path: effectivePath) {
                 content
+                    // Here, not on the list: an empty list would drop it,
+                    // and an exercise on the path would open a blank page.
+                    .navigationDestination(for: Exercise.self) { ex in
+                        ExerciseDetailView(exercise: ex)
+                    }
             }
             // Search keeps focus under a pushed exercise otherwise, and comes
             // back editing with no keyboard, which keeps the tab bar hidden.
@@ -169,10 +174,12 @@ public struct ExerciseLibraryView: View {
             FilterPickerSheet(facet: facet, filterState: filterState)
         }
         .sheet(item: $newCustomDraft) { draft in
-            // The editor saves and dismisses, and the inner @Query picks up
-            // the new row.
+            // SAVE opens the new exercise in the Library (RM-027); a picker
+            // lists it, ready to pick.
             NavigationStack {
-                CustomExerciseEditor(draft: draft)
+                CustomExerciseEditor(draft: draft, onCreated: { exercise in
+                    if !isPicker { effectivePath.wrappedValue.append(exercise) }
+                })
             }
         }
     }
@@ -354,9 +361,6 @@ private struct FilteredExerciseList: View {
                     }
                 }
                 .scrollDismissesKeyboard(.immediately)
-                .navigationDestination(for: Exercise.self) { ex in
-                    ExerciseDetailView(exercise: ex)
-                }
             }
         }
     }

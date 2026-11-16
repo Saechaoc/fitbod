@@ -69,8 +69,11 @@
 //
 //  Save tap → `draft.materialize(into:allMuscles:)` (New) or
 //  `draft.updateExisting(in:allMuscles:)` (Edit) → `ctx.save()` →
-//  `dismiss()`. The new row appears in `ExerciseLibraryView` via the
-//  outer `@Query<Exercise>` re-running on `Exercise` changes.
+//  `onCreated` for a new or copied exercise → `dismiss()`. The Library
+//  opens the new exercise and an exercise's page opens its copy; a picker
+//  lists it, ready to pick (RM-027). A delete calls `onDeleted` before
+//  `dismiss()`, so the deleted exercise's page closes too. A failed save
+//  or delete calls neither and keeps the editor and its draft.
 //
 
 import SwiftUI
@@ -85,6 +88,11 @@ import SwiftData
 /// its own `BRUHeaderBar`.
 struct CustomExerciseEditor: View {
     @Bindable var draft: CustomExerciseDraft
+    /// Gets the exercise a new or copied draft saved, just before the
+    /// editor closes, so the screen behind can open it (RM-027).
+    var onCreated: (Exercise) -> Void = { _ in }
+    /// Runs once a delete has saved, just before the editor closes.
+    var onDeleted: () -> Void = {}
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -554,7 +562,8 @@ struct CustomExerciseEditor: View {
         showingValidation = true
         guard draft.isValid else { return }
         do {
-            try draft.persist(in: modelContext, allMuscles: allMuscles)
+            let saved = try draft.persist(in: modelContext, allMuscles: allMuscles)
+            if !isEditing { onCreated(saved) }
             dismiss()
         } catch {
             persistenceError = (error as? ExercisePhotoError)?.errorDescription
@@ -566,6 +575,7 @@ struct CustomExerciseEditor: View {
         guard let target = draft.editingExisting else { return }
         do {
             try ExerciseDeletion.delete(target, context: modelContext)
+            onDeleted()
             dismiss()
         } catch {
             SessionSetActions.rollBack(modelContext)

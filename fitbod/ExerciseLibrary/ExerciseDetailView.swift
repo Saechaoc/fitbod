@@ -61,7 +61,8 @@
 //  `updateExisting(in:)` — meaning the source built-in is never
 //  mutated. The user gets a new editable custom exercise; the built-in
 //  remains pristine. (PITFALLS — never mutate templates from instance
-//  flows.)
+//  flows.) SAVE opens the copy's page over this one, and Back returns
+//  here; Delete in EDIT closes the deleted exercise's page (RM-027).
 //
 //  ## Why List (.insetGrouped) instead of Form
 //
@@ -90,6 +91,15 @@ struct ExerciseDetailView: View {
     /// so the sheet always gets the draft it was opened with (a separate
     /// Bool flag let the first presentation render before the draft).
     @State private var editorDraft: CustomExerciseDraft? = nil
+
+    /// The copy the editor saved, opened over this page (RM-027).
+    @State private var savedCopy: Exercise?
+
+    /// Set when the editor deleted this exercise, so the page closes once
+    /// the editor has (RM-027).
+    @State private var wasDeleted = false
+
+    @Environment(\.dismiss) private var dismiss
 
     /// The prescription setting being typed into, by its label.
     @FocusState private var focusedSetting: String?
@@ -144,13 +154,21 @@ struct ExerciseDetailView: View {
         .navigationBarHidden(true)
         // Number pads have no return key (T39).
         .keyboardDone()
-        .sheet(item: $editorDraft) { draft in
+        // The page leaves after the sheet, not with it: it presents the sheet.
+        .sheet(item: $editorDraft, onDismiss: { if wasDeleted { dismiss() } }) { draft in
             // Wrap the editor in its own NavigationStack so it owns its
             // toolbar (Save / Cancel). The editor dismisses itself on
             // save / discard / delete.
             NavigationStack {
-                CustomExerciseEditor(draft: draft)
+                CustomExerciseEditor(
+                    draft: draft,
+                    onCreated: { savedCopy = $0 },
+                    onDeleted: { wasDeleted = true }
+                )
             }
+        }
+        .navigationDestination(item: $savedCopy) { copy in
+            ExerciseDetailView(exercise: copy)
         }
     }
 

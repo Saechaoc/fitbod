@@ -16,8 +16,8 @@
 //  saved-name tests (prove `materialize` and `updateExisting(in:)` store
 //  `name` and `canonicalName` without outer whitespace, ticket T54), a
 //  `snapshot()` equality test (proves the dirty-detection contract the
-//  editor's `Discard Changes?` confirmation relies on) and a family test
-//  (RM-022).
+//  editor's `Discard Changes?` confirmation relies on), a family test
+//  (RM-022) and a failed-create retry test (RM-027).
 //
 //  These tests are deliberately decoupled from the SwiftUI editor view
 //  — they exercise the pure value-type validation logic in isolation.
@@ -284,6 +284,34 @@ struct CustomExerciseDraftTests {
         let ex = try #require(try ctx.fetch(FetchDescriptor<Exercise>()).first)
         #expect(ex.name == "Zercher  Squat")
         #expect(ex.canonicalName == "zercher  squat")
+    }
+
+    // MARK: - Failed save and retry (RM-027)
+
+    @Test("A failed create leaves no rows and the draft as typed; the retry saves one exercise, the one SAVE opens")
+    @MainActor
+    func failedCreateRetriesIntoOneExercise() throws {
+        enum Failure: Error { case disk }
+        let ctx = try LoggerFixtures.makeContext()
+        let chest = MuscleGroup(slug: "chest", displayName: "Chest", region: .upper)
+        ctx.insert(chest)
+        try ctx.save()
+
+        let d = CustomExerciseDraft()
+        d.name = "Zercher Probe"
+        d.muscles = [.init(slug: "chest", role: .primary, weight: 1.0)]
+        let typed = d.snapshot()
+        #expect(throws: Failure.self) {
+            try d.persist(in: ctx, allMuscles: [chest], save: { _ in throw Failure.disk })
+        }
+        #expect(try ctx.fetch(FetchDescriptor<Exercise>()).isEmpty)
+        #expect(try ctx.fetch(FetchDescriptor<ExerciseMuscleStimulus>()).isEmpty)
+        #expect(d.snapshot() == typed, "the form keeps what was typed")
+
+        let saved = try d.persist(in: ctx, allMuscles: [chest])
+        let store = ModelContext(ctx.container)
+        #expect(try store.fetch(FetchDescriptor<Exercise>()).map(\.id) == [saved.id])
+        #expect(try store.fetch(FetchDescriptor<ExerciseMuscleStimulus>()).count == 1)
     }
 
     // MARK: - Snapshot / dirty detection

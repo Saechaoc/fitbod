@@ -4,7 +4,7 @@ import XCTest
 /// role and weight, and EDIT reopens them after a relaunch. RM-062: a cardio
 /// exercise saves without a muscle and keeps what its sets record. RM-022: a
 /// machine joins its family in the Library; RM-066 names machines in the
-/// workout, so the editor has no brand.
+/// workout, so the editor has no brand. RM-027: SAVE opens the new exercise.
 final class CustomExerciseEditorBRUUITests: XCTestCase {
 
     @MainActor
@@ -31,8 +31,7 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         assertMuscle("triceps", role: "Secondary", percent: 25, in: app)
         XCTAssertEqual(status(in: app), "Valid, 1 primary mapped. Ready to save.")
 
-        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
-        XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
+        saveOpensExercise(exerciseName, in: app)
 
         // A relaunch reads the exercise back from the store.
         UITestNavigation.relaunch(app)
@@ -59,8 +58,7 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         pick("duration_level", from: "customExercise.tracking", in: app)
         XCTAssertEqual(app.buttons["customExercise.tracking"].value as? String, "Time and level")
 
-        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
-        XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
+        saveOpensExercise(exerciseName, in: app)
 
         UITestNavigation.relaunch(app)
         reopenEditor(for: exerciseName, in: app)
@@ -83,8 +81,8 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         pick("Chest Press", from: "customExercise.family", searching: "chest press", in: app)
         addMuscle("chest", in: app)
 
-        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
-        XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
+        saveOpensExercise(exerciseName, in: app)
+        UITestNavigation.hittable(app.buttons, "Back", exactLabel: true).tap()
 
         let family = app.buttons["library.family.Chest Press"]
         UITestNavigation.reveal(family, in: app)
@@ -100,6 +98,15 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// SAVE closes the editor onto the new exercise's page (RM-027).
+    @MainActor
+    private func saveOpensExercise(_ exerciseName: String, in app: XCUIApplication) {
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("Edit")), "SAVE must open the new exercise")
+        XCTAssertTrue(app.staticTexts[exerciseName].exists, "The page must be the new exercise's")
+    }
 
     /// Library → the exercise, found by search → EDIT.
     @MainActor

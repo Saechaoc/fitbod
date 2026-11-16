@@ -42,13 +42,10 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(chest))
         chest.tap()
         tap("Save")
-        XCTAssertTrue(UITestNavigation.appears(app.textFields["library.search.browser"]))
-        enter("M1 Cambered", into: app.textFields["library.search.browser"])
-        let custom = app.staticTexts[exerciseName]
-        XCTAssertTrue(UITestNavigation.appears(custom))
-        custom.tap()
+        // SAVE opens the new exercise's page (RM-027).
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts[exerciseName]))
         tap("Back")
-        if app.keyboards.buttons["Search"].exists { app.keyboards.buttons["Search"].tap() }
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["library.search.browser"]))
         XCTAssertTrue(UITestNavigation.appears(app.buttons["Today"]))
         app.buttons["Today"].tap()
         UITestNavigation.reveal(app.buttons["today.planRoutine"], in: app)

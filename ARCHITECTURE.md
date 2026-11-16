@@ -301,6 +301,7 @@ Duplicate session saves the draft, unsaved changes included, as a new session na
 The copy's lifts, per-set overrides and superset groups are new rows, never the original's, and a failed copy rolls back and keeps the draft.
 Duplicate session and Duplicate exercise copy a lift through `RoutineExerciseDraft.copy()`: its whole prescription, warm-up and per-set targets included, with no stored row and in no superset.
 The workout does not read supersets: each lift keeps its own sets and rest.
+The custom exercise editor moves on only after its save or delete succeeds: SAVE opens a new exercise's page in the Library, or a copy's page over the built-in, and Delete closes the deleted exercise's page; a picker lists a new exercise instead, and a failure rolls back and keeps the editor and its draft ([RM-027](docs/ROADMAP.md#rm-027)).
 
 Four native tab containers preserve stacks: Today, Program, Progress, Library.
 Settings is a Today sheet; workout History opens from Progress.

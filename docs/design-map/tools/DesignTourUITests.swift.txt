@@ -1583,10 +1583,8 @@ final class DesignTourMainUITests: XCTestCase {
             XCTAssertTrue(name.waitForNonExistence(timeout: 5), "SAVE must close the editor")
         }
         DesignTour.step("dialog-delete-exercise") {
-            UITestNavigation.type("Tour Custom", into: search, replacing: false)
-            let row = app.staticTexts[custom]
-            DesignTour.expect(row, "The saved custom exercise")
-            row.tap()
+            // SAVE opened the new exercise's page (RM-027).
+            DesignTour.expect(app.staticTexts[custom], "The saved custom exercise")
             DesignTour.tap(app.buttons, "Edit", exact: true)
             DesignTour.expect(app.staticTexts.labeled("Edit exercise"), "Edit exercise")
             TourProgressLibrary.tapRevealed(app.buttons.labeled("Delete exercise"), in: app)
@@ -2759,10 +2757,7 @@ final class DesignTourStatesUITests: XCTestCase {
             chest.tap()
             DesignTour.tap(app.buttons, "Save", exact: true)
             XCTAssertTrue(name.waitForNonExistence(timeout: 5), "SAVE must close the editor")
-            // The search still reads the new name.
-            let row = app.staticTexts[probe]
-            DesignTour.expect(row, "The saved custom exercise")
-            row.tap()
+            // SAVE opens the new exercise's page (RM-027).
             DesignTour.expect(app.buttons.labeled("Edit"), "The custom exercise's detail")
             DesignTour.shot(app, "exercise-detail--custom")
         }
