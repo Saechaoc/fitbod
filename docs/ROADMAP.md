@@ -792,14 +792,18 @@ Kept differences: the app's header bar with + NEW in place of the mock-up's titl
 Captures before and after the shared check box are pixel-identical in the picker and in the superset sheet, its locked box included.
 Progression eligibility, the fourth delivery (2026-11-15): the session editor offers Block Periodized and Hybrid to a session slotted in the active block's routine, read from the program graph, so a lifter can now choose them (D-142).
 The deprecated `SessionTemplate.block` stays stored: the editor no longer reads or writes it, a duplicate no longer copies it, and only backup export and restore carry it.
-Off the active block the editor still turns either choice into Double Progression on save, and a copy keeps the progression of the session it copies.
+Off the active block, the editor opens with either choice turned into Double Progression as an unsaved change: Cancel asks before it discards the change and keeps what is stored, and Save stores Double Progression.
+Save reads the graph again, so a block that ends while the editor is open makes either choice fall back too, and a copy, which joins no routine, saves Double Progression.
 The progression chip always names the progression, so the Linked → Block chip, which no lifter could reach, is gone; the ACTIVE BLOCK banner already says the session is part of the block.
+The intent and progression menus are pickers now, so each marks the current choice.
 A workout still takes the active block when it starts, so logged snapshots and frozen prescriptions are unchanged.
-`RoutineBlockLinkageTests`, rewritten for the graph, passed 4/4, and `SessionFactoryTests` passed 16/16 with a session whose deprecated block names another block: it saves Block Periodized from the graph and starts in the active block's deload week (`fast-20261115-162516-38405`).
-In the same run, the seven other suites that build or save a session draft passed 42/42.
-`SlottedSessionDeleteUITests` passed 3/3 and `SessionEditorRowsUITests` 2/2 on iPhone 17/iOS 26.5 (`fast-20261115-162816-40453`).
+`RoutineBlockLinkageTests`, rewritten for the graph, passed 6/6, with checks that the fall back on opening is an unsaved change, that a block ending mid-edit makes save fall back, and that a copy saves Double Progression (`fast-20261115-164137-48851`).
+In the same run, `SessionFactoryTests` passed 16/16 with a session whose deprecated block names another block: it saves Block Periodized from the graph and starts in the active block's deload week.
+The seven other suites that build or save a session draft passed 42/42 in that run.
+`SlottedSessionDeleteUITests` passed 3/3 and `SessionEditorRowsUITests` 2/2 on iPhone 17/iOS 26.5 (`fast-20261115-164333-50175`), the session's EDIT now opening one draft per tap.
 A throwaway check on the iPhone 17e opened Upper A on the active Powerbuilding block, chose Block Periodized from all four progressions and read it back after a relaunch (`fast-20261115-163109-42048`).
 Its 390pt light captures were compared with `phase-2--routine-builder.png`: the chip row is unchanged, and the mock-up's LINKED → BLOCK 03 · W3 chip is still absent, with the ACTIVE BLOCK banner in its place.
+A second throwaway check captured both pickers on the iPhone 17e: the check mark sits on Double Progression, moves to Block Periodized once it is chosen, and sits on Strength in the intent menu, whose items keep their order (`fast-20261115-164603-51788`).
 Not built: a new session made from the active block's routine offers the two choices only after it is saved and reopened, because it joins the routine when it saves.
 No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
 **References:** D-09/D-33/D-61–D-63/D-85/D-140–D-142/D-152; [session](design-map/workflows/build-a-session-and-its-prescription.md)/[routine](design-map/workflows/build-a-routine.md) workflows.
