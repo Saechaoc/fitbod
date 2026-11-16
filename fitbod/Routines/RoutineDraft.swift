@@ -285,6 +285,16 @@ public final class RoutineDraft {
         }
     }
 
+    /// What the editor runs when it opens: the snapshot its dirty check
+    /// compares with, taken before the eligibility check, so a progression
+    /// the check changes is an unsaved change the lifter can see, keep or
+    /// discard (RM-026).
+    func openingSnapshot() -> String {
+        let snapshot = snapshotHash()
+        enforceBlockProgressionEligibility()
+        return snapshot
+    }
+
     /// Append a brand-new exercise to the draft. Runs the
     /// `PrescriptionDefaults` heuristic (ROUTINE-09) so the user sees
     /// reasonable defaults the moment they tap a search result.
@@ -344,10 +354,12 @@ public final class RoutineDraft {
         routine.folderID = folderID
         // Phase 3.1 PIVOT-04 — write session-level Intent to the
         // persisted SessionTemplate row. Block Periodized and Hybrid persist
-        // only on the active block. The deprecated `routine.block` keeps
-        // what is stored, for a later schema to remove (RM-026).
+        // only on the active block, read again here in case it ended while
+        // the editor was open. The deprecated `routine.block` keeps what is
+        // stored, for a later schema to remove (RM-026).
         routine.intentRaw = intent.rawValue
         routine.updatedAt = .now
+        isOnActiveBlock = isTemplateOnActiveBlock(routine, context: context)
         enforceBlockProgressionEligibility()
         routine.progressionKindRaw = progressionKind.rawValue
 
@@ -448,6 +460,9 @@ public final class RoutineDraft {
         return (fields.map(text) + [rows.joined(separator: ",")]).joined(separator: "|")
     }
 }
+
+/// A draft is identified by the object itself, so a sheet holds one draft per opening.
+extension RoutineDraft: Identifiable {}
 
 // MARK: - RoutineExerciseDraft
 

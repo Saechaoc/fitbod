@@ -35,7 +35,8 @@ public struct SessionTemplateDetailView: View {
 
     @State private var inProgressConflict: Session? = nil
     @State private var startError: String? = nil
-    @State private var presentingEditor = false
+    /// The open editor's draft, built once per opening: building it reads the program graph.
+    @State private var editorDraft: RoutineDraft? = nil
 
     public init(template: SessionTemplate, routine: Split?) {
         self.template = template
@@ -55,7 +56,7 @@ public struct SessionTemplateDetailView: View {
             BRUHeaderBar.slots(
                 left: .back,
                 center: "Session",
-                right: .action("Edit") { presentingEditor = true }
+                right: .action("Edit") { editorDraft = RoutineDraft(routine: template) }
             )
 
             ScrollView {
@@ -69,9 +70,9 @@ public struct SessionTemplateDetailView: View {
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
         .safeAreaInset(edge: .bottom, spacing: 0) { startBar }
-        .sheet(isPresented: $presentingEditor) {
+        .sheet(item: $editorDraft) { draft in
             NavigationStack {
-                RoutineBuilderView(draft: RoutineDraft(routine: template), editing: template)
+                RoutineBuilderView(draft: draft, editing: template)
             }
         }
         .alert(
@@ -153,7 +154,7 @@ public struct SessionTemplateDetailView: View {
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
                     .multilineTextAlignment(.center)
-                BRUButton("Add exercises", kind: .ghost) { presentingEditor = true }
+                BRUButton("Add exercises", kind: .ghost) { editorDraft = RoutineDraft(routine: template) }
                     .frame(maxWidth: 240)
             }
             .padding(.vertical, 40)

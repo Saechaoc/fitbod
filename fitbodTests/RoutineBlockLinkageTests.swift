@@ -119,8 +119,8 @@ struct RoutineBlockLinkageTests {
         }
     }
 
-    @Test("A copy of a session on the active block keeps Block Periodized and no deprecated block")
-    func copyKeepsBlockProgression() throws {
+    @Test("A copy of a Block Periodized session joins no routine, so it saves Double Progression and no deprecated block")
+    func copyFallsBackToDouble() throws {
         let context = try makeContext()
         let graph = try makeGraph(in: context)
         let session = makeSession("Upper A", in: graph.routine, context: context)
@@ -130,7 +130,41 @@ struct RoutineBlockLinkageTests {
 
         let copy = try RoutineDuplicator.duplicate(RoutineDraft(routine: session), context: context)
 
-        #expect(copy.progressionKind == .block)
+        #expect(copy.progressionKind == .double)
         #expect(copy.block == nil)
+        #expect(session.progressionKind == .block)
+    }
+
+    @Test("A Block Periodized session opened off the active block shows the fall back as an unsaved change")
+    func openingOffTheActiveBlockShowsAnUnsavedChange() throws {
+        let context = try makeContext()
+        let session = makeSession("Upper B", context: context)
+        session.progressionKindRaw = ProgressionKind.block.rawValue
+        try context.save()
+
+        let draft = RoutineDraft(routine: session)
+        let opened = draft.openingSnapshot()
+
+        #expect(draft.progressionKind == .double)
+        #expect(draft.snapshotHash() != opened, "Cancel must ask before it drops the change, and Save must be the lifter's choice")
+        #expect(session.progressionKind == .block, "Opening the editor writes nothing")
+    }
+
+    @Test("A block that ends while the editor is open makes save fall back to Double Progression")
+    func blockEndingWhileEditingFallsBack() throws {
+        let context = try makeContext()
+        let graph = try makeGraph(in: context)
+        let session = makeSession("Upper A", in: graph.routine, context: context)
+        try context.save()
+
+        let draft = RoutineDraft(routine: session)
+        #expect(draft.isOnActiveBlock)
+        draft.progressionKind = .block
+        graph.active.isActive = false
+        graph.active.endDate = .now
+        try draft.persist(into: session, context: context)
+
+        #expect(!draft.isOnActiveBlock)
+        #expect(session.progressionKind == .double)
     }
 }

@@ -289,8 +289,7 @@ public struct RoutineBuilderView: View {
             Text(saveErrorMessage ?? "")
         }
         .onAppear {
-            draft.enforceBlockProgressionEligibility()
-            initialSnapshot = draft.snapshotHash()
+            initialSnapshot = draft.openingSnapshot()
         }
         // A swipe would skip the discard dialog that CANCEL and Discard show.
         .interactiveDismissDisabled(hasUnsavedChanges)
@@ -352,7 +351,7 @@ public struct RoutineBuilderView: View {
                 intentMenuItems
             } label: {
                 BRUChip(
-                    intentLabel,
+                    intentLabel(draft.intent),
                     color: .bruSignal,
                     fill: draft.intent == .strength
                 )
@@ -379,8 +378,8 @@ public struct RoutineBuilderView: View {
 
     // MARK: - Intent menu
 
-    private var intentLabel: String {
-        switch draft.intent {
+    private func intentLabel(_ intent: Intent) -> String {
+        switch intent {
         case .strength:    return "Strength"
         case .hypertrophy: return "Hypertrophy"
         case .power:       return "Power"
@@ -389,13 +388,11 @@ public struct RoutineBuilderView: View {
         }
     }
 
-    @ViewBuilder
+    /// A picker, so the menu marks the current intent.
     private var intentMenuItems: some View {
-        Button("Strength")    { draft.intent = .strength }
-        Button("Hypertrophy") { draft.intent = .hypertrophy }
-        Button("Power")       { draft.intent = .power }
-        Button("Endurance")   { draft.intent = .endurance }
-        Button("Technique")   { draft.intent = .technique }
+        Picker("Intent", selection: $draft.intent) {
+            ForEach(Intent.allCases, id: \.self) { Text(intentLabel($0)).tag($0) }
+        }
     }
 
     // MARK: - Progression menu
@@ -420,12 +417,10 @@ public struct RoutineBuilderView: View {
         )
     }
 
-    @ViewBuilder
+    /// A picker, so the menu marks the current progression.
     private var progressionMenuItems: some View {
-        ForEach(availableProgressionKinds, id: \.rawValue) { kind in
-            Button(progressionLabel(kind)) {
-                guardedProgressionSelection.wrappedValue = kind
-            }
+        Picker("Progression", selection: guardedProgressionSelection) {
+            ForEach(availableProgressionKinds, id: \.self) { Text(progressionLabel($0)).tag($0) }
         }
     }
 

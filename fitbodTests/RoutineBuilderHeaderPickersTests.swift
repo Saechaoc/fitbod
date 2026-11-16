@@ -99,12 +99,11 @@ struct RoutineBuilderHeaderPickersTests {
 
         // Build a fresh draft with both pickers MUTATED away from the
         // default values so the assertion exercises a real write.
-        // Hybrid progression needs the session on the active block (RM-026).
+        // RoutineBlockLinkageTests covers the block-only progressions (RM-026).
         let draft = RoutineDraft()
         draft.name = "Header Picker Save Test"
-        draft.isOnActiveBlock = true
         draft.intent = .power
-        draft.progressionKind = .hybrid
+        draft.progressionKind = .rpe
         let exDraft = RoutineExerciseDraft()
         exDraft.exercise = bench
         draft.exercises = [exDraft]
@@ -119,10 +118,10 @@ struct RoutineBuilderHeaderPickersTests {
         let routines = try ctx.fetch(FetchDescriptor<SessionTemplate>())
         let saved = try #require(routines.first)
         #expect(saved.intentRaw == "power")
-        #expect(saved.progressionKindRaw == "hybrid")
+        #expect(saved.progressionKindRaw == "rpe")
         // Computed accessor sanity-check.
         #expect(saved.intent == .power)
-        #expect(saved.progressionKind == .hybrid)
+        #expect(saved.progressionKind == .rpe)
     }
 
     // MARK: - 4. snapshotHash dirty-check (Phase 3.1 expansion)
