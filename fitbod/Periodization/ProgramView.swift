@@ -96,6 +96,8 @@ public struct ProgramView: View {
     @State private var repairing: SessionTemplate? = nil
     /// Why This week's TODAY ▸ or NEXT ▸ could not start a workout.
     @State private var startError: String? = nil
+    /// False while This week has nothing to show, which puts the next head right under the slab.
+    @State private var showsThisWeek = true
     #if DEBUG
     /// UI tests' `-fitbod-fail-block-start-once` makes the first START BLOCK ▸ throw, as on Today.
     @State private var failNextBlockStart = ProcessInfo.processInfo.arguments.contains("-fitbod-fail-block-start-once")
@@ -136,8 +138,7 @@ public struct ProgramView: View {
                                 }
                             } else {
                                 blocksSection(blocks)
-                                // The active slab has This week under it.
-                                routinesSection(underSlab: blocks.active == nil && blocks.leadIsSlab && blocks.planned.isEmpty)
+                                routinesSection(underSlab: isUnderSlab(blocks) && blocks.planned.isEmpty)
                                 if !blocks.past.isEmpty {
                                     pastBlocksEntry(count: blocks.past.count)
                                 }
@@ -298,13 +299,19 @@ public struct ProgramView: View {
 
     // MARK: - Blocks
 
+    /// Whether the head after the lead sits right under its dark slab: not
+    /// when the active slab has This week under it.
+    private func isUnderSlab(_ blocks: ProgramBlocks) -> Bool {
+        blocks.leadIsSlab && (blocks.active == nil || !showsThisWeek)
+    }
+
     /// The lead block, or BLOCKS saying there is none, then PLANNED.
     @ViewBuilder
     private func blocksSection(_ blocks: ProgramBlocks) -> some View {
         if let active = blocks.active {
             ActiveBlockSlab(block: active) { openBlock(active) }
             ThisWeekSection(
-                block: active, liveRoutines: allSplits, readyBlocks: blocks.ready,
+                block: active, liveRoutines: allSplits, readyBlocks: blocks.ready, isShown: $showsThisWeek,
                 onOpen: { navigationPath.append(SessionHistoryRoute.summary(sessionID: $0.id)) },
                 onStart: { startWorkout($0, in: active.split) },
                 onRepair: { repairing = $0 }
@@ -331,7 +338,7 @@ public struct ProgramView: View {
         }
 
         if !blocks.planned.isEmpty {
-            BRUSectionHead("Planned", underSlab: blocks.active == nil && blocks.leadIsSlab)
+            BRUSectionHead("Planned", underSlab: isUnderSlab(blocks))
             ForEach(Array(blocks.planned.enumerated()), id: \.element.id) { index, block in
                 if index > 0 {
                     BRUDivider(.hair)

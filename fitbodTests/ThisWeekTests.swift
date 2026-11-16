@@ -59,8 +59,11 @@ struct ThisWeekTests: ProgramFixtures {
         let (routine, _) = makeRoutine(sessions: ["Push A"])
         let block = weekly(routine, on: [3])
         let sunday = makeWorkout(in: nil, daysAgo: 2, block: block)
+        let settings = UserSettings()
+        ctx.insert(settings)
+        settings.weekStartsMonday = false
 
-        let days = try groups(for: block, weekStartsMonday: false)
+        let days = try groups(for: block)
 
         #expect(days[0].label == .day(monday - day))
         #expect(days[0].rows == [.logged(sunday)])
@@ -198,6 +201,19 @@ struct ThisWeekTests: ProgramFixtures {
         #expect(try groups(for: block).map(\.rows) == [[.logged(push)], [.planned(slots[1], .plain)]])
     }
 
+    @Test("Rotation: a NEXT slot logged this week offers NEXT ▸, and that workout lists once under Also")
+    func rotationNextLoggedThisWeek() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"])
+        let block = makeBlock(on: routine)
+        let pull = makeWorkout(in: slots[1], daysAgo: 1.5, block: block)
+        let push = makeWorkout(in: slots[0], daysAgo: 1, block: block)
+
+        let strip = try groups(for: block)
+
+        #expect(strip.map(\.rows) == [[.logged(push)], [.planned(slots[1], .start)], [.logged(pull)]])
+        #expect(strip.last?.label == .also)
+    }
+
     @Test("Rotation T-FIX: an empty NEXT repairs ahead of its last workout, which lists under Also")
     func rotationFix() throws {
         let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"], empty: ["Pull A"])
@@ -208,6 +224,94 @@ struct ThisWeekTests: ProgramFixtures {
         #expect(try groups(for: block).map(\.rows) == [
             [.logged(push)], [.planned(slots[1], .repair)], [.logged(pull)],
         ])
+    }
+
+    // MARK: - Edges
+
+    @Test("A workout from 23:30 past midnight stays on the day it started, the week's last day included")
+    func overnightWorkouts() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"])
+        let block = weekly(routine, on: [3, 5]) // Tuesday, Thursday
+        let lastSunday = overnight(from: monday - day, block: block) // last week's last day, into Monday
+        let mondayNight = overnight(from: monday, block: block)      // into today
+
+        let days = try groups(for: block)
+
+        #expect(days[0].rows == [.logged(mondayNight)])
+        #expect(days[1].rows == [.planned(slots[0], .start)])         // nothing started today: still T-TODAY
+        #expect(!days.flatMap(\.rows).contains(.logged(lastSunday)))
+    }
+
+    @Test("In New York's clock-change week the days and the week's end fall on local midnight")
+    func daylightSavingWeek() throws {
+        var newYork = Calendar(identifier: .gregorian)
+        newYork.timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        func local(_ month: Int, _ day: Int, _ hour: Int = 0, _ minute: Int = 0) throws -> Date {
+            try #require(newYork.date(from: DateComponents(year: 2023, month: month, day: day, hour: hour, minute: minute)))
+        }
+        let (routine, _) = makeRoutine(sessions: ["Push A"])
+        let block = makeBlock(on: routine, weekly: [2])
+        func workout(at start: Date) -> Session {
+            let workout = makeWorkout(in: nil, daysAgo: 0, block: block)
+            workout.startedAt = start
+            workout.completedAt = start.addingTimeInterval(1_800)
+            return workout
+        }
+        let lastWeek = workout(at: try local(10, 29, 23, 30))
+        let first = workout(at: try local(10, 30, 0, 30))
+        // The clocks went back at 2:00 that Sunday, so seven times 24 hours from the week start ends at 23:00.
+        let last = workout(at: try local(11, 5, 23, 30))
+
+        let days = try groups(for: block, at: try local(11, 5, 23, 45), calendar: newYork)
+
+        let weekStart = try local(10, 30)
+        let midnights = (0..<7).compactMap { newYork.date(byAdding: .day, value: $0, to: weekStart) }
+        #expect(days.map(\.label) == midnights.map(ThisWeek.Label.day))
+        #expect(logged(days.first) == [first])
+        #expect(logged(days.last) == [last])
+        #expect(!days.flatMap(\.rows).contains(.logged(lastWeek)))
+    }
+
+    @Test("No routine, or a routine with no sessions, plans nothing: only the week's workouts show, and none hides it")
+    func nothingPlanned() throws {
+        let block = weekly(makeRoutine("No Sessions"), on: [2, 3])
+        #expect(try groups(for: block).isEmpty)
+
+        let arms = makeWorkout(in: nil, daysAgo: 1, block: block)
+        let onItsDay = [ThisWeek.Group(label: .day(monday), rows: [.logged(arms)])]
+        #expect(try groups(for: block) == onItsDay)
+        block.split = nil // T-ATTACH
+        #expect(try groups(for: block) == onItsDay)
+
+        block.schedulingMode = .rotation
+        #expect(try week(for: block) == ThisWeek(range: nil, groups: [.init(label: .also, rows: [.logged(arms)])]))
+    }
+
+    @Test("A slot whose session is gone reads Untitled session, plain, on rotation and on its weekday")
+    func slotWithoutSession() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"])
+        slots[1].sessionTemplate = nil
+        let rotation = makeBlock(on: routine)
+        makeWorkout(in: slots[0], daysAgo: 1, block: rotation) // so NEXT is the slot without a session
+        let weekBlock = weekly(routine, on: [2, 3])             // Monday, Tuesday: today is that slot's day
+
+        let strip = try groups(for: rotation)
+        let days = try groups(for: weekBlock)
+
+        #expect(strip[1].rows == [.planned(slots[1], .plain)])
+        #expect(days[1].rows == [.planned(slots[1], .plain)])
+        #expect(strip[1].rows.first?.name == "Untitled session")
+    }
+
+    @Test("An open workout from an earlier week shows nowhere: the resume banner is its route")
+    func openFromAnEarlierWeek() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A"])
+        let rotation = makeBlock(on: routine)
+        let open = makeWorkout(in: slots[0], daysAgo: 8, block: rotation, finished: false)
+        let weekBlock = weekly(routine, on: [3, 5])
+
+        #expect(try groups(for: rotation).map(\.rows) == [[.planned(slots[0], .plain)], [.planned(slots[1], .plain)]])
+        #expect(!(try groups(for: weekBlock)).flatMap(\.rows).contains(.inProgress(open)))
     }
 
     // MARK: - Helpers
@@ -222,17 +326,32 @@ struct ThisWeekTests: ProgramFixtures {
         return block
     }
 
-    /// This week as Program shows it now: Today's state from Today's inputs, then the groups.
-    private func groups(for block: Block, weekStartsMonday: Bool = true) throws -> [ThisWeek.Group] {
-        let workouts = try ctx.fetch(FetchDescriptor<Session>())
-        let resolution = resolution(for: block, at: now)
-        let state = TodayState.resolve(
-            openWorkouts: workouts.filter { $0.completedAt == nil }, activeBlock: block, resolution: resolution,
-            finishedWorkouts: workouts.filter { $0.completedAt != nil }, readyBlocks: [], liveRoutines: [],
-            sessions: [], now: now, calendar: calendar)
-        return ThisWeek.groups(
-            block: block, state: state, resolution: resolution, workouts: workouts,
-            weekStart: now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday, calendar: calendar),
-            now: now, calendar: calendar)
+    /// A finished workout from 23:30 on `day` to 00:30 the day after.
+    private func overnight(from day: Date, block: Block) -> Session {
+        let workout = makeWorkout(in: nil, daysAgo: 0, block: block)
+        workout.startedAt = day.addingTimeInterval(23.5 * 3_600)
+        workout.completedAt = workout.startedAt.addingTimeInterval(3_600)
+        return workout
+    }
+
+    /// This week as Program shows it at `date`, from the store as Program's queries read it.
+    private func week(for block: Block, at date: Date? = nil, calendar: Calendar? = nil) throws -> ThisWeek {
+        ThisWeek.make(
+            block: block,
+            workouts: try ctx.fetch(FetchDescriptor<Session>()),
+            templates: try ctx.fetch(FetchDescriptor<SessionTemplate>()).filter { !$0.isArchived },
+            settings: try ctx.fetch(FetchDescriptor<UserSettings>()),
+            liveRoutines: try ctx.fetch(FetchDescriptor<Split>()).filter { !$0.isArchived },
+            readyBlocks: try ctx.fetch(FetchDescriptor<Block>()).filter { $0.derivedStatus == .ready },
+            context: ctx, now: date ?? now, calendar: calendar ?? self.calendar)
+    }
+
+    private func groups(for block: Block, at date: Date? = nil, calendar: Calendar? = nil) throws -> [ThisWeek.Group] {
+        try week(for: block, at: date, calendar: calendar).groups
+    }
+
+    /// The workouts a group lists as logged.
+    private func logged(_ group: ThisWeek.Group?) -> [Session] {
+        (group?.rows ?? []).compactMap { if case .logged(let workout) = $0 { workout } else { nil } }
     }
 }

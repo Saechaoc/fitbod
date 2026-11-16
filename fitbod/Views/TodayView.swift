@@ -425,13 +425,16 @@ public struct TodayView: View {
         return false
     }
 
-    /// What the week board's counts depend on.
-    private struct WeekKey: Equatable {
+    /// What the week board's counts depend on. Program's This week counts
+    /// its groups on the same key (RM-015).
+    struct WeekKey: Equatable {
         let finished: [PersistentIdentifier]
         let weekStart: Date
         /// Moves today's tile at a day change within the week.
         let today: Date
         let edits: Int?
+        /// The open workout, which This week shows and the board leaves out.
+        var open: [PersistentIdentifier] = []
     }
 
     // MARK: - Formatted Date (BRU header right slot)

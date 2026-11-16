@@ -21,6 +21,11 @@
 //  Today's hero would. A planned session with no exercises reads
 //  NO EXERCISES › and opens its detail. No adherence count (RM-039).
 //
+//  The open workout shows only in the week it started: Program's resume
+//  banner is its route. A block with no routine, or a routine with no
+//  sessions, plans nothing, so only the week's workouts show, and the
+//  section hides when there are none.
+//
 
 import SwiftUI
 import SwiftData
@@ -28,8 +33,13 @@ import UIKit
 
 // MARK: - ThisWeek
 
-/// This week's rows, worked out from Today's state.
-enum ThisWeek {
+/// What This week shows, worked out from Today's state.
+struct ThisWeek: Equatable {
+    /// The head's dates, "NOV 9–15", in a weekday block; nil on rotation,
+    /// whose head reads Rotation.
+    let range: String?
+    /// Empty when there is nothing to show, which hides the section.
+    let groups: [Group]
 
     /// What a group's leading column names.
     enum Label: Equatable {
@@ -54,6 +64,18 @@ enum ThisWeek {
         case planned(SplitSessionSlot, Mark)
         /// A day with nothing logged or planned.
         case rest
+
+        /// What the row is called: the workout's own name, the planned session's, or Rest.
+        var name: String {
+            switch self {
+            case .logged(let workout), .inProgress(let workout):
+                workout.displayName
+            case .planned(let slot, _):
+                slot.sessionTemplate.flatMap { $0.name.isEmpty ? nil : $0.name } ?? "Untitled session"
+            case .rest:
+                "Rest"
+            }
+        }
     }
 
     enum Mark: Equatable {
@@ -69,29 +91,57 @@ enum ThisWeek {
         let rows: [Row]
     }
 
-    /// The groups This week shows for `block`.
+    /// The week Today's board shows, from the week start setting.
+    static func weekStart(_ settings: [UserSettings], now: Date, calendar: Calendar) -> Date {
+        now.mondayAtMidnightForToday(weekStartsMonday: settings.first?.weekStartsMonday ?? true, calendar: calendar)
+    }
+
+    /// What This week shows for the active `block`, from the queries Today
+    /// reads, through Today's own state function. The view's task and the
+    /// tests both call this, so they read the same inputs.
+    /// - Parameter workouts: every workout, open or finished.
+    @MainActor
+    static func make(
+        block: Block, workouts: [Session], templates: [SessionTemplate], settings: [UserSettings],
+        liveRoutines: [Split], readyBlocks: [Block], context: ModelContext, now: Date, calendar: Calendar
+    ) -> ThisWeek {
+        let finished = workouts.filter { $0.completedAt != nil }
+        let resolution = TodayResolver.resolve(block: block, context: context, today: now, calendar: calendar)
+        let state = TodayState.resolve(
+            openWorkouts: workouts.filter { $0.completedAt == nil }, activeBlock: block, resolution: resolution,
+            finishedWorkouts: finished, readyBlocks: readyBlocks, liveRoutines: liveRoutines,
+            sessions: templates, now: now, calendar: calendar)
+        let start = calendar.startOfDay(for: weekStart(settings, now: now, calendar: calendar))
+        let days = (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+        return ThisWeek(
+            range: block.schedulingMode == .rotation ? nil : TodayWeek.rangeLabel(days),
+            groups: groups(
+                block: block, state: state, resolution: resolution, workouts: workouts, finished: finished,
+                days: days, now: now, calendar: calendar))
+    }
+
     /// - Parameters:
-    ///   - state: Today's state, resolved from Today's own inputs.
     ///   - resolution: the resolver's answer for `now`; its slot is a rotation block's NEXT.
-    ///   - workouts: every workout, open or finished.
-    ///   - weekStart: the start of the week Today's board shows.
-    static func groups(
-        block: Block, state: TodayState, resolution: TodayResolution, workouts: [Session],
-        weekStart: Date, now: Date, calendar: Calendar
+    ///   - days: the week's seven local midnights.
+    private static func groups(
+        block: Block, state: TodayState, resolution: TodayResolution, workouts: [Session], finished: [Session],
+        days: [Date], now: Date, calendar: Calendar
     ) -> [Group] {
-        let days = (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: calendar.startOfDay(for: weekStart)) }
-        let end = days.last.flatMap { calendar.date(byAdding: .day, value: 1, to: $0) } ?? weekStart
+        guard let first = days.first, let end = days.last.flatMap({ calendar.date(byAdding: .day, value: 1, to: $0) })
+        else { return [] }
+        let isThisWeek = { (workout: Session) in workout.startedAt >= first && workout.startedAt < end }
         // The week first: counting reads each workout's sets.
-        let week = SessionSetActions.countedWorkouts(workouts.filter { $0.startedAt >= weekStart && $0.startedAt < end })
-            .sorted { $0.startedAt < $1.startedAt }
-        let open: Session? = if case .resume(let open) = state { open } else { nil }
+        let week = SessionSetActions.countedWorkouts(workouts.filter(isThisWeek)).sorted { $0.startedAt < $1.startedAt }
+        let open: Session? = if case .resume(let open) = state, isThisWeek(open) { open } else { nil }
         // T-TODAY's slot, the one start This week offers.
         let startable: SplitSessionSlot? = if case .today(_, let slot) = state { slot } else { nil }
+        // None without a routine (T-ATTACH) or with an empty one (T-FIX): then nothing is planned.
+        let slots = (block.split?.slots ?? []).sorted { $0.position < $1.position }
 
         guard block.schedulingMode == .rotation else {
             // The plan starts on the day the block did.
             let firstPlanned = calendar.startOfDay(for: block.startDate)
-            return days.map { day in
+            return days.compactMap { day in
                 let logged = week.filter { calendar.isDate($0.startedAt, inSameDayAs: day) }
                 let started = open.flatMap { calendar.isDate($0.startedAt, inSameDayAs: day) ? $0 : nil }
                 var rows = logged.map(Row.logged) + (started.map { [Row.inProgress($0)] } ?? [])
@@ -101,18 +151,24 @@ enum ThisWeek {
                     let starts = calendar.isDate(day, inSameDayAs: now) && slot.id == startable?.id
                     rows.append(.planned(slot, mark(slot, starts: starts)))
                 }
-                return Group(label: .day(day), rows: rows.isEmpty ? [.rest] : rows)
+                if rows.isEmpty && !slots.isEmpty {
+                    rows = [.rest]
+                }
+                return rows.isEmpty ? nil : Group(label: .day(day), rows: rows)
             }
         }
 
-        let slots = (block.split?.slots ?? []).sorted { $0.position < $1.position }
-        let finished = workouts.filter { $0.completedAt != nil }
         let next = StartSlot.next(in: block, resolution: resolution, finished: finished, now: now, calendar: calendar)
         // Each slot's newest counted workout in this block. Newest first, so
-        // only the newest candidates have their sets read.
+        // only the newest candidates have their sets read, and only until
+        // every slot has one.
+        let slotIDs = Set(slots.map(\.id))
         var latest: [UUID: Session] = [:]
-        for workout in finished.sorted(by: { $0.startedAt > $1.startedAt }) where workout.block?.id == block.id {
-            guard let slot = workout.slot?.id, latest[slot] == nil, !SessionSetActions.isEmptyWorkout(workout) else { continue }
+        for workout in finished.sorted(by: { $0.startedAt > $1.startedAt }) {
+            if latest.count == slotIDs.count { break }
+            guard workout.block?.id == block.id, let slot = workout.slot?.id, slotIDs.contains(slot),
+                  latest[slot] == nil, !SessionSetActions.isEmptyWorkout(workout)
+            else { continue }
             latest[slot] = workout
         }
         func row(_ slot: SplitSessionSlot) -> Row {
@@ -149,6 +205,9 @@ struct ThisWeekSection: View {
     /// Today's state reads these too, and Program already queries them.
     let liveRoutines: [Split]
     let readyBlocks: [Block]
+    /// False while the section shows nothing, so the next head sits right
+    /// under the slab, whose edge is its top rule.
+    @Binding var isShown: Bool
     let onOpen: (Session) -> Void
     let onStart: (SessionTemplate) -> Void
     let onRepair: (SessionTemplate) -> Void
@@ -165,32 +224,41 @@ struct ThisWeekSection: View {
 
     /// What "today" is, refreshed when Today refreshes its own.
     @State private var now = Date.now
+    /// Worked out as Today's board is counted (RM-010): when the workouts, a
+    /// History correction, the week or the day change, never per render. The
+    /// task also runs each time Program shows, which picks up edits to the
+    /// block, its routine and its sessions: all of them are made on other screens.
+    @State private var week: ThisWeek? = nil
 
     var body: some View {
-        let resolution = TodayResolver.resolve(block: block, context: ctx, today: now, calendar: calendar)
-        let state = TodayState.resolve(
-            openWorkouts: workouts.filter { $0.completedAt == nil }, activeBlock: block, resolution: resolution,
-            finishedWorkouts: workouts.filter { $0.completedAt != nil }, readyBlocks: readyBlocks,
-            liveRoutines: liveRoutines, sessions: sessions, now: now, calendar: calendar)
-        let weekStart = now.mondayAtMidnightForToday(
-            weekStartsMonday: settingsList.first?.weekStartsMonday ?? true, calendar: calendar)
-        let groups = ThisWeek.groups(
-            block: block, state: state, resolution: resolution, workouts: workouts,
-            weekStart: weekStart, now: now, calendar: calendar)
         VStack(spacing: 0) {
-            if block.schedulingMode == .rotation {
-                BRUSectionHead("Rotation", underSlab: true)
-            } else {
-                BRUSectionHead("This week", right: TodayWeek.rangeLabel(groups.compactMap(\.label.day)), underSlab: true)
-            }
-            ForEach(Array(groups.enumerated()), id: \.offset) { index, group in
-                if index > 0 {
-                    BRUDivider(.hair)
+            if let week, !week.groups.isEmpty {
+                if let range = week.range {
+                    BRUSectionHead("This week", right: range, underSlab: true)
+                } else {
+                    BRUSectionHead("Rotation", underSlab: true)
                 }
-                ForEach(Array(group.rows.enumerated()), id: \.offset) { position, row in
-                    rowView(row, in: group.label, showsTag: position == 0)
+                ForEach(Array(week.groups.enumerated()), id: \.offset) { index, group in
+                    if index > 0 {
+                        BRUDivider(.hair)
+                    }
+                    ForEach(Array(group.rows.enumerated()), id: \.offset) { position, row in
+                        rowView(row, in: group.label, showsTag: position == 0)
+                    }
                 }
             }
+        }
+        .task(id: TodayView.WeekKey(
+            finished: workouts.filter { $0.completedAt != nil }.map(\.persistentModelID),
+            weekStart: ThisWeek.weekStart(settingsList, now: now, calendar: calendar),
+            today: calendar.startOfDay(for: now), edits: historyEdits?.version,
+            open: workouts.filter { $0.completedAt == nil }.map(\.persistentModelID)
+        )) {
+            let week = ThisWeek.make(
+                block: block, workouts: workouts, templates: sessions, settings: settingsList,
+                liveRoutines: liveRoutines, readyBlocks: readyBlocks, context: ctx, now: now, calendar: calendar)
+            self.week = week
+            isShown = !week.groups.isEmpty
         }
         .onAppear { now = .now }
         // A History correction can empty a finished workout or fill an empty one.
@@ -215,16 +283,15 @@ struct ThisWeekSection: View {
                 tag: tag, showsTag: showsTag, name: line.name, isMuted: isAlso, status: line.status,
                 spokenLabel: "\(spokenTag): \(line.name)", spokenValue: line.spoken
             ) { onOpen(workout) }
-        case .inProgress(let workout):
+        case .inProgress:
             ThisWeekRow(
-                tag: tag, showsTag: showsTag, name: workout.displayName, isMuted: isAlso,
+                tag: tag, showsTag: showsTag, name: row.name, isMuted: isAlso,
                 status: "In progress", isStatusInk: true,
-                spokenLabel: "\(spokenTag): \(workout.displayName)", spokenValue: "In progress"
+                spokenLabel: "\(spokenTag): \(row.name)", spokenValue: "In progress"
             )
         case .planned(let slot, let mark):
-            let session = slot.sessionTemplate
-            let name = session.map { $0.name.isEmpty ? "Untitled session" : $0.name } ?? "Untitled session"
-            switch (mark, session) {
+            let name = row.name
+            switch (mark, slot.sessionTemplate) {
             case (.start, let session?):
                 ThisWeekRow(
                     tag: tag, showsTag: showsTag, name: name,
@@ -243,13 +310,14 @@ struct ThisWeekSection: View {
                 )
             }
         case .rest:
-            ThisWeekRow(tag: tag, showsTag: showsTag, name: "Rest", isMuted: true, spokenLabel: "\(spokenTag): Rest")
+            ThisWeekRow(tag: tag, showsTag: showsTag, name: row.name, isMuted: true, spokenLabel: "\(spokenTag): \(row.name)")
         }
     }
 
     /// A counted workout's name and what its row says beside it: "52M ✓" in
     /// a day group, "Logged Nov 9" on its slot's row, and its date after its
-    /// name under Also this week.
+    /// name under Also this week. Each names the workout itself, so a row
+    /// says what its summary opens, a swapped session included.
     private func loggedLine(_ workout: Session, in label: ThisWeek.Label) -> (name: String, status: String?, spoken: String) {
         let date = workout.startedAt.formatted(dateStyle.month(.abbreviated).day())
         switch label {
@@ -258,9 +326,8 @@ struct ThisWeekSection: View {
             let status = [minutes.map { SessionHistoryFormat.duration(minutes: $0) }, "✓"].compactMap { $0 }
             let spoken = ["Done", minutes.map { BRUCountLabel.text($0, "minute") }].compactMap { $0 }
             return (workout.displayName, status.joined(separator: " "), spoken.joined(separator: ", "))
-        case .slot(let slot):
-            let name = slot.sessionTemplate?.name ?? workout.displayName
-            return (name.isEmpty ? workout.displayName : name, "Logged \(date)", "Logged \(date)")
+        case .slot:
+            return (workout.displayName, "Logged \(date)", "Logged \(date)")
         case .also:
             return ("\(workout.displayName) · \(date)", nil, "Done")
         }

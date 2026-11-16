@@ -24,7 +24,11 @@
 //                               and every other day after it. For Program's
 //                               This week, the session it planned five days
 //                               ago was done that day, and Legs A and then
-//                               Pull A two days ago, a rest day.
+//                               Pull A two days ago, a rest day. A day in
+//                               last week moves up to this week's first day,
+//                               which logs no planned session if it rests. A
+//                               Monday launch, the week's first day by
+//                               default, has no past day, so it logs nothing.
 //    -fitbod-seed-today-attach  T-ATTACH: an active block whose routine is
 //                               gone, as restored data can leave it.
 //    -fitbod-seed-today-pick    T-PICK: no block; a routine whose Push A was
@@ -174,14 +178,23 @@ enum TodayStatesSeed {
             block.schedulingMode = .fixedWeekly
             block.trainingDays = weekdays([0, 2, 4])
             start(block, at: now, in: context)
-            let midnight = Calendar.current.startOfDay(for: now)
-            let fiveDaysAgo = midnight.addingTimeInterval(-5 * day)
-            if case .session(let planned) = TodayResolver.resolveFixedWeekly(block: block, today: fiveDaysAgo, calendar: .current) {
-                finish(planned, block: block, startedAt: fiveDaysAgo.addingTimeInterval(9 * 3600), duration: 52 * 60, in: context)
+            // A day `daysAgo` before today, moved up to the week This week shows; nil when that is today.
+            let calendar = Calendar.current
+            let today = calendar.startOfDay(for: now)
+            let settings = (try? context.fetch(FetchDescriptor<UserSettings>())) ?? []
+            let weekStart = ThisWeek.weekStart(settings, now: now, calendar: calendar)
+            func pastDay(_ daysAgo: Int) -> Date? {
+                let date = max(calendar.date(byAdding: .day, value: -daysAgo, to: today) ?? today, weekStart)
+                return date < today ? date : nil
             }
-            let twoDaysAgo = midnight.addingTimeInterval(-2 * day)
-            finish(slots[2], block: block, startedAt: twoDaysAgo.addingTimeInterval(10 * 3600), duration: 35 * 60, in: context)
-            finish(slots[1], block: block, startedAt: twoDaysAgo.addingTimeInterval(18 * 3600), duration: 20 * 60, in: context)
+            if let done = pastDay(5),
+               case .session(let planned) = TodayResolver.resolveFixedWeekly(block: block, today: done, calendar: calendar) {
+                finish(planned, block: block, startedAt: done.addingTimeInterval(9 * 3600), duration: 52 * 60, in: context)
+            }
+            if let offPlan = pastDay(2) {
+                finish(slots[2], block: block, startedAt: offPlan.addingTimeInterval(10 * 3600), duration: 35 * 60, in: context)
+                finish(slots[1], block: block, startedAt: offPlan.addingTimeInterval(18 * 3600), duration: 20 * 60, in: context)
+            }
         case .attach:
             let block = makeBlock(blockName)
             start(block, at: now, in: context)

@@ -17,18 +17,24 @@ struct TodayStatesSeedTests {
         try seeded(seed, now: now).state
     }
 
-    /// Seeds `seed`, then the pending review when `review` is set, and
-    /// resolves Today's state and the review its notice offers.
-    private func seeded(
-        _ seed: TodayStatesSeed.State?, review: Bool = false, now: Date
-    ) throws -> (state: TodayState, pendingReview: Block?) {
+    /// An empty store with the catalog rows the seeds use, after `seed`,
+    /// then the pending review when `review` is set.
+    private func store(after seed: TodayStatesSeed.State?, review: Bool = false, now: Date) throws -> ModelContext {
         let ctx = ModelContext(try InMemoryContainer.makeCurrent())
         for id in TodayStatesSeed.catalogIDs {
             ctx.insert(Exercise(externalID: id, name: id, canonicalName: id.lowercased(), equipmentRaw: "barbell", mechanicRaw: "compound"))
         }
         if let seed { TodayStatesSeed.seed(seed, in: ctx, now: now) }
         if review { TodayStatesSeed.seedPendingReview(in: ctx, now: now) }
+        return ctx
+    }
 
+    /// Seeds `seed`, then the pending review when `review` is set, and
+    /// resolves Today's state and the review its notice offers.
+    private func seeded(
+        _ seed: TodayStatesSeed.State?, review: Bool = false, now: Date
+    ) throws -> (state: TodayState, pendingReview: Block?) {
+        let ctx = try store(after: seed, review: review, now: now)
         let blocks = try ctx.fetch(FetchDescriptor<Block>())
         let workouts = try ctx.fetch(FetchDescriptor<Session>())
         let active = blocks.first { $0.isActive }
@@ -104,6 +110,21 @@ struct TodayStatesSeedTests {
             }
             #expect(workouts.map(\.slot) == [today], "day +\(offset)")
         }
+    }
+
+    /// Program's This week shows only this week, so the weekly seed's
+    /// workouts stay in it on every launch weekday, before today.
+    @Test("the weekly seed logs only in this week before today, and nothing on the week's first day",
+          arguments: 0..<7)
+    func weeklySeedStaysInThisWeek(_ offset: Int) throws {
+        let now = noon.addingTimeInterval(Double(offset) * 86_400)
+        let ctx = try store(after: .weekly, now: now)
+        let weekStart = ThisWeek.weekStart(try ctx.fetch(FetchDescriptor<UserSettings>()), now: now, calendar: calendar)
+        let today = calendar.startOfDay(for: now)
+        let workouts = try ctx.fetch(FetchDescriptor<Session>())
+
+        #expect(workouts.allSatisfy { $0.startedAt >= weekStart && $0.startedAt < today })
+        #expect(workouts.isEmpty == (weekStart == today))
     }
 
     @Test("workouts seeded as done today stay on today one minute after midnight")
