@@ -59,6 +59,8 @@ VoiceOver, AX3 and two-phone checks stayed deferred to workflow stability, as th
 
 The last unit-target runs passed 1,367 of 1,370 (D3e) and 1,371 of 1,374 (B3), with 2 skipped and 1 expected failure.
 The largest full tier, before A6 landed, ran 1,460 tests with 0 failures, 2 skipped and 1 expected failure.
+After the last landing, a full tier on `main` (`62b84015`, app code as `faaff623`) ran 1,499 tests with 0 failures, 2 skipped and 1 expected failure, both UI shards clean and the widget build passing (`full-20261116-160324-93275`).
+A throwaway 390pt tour of the swarm's screens in light and dark found two new layout and copy flaws, filed under [RM-035](../../ROADMAP.md#rm-035) and [RM-044](../../ROADMAP.md#rm-044); the store rehearsal passed on a copy of the phone's store pulled the same day.
 Landings were installed on the user's iPhone 15 Pro Max as they went, often several at once, and test-only ones not at all; what only the phone can show stays open as rows in the roadmap's Needs input table.
 Evidence lines that cited commits from rebased branches were corrected on 2026-11-16, so evidence that names a commit names the one on `main`.
 `ui-lock.sh --all` held the first token while it waited for the second, so a full tier is started only when no slice is in its UI phase.
